@@ -16,6 +16,11 @@ const navLinks = [
   { href: '/about/', label: 'About' },
   { href: '/api/', label: 'API' },
 ];
+
+const ecosystemLinks = [
+  { href: 'https://opencastor.com', label: 'OpenCastor' },
+  { href: 'https://rcan.dev', label: 'RCAN Spec' },
+];
 ---
 
 <header class="fixed top-0 w-full z-50 border-b border-border bg-bg/85 backdrop-blur-md" id="site-header">
@@ -58,6 +63,18 @@ const navLinks = [
           ]}
         >
           {link.label}
+        </a>
+      ))}
+      <span class="mx-1 text-white/10">|</span>
+      {ecosystemLinks.map(link => (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="px-3 py-1.5 rounded-md text-sm font-medium text-accent/70 hover:text-accent transition-colors duration-150 flex items-center gap-1"
+        >
+          {link.label}
+          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
       ))}
     </nav>
