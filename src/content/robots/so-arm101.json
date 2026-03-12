@@ -1,0 +1,17 @@
+{
+  "rrn": "RRN-00000004",
+  "name": "SO-ARM101",
+  "manufacturer": "TheRobotStudio / HuggingFace",
+  "model": "so-arm101",
+  "description": "Open-source 5-DOF robot arm designed for imitation learning. Feetech STS3215 servos, LeRobot compatible.",
+  "status": "active",
+  "production_year": 2025,
+  "specs": {
+    "compute": "Raspberry Pi 5 (typical)",
+    "sensors": ["wrist camera (optional)", "Feetech servo encoders"]
+  },
+  "verification_status": "community",
+  "tags": ["arm", "lerobot", "open-source", "imitation-learning"],
+  "submitted_by": "community",
+  "submitted_date": "2026-03-12"
+}

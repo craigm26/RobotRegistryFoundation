@@ -1,0 +1,18 @@
+{
+  "rrn": "RRN-00000005",
+  "name": "OpenCastor Alex",
+  "manufacturer": "ContinuonAI",
+  "model": "opencastor-rpi5",
+  "description": "Reference RCAN implementation running OpenCastor on Raspberry Pi 5 with OAK-D camera and Hailo-8 NPU.",
+  "status": "active",
+  "production_year": 2026,
+  "specs": {
+    "compute": "Raspberry Pi 5 16GB + Hailo-8",
+    "sensors": ["OAK-D RGB+Depth", "Hailo-8 NPU"]
+  },
+  "verification_status": "verified",
+  "ruri": "rcan://rcan.dev/continuonai/opencastor-rpi5/alex",
+  "tags": ["rpi5", "hailo", "oak-d", "rcan-compliant", "rcan-verified"],
+  "submitted_by": "craigm26",
+  "submitted_date": "2026-03-12"
+}

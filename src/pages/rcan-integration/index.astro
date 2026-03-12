@@ -1,0 +1,229 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="RRF + RCAN Integration"
+  description="How the Robot Registry Foundation and RCAN protocol work together — globally unique identifiers combined with cryptographic ownership proof."
+>
+
+  <!-- Hero -->
+  <section class="pt-16 pb-12 border-b border-border">
+    <div class="max-w-3xl">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        §21 Preview
+      </div>
+      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text leading-tight tracking-tight mb-5">
+        How the RRF and RCAN<br class="hidden md:block" /> Work Together
+      </h1>
+      <p class="text-lg text-text-muted leading-relaxed max-w-2xl">
+        Two independent standards designed to compose. Use either alone or both together for globally identifiable, cryptographically verifiable robot identity.
+      </p>
+    </div>
+  </section>
+
+  <!-- Two Different Things -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-8">Two Different Things, Designed to Compose</h2>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-10">
+        <div class="bg-bg-card border border-border rounded-xl p-7">
+          <div class="font-mono text-xs text-accent mb-3 uppercase tracking-widest">RRF</div>
+          <h3 class="font-display text-xl font-semibold text-text mb-3">The Registry</h3>
+          <ul class="space-y-2 text-sm text-text-muted leading-relaxed">
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Assigns permanent RRNs</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Any robot can register</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> No software required</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Neutral, independent governance</li>
+          </ul>
+        </div>
+
+        <div class="bg-bg-card border border-border rounded-xl p-7">
+          <div class="font-mono text-xs text-accent mb-3 uppercase tracking-widest">RCAN</div>
+          <h3 class="font-display text-xl font-semibold text-text mb-3">The Protocol</h3>
+          <ul class="space-y-2 text-sm text-text-muted leading-relaxed">
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Defines how robots identify, sign, and prove behavior</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Any language or runtime</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Ed25519 message signing</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Hierarchical URIs (RURIs)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-accent/5 border border-accent/20 rounded-xl p-6">
+        <p class="text-sm text-text-muted leading-relaxed">
+          <span class="text-accent font-semibold">Used together:</span> a robot becomes globally identifiable via its RRN <em>and</em> cryptographically verifiable via its RCAN keys. Anyone can look up the robot, resolve its RURI, and verify that its signed messages are authentic.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Identifier Relationship -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-8">The Identifier Relationship</h2>
+
+      <div class="space-y-5 mb-10">
+        <div class="flex gap-4 items-start">
+          <div class="font-mono text-xs bg-bg-card border border-border rounded px-2 py-1 text-accent flex-shrink-0 mt-0.5">RRN</div>
+          <div>
+            <code class="text-sm font-mono text-text">RRN-00000001</code>
+            <p class="text-sm text-text-muted mt-1">Opaque, permanent, registry-assigned. Stable across renames, re-deployments, ownership transfers.</p>
+          </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+          <div class="font-mono text-xs bg-bg-card border border-border rounded px-2 py-1 text-accent flex-shrink-0 mt-0.5">RURI</div>
+          <div>
+            <code class="text-sm font-mono text-text break-all">rcan://rcan.dev/continuonai/opencastor-rpi5/bob</code>
+            <p class="text-sm text-text-muted mt-1">Hierarchical, protocol-level address. Human-readable. Scoped to an organization and model.</p>
+          </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+          <div class="font-mono text-xs bg-bg-card border border-border rounded px-2 py-1 text-accent flex-shrink-0 mt-0.5">Link</div>
+          <div>
+            <p class="text-sm text-text-muted">A registered robot can associate its RURI with its RRN. The registry stores the mapping.</p>
+          </div>
+        </div>
+
+        <div class="flex gap-4 items-start">
+          <div class="font-mono text-xs bg-bg-card border border-border rounded px-2 py-1 text-accent flex-shrink-0 mt-0.5">Lookup</div>
+          <div>
+            <code class="text-sm font-mono text-text break-all">GET /api/v1/resolve?ruri=rcan://...</code>
+            <p class="text-sm text-text-muted mt-1">Returns the RRN if the RURI is registered.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ownership Proof Flow -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-3">Ownership Proof Flow</h2>
+      <p class="text-text-muted text-sm mb-10">The challenge/sign/verify handshake from RCAN §21. A robot proves it holds the private key for its RURI without transmitting that key.</p>
+
+      <div class="space-y-4 mb-10">
+        {[
+          {
+            step: '1',
+            title: 'Request a challenge',
+            code: 'POST /api/v1/challenge\n{ "ruri": "rcan://rcan.dev/myorg/mybot/unit1" }',
+          },
+          {
+            step: '2',
+            title: 'Registry returns a 32-byte nonce',
+            code: '{ "nonce": "a3f8...", "expires_at": "2026-03-12T00:05:00Z" }',
+          },
+          {
+            step: '3',
+            title: 'Robot signs nonce with Ed25519 key',
+            code: '# Same key used for RCAN message signing\nsignature = ed25519_sign(private_key, nonce)',
+          },
+          {
+            step: '4',
+            title: 'Submit proof',
+            code: 'POST /api/v1/verify\n{ "ruri": "...", "nonce": "...", "signature": "...", "public_key": "..." }',
+          },
+          {
+            step: '5',
+            title: 'Registry verifies → robot promoted to "verified" tier',
+            code: '{ "status": "verified", "rrn": "RRN-00000005", "verified_at": "2026-03-12T00:00:42Z" }',
+          },
+        ].map(item => (
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent font-mono text-sm font-bold">{item.step}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-text mb-2">{item.title}</div>
+              <pre class="bg-bg-card border border-border rounded-lg p-4 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{item.code}</pre>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h3 class="font-display text-lg font-semibold text-text mb-4">Using rcan-py</h3>
+      <pre class="bg-bg-card border border-border rounded-xl p-6 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed mb-2"><span class="text-accent/70">from</span> rcan <span class="text-accent/70">import</span> RCANClient, MessageSigner
+
+signer = MessageSigner(private_key_path=<span class="text-green-400/80">"~/.rcan/key.pem"</span>)
+client = RCANClient(ruri=<span class="text-green-400/80">"rcan://rcan.dev/myorg/mybot/unit1"</span>)
+
+<span class="text-text-faint"># Register with the Robot Registry Foundation</span>
+result = client.registry_register(
+    registry_url=<span class="text-green-400/80">"https://robotregistryfoundation.org/api/v1"</span>,
+    metadata=&#123;<span class="text-green-400/80">"name"</span>: <span class="text-green-400/80">"My Robot"</span>, <span class="text-green-400/80">"manufacturer"</span>: <span class="text-green-400/80">"MyOrg"</span>&#125;
+)
+print(result.rrn)  <span class="text-text-faint"># "RRN-000XXXXX"</span></pre>
+      <p class="text-xs text-text-faint font-mono">rcan-py handles the full challenge/verify handshake automatically</p>
+    </div>
+  </section>
+
+  <!-- Without / With RCAN -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-8">Choose Your Path</h2>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-bg-card border border-border rounded-xl p-7">
+          <div class="text-2xl mb-4">📋</div>
+          <h3 class="font-display text-lg font-semibold text-text mb-3">Without RCAN</h3>
+          <p class="text-sm text-text-muted leading-relaxed mb-4">
+            Submit the form, get an RRN. No software to install, no keys to manage. Works for any robot — commercial, research, homebrew.
+          </p>
+          <p class="text-sm text-text-muted leading-relaxed mb-4">
+            Verification tier: <span class="font-mono text-xs bg-bg-card border border-border rounded px-1.5 py-0.5 text-text">community</span> — suitable for most use cases. The robot is registered and globally identifiable.
+          </p>
+          <a href="/registry/submit/" class="text-sm text-accent hover:underline font-medium">Register now →</a>
+        </div>
+
+        <div class="bg-bg-card border border-accent/20 rounded-xl p-7">
+          <div class="text-2xl mb-4">🔐</div>
+          <h3 class="font-display text-lg font-semibold text-text mb-3">With RCAN</h3>
+          <p class="text-sm text-text-muted leading-relaxed mb-4">
+            If your robot runs RCAN, prove ownership cryptographically and automatically upgrade to <span class="font-mono text-xs bg-bg-card border border-border rounded px-1.5 py-0.5 text-text">verified</span> or <span class="font-mono text-xs bg-bg-card border border-border rounded px-1.5 py-0.5 text-text">manufacturer</span> tier.
+          </p>
+          <p class="text-sm text-text-muted leading-relaxed mb-4">
+            The registry stores your public key. Anyone can verify your robot's signed messages without contacting you directly.
+          </p>
+          <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-sm text-accent hover:underline font-medium">Get RCAN →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Links -->
+  <section class="py-16">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-xl font-semibold text-text mb-6">Go deeper</h2>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a
+          href="https://rcan.dev/spec/section-21/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 px-5 py-3 rounded-lg border border-border bg-bg-card hover:border-accent/40 hover:text-accent text-sm text-text-muted transition-colors"
+        >
+          Read the RCAN §21 spec
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a
+          href="/registry/submit/"
+          class="flex items-center gap-2 px-5 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors"
+        >
+          Register your robot →
+        </a>
+        <a
+          href="https://rcan.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 px-5 py-3 rounded-lg border border-border bg-bg-card hover:border-accent/40 hover:text-accent text-sm text-text-muted transition-colors"
+        >
+          RCAN protocol spec
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

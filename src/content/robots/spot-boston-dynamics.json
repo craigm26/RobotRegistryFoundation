@@ -1,0 +1,17 @@
+{
+  "rrn": "RRN-00000002",
+  "name": "Spot",
+  "manufacturer": "Boston Dynamics",
+  "model": "spot-enterprise",
+  "description": "Quadruped robot for industrial inspection and autonomous data collection. Supports custom payload integration.",
+  "status": "active",
+  "production_year": 2023,
+  "specs": {
+    "compute": "Spot Core (x86)",
+    "sensors": ["360° cameras", "depth sensing", "IMU"]
+  },
+  "verification_status": "community",
+  "tags": ["quadruped", "industrial", "inspection"],
+  "submitted_by": "community",
+  "submitted_date": "2026-03-12"
+}
