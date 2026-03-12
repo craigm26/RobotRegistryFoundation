@@ -1,0 +1,287 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Governance Charter"
+  description="The Robot Registry Foundation founding charter — multi-stakeholder governance for the global robot identity namespace."
+>
+
+  <div class="pt-8 max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <span class="text-text">Governance</span>
+    </div>
+
+    <!-- DRAFT Banner -->
+    <div class="flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/8 mb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 flex-shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div class="text-sm">
+        <span class="font-semibold text-amber-400">DRAFT</span>
+        <span class="text-text-muted ml-2">· Last revised 2026-03-04 · </span>
+        <a href="https://github.com/continuonai/rcan-spec/issues/13" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:underline">
+          Discuss on GitHub issue #13 →
+        </a>
+      </div>
+    </div>
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Robot Registry Foundation</h1>
+    <p class="text-lg text-text-muted mb-12">Draft Founding Charter · Seeking co-founders, endorsing organizations, and stakeholder input.</p>
+
+    <!-- Mission -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Mission</h2>
+      <p class="text-text-muted leading-relaxed mb-4">
+        The <strong class="text-text">Robot Registry Foundation (RRF)</strong> shall operate the root RCAN robot registry as
+        <strong class="text-text">neutral, independent, public infrastructure</strong> — analogous to IANA/ICANN for the internet's domain
+        name system, or the Linux Foundation for open-source governance.
+      </p>
+      <ul class="space-y-2 text-text-muted">
+        <li class="flex gap-2"><span class="text-accent mt-1">→</span> Maintain the authoritative root registry of Robot Registry Numbers (RRNs) and registered robot identities under the RCAN protocol.</li>
+        <li class="flex gap-2"><span class="text-accent mt-1">→</span> Operate that registry in a vendor-neutral, financially transparent, and publicly accountable manner.</li>
+        <li class="flex gap-2"><span class="text-accent mt-1">→</span> Serve as the <strong class="text-text">registry of last resort</strong>, ensuring continuity of robot identity infrastructure regardless of any single organization's commercial fate.</li>
+        <li class="flex gap-2"><span class="text-accent mt-1">→</span> Steward the RCAN specification in alignment with the broader RCAN community.</li>
+      </ul>
+    </section>
+
+    <!-- The Problem -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">The Problem</h2>
+      <p class="text-text-muted leading-relaxed mb-6">Robot identity infrastructure today has no independent authority. This creates systemic risks:</p>
+
+      <div class="space-y-4">
+        {[
+          {
+            n: '1',
+            title: 'Manufacturer-controlled registries',
+            body: 'Each manufacturer operates its own robot registry under its own terms. There is no shared namespace, no interoperability guarantee, and no recourse if a manufacturer changes its policies or exits the market. When a manufacturer\'s registry disappears, the identity records of deployed robots disappear with it.',
+          },
+          {
+            n: '2',
+            title: 'No dispute resolution',
+            body: 'If two organizations claim the same Robot Registry Number prefix, or if a manufacturer\'s identity is impersonated in a third-party registry, there is currently no neutral body to adjudicate the conflict. Legal action in national courts — slow, expensive, and jurisdictionally fragmented — is the only recourse.',
+          },
+          {
+            n: '3',
+            title: 'No registry of last resort',
+            body: 'There is no entity whose explicit mandate is to preserve the root registry and ensure that deployed robots can always resolve their identity. Infrastructure that depends on any single commercial entity\'s survival is fragile by design.',
+          },
+          {
+            n: '4',
+            title: 'Regulatory vacuum',
+            body: 'Emerging frameworks (EU AI Act, ISO/TC 299 standards) increasingly require traceable robot identity for compliance. Without a neutral registration body, regulators cannot point implementors to a trustworthy, independent authority.',
+          },
+        ].map(item => (
+          <div class="flex gap-4 p-5 bg-bg-card border border-border rounded-xl">
+            <div class="flex-shrink-0 w-7 h-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center text-accent font-mono text-sm font-bold">{item.n}</div>
+            <div>
+              <h3 class="font-semibold text-text mb-1 text-sm">{item.title}</h3>
+              <p class="text-sm text-text-muted leading-relaxed">{item.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Governance Principles -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Governance Principles</h2>
+      <div class="space-y-4">
+        {[
+          { n: '1', title: 'Multi-stakeholder representation', body: 'No single sector — industry, government, academia, or civil society — shall dominate governance. The board and committees shall structurally represent all affected communities.' },
+          { n: '2', title: 'No single-entity control', body: 'No corporation, government body, or individual shall hold a majority of board seats, veto power over technical decisions, or unilateral control over registry data or software.' },
+          { n: '3', title: 'Open membership', body: 'Membership shall be open to any organization or individual committed to the RRF\'s mission. Membership tiers shall reflect contribution levels, not gatekeeping.' },
+          { n: '4', title: 'Transparent decision-making', body: 'Board deliberations, votes, financial statements, and policy changes shall be published publicly. Major decisions shall include a public comment period of not less than 30 days.' },
+          { n: '5', title: 'Open source software requirement', body: 'All software used to operate the root registry shall be released under an OSI-approved open source license. This ensures that the community can fork and continue operations if the RRF itself fails.' },
+        ].map(p => (
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent font-mono text-xs font-bold">{p.n}</div>
+            <div>
+              <h3 class="font-semibold text-text mb-1">{p.title}</h3>
+              <p class="text-sm text-text-muted leading-relaxed">{p.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Board -->
+    <section id="board" class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Proposed Board Composition</h2>
+      <p class="text-text-muted mb-6">The founding board shall consist of <strong class="text-text">10 voting seats</strong> plus non-voting observers:</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left py-2.5 px-3 text-xs font-mono text-text-faint uppercase tracking-wider">Seats</th>
+              <th class="text-left py-2.5 px-3 text-xs font-mono text-text-faint uppercase tracking-wider">Constituency</th>
+              <th class="text-left py-2.5 px-3 text-xs font-mono text-text-faint uppercase tracking-wider">Selection</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {[
+              { seats: '2', constituency: 'Robot manufacturers', selection: 'Elected by manufacturer member organizations; rotating 2-year terms; no single manufacturer may hold both seats simultaneously' },
+              { seats: '2', constituency: 'Safety standards bodies', selection: 'Designated by ISO/TC 299 (1 seat) and A3 — Association for Advancing Automation (1 seat)' },
+              { seats: '2', constituency: 'Academic / research institutions', selection: 'Elected by academic member organizations' },
+              { seats: '1', constituency: 'Civil society', selection: 'Elected by contributor-tier members' },
+              { seats: '3', constituency: 'Foundation general', selection: 'Elected at large by all member classes combined' },
+              { seats: '—', constituency: 'Government observers', selection: 'Non-voting; open to national standards bodies and regulatory agencies (e.g., NIST, EU Commission, BSI)' },
+            ].map(row => (
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="py-3 px-3 font-mono text-accent text-center">{row.seats}</td>
+                <td class="py-3 px-3 text-text font-medium">{row.constituency}</td>
+                <td class="py-3 px-3 text-text-muted">{row.selection}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-sm text-text-muted mt-4">
+        Board members serve 2-year staggered terms. No individual may serve more than three consecutive terms.
+        A simple majority (6/10) is required for operational decisions.
+        A supermajority (8/10) is required for charter amendments, registry policy changes, or dissolution.
+      </p>
+    </section>
+
+    <!-- Membership -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Membership Tiers</h2>
+      <div class="space-y-4">
+        {[
+          {
+            tier: 'Founding Members',
+            color: 'text-amber-400 border-amber-500/30 bg-amber-500/8',
+            body: 'Organizations that actively co-create this charter prior to the Foundation\'s formal incorporation. Receive a permanent seat in the founding board election. Recognized by name in the Foundation\'s public record. Commit to a minimum 3-year financial contribution at the Supporting Member level.',
+          },
+          {
+            tier: 'Supporting Members',
+            color: 'text-blue-400 border-blue-500/30 bg-blue-500/8',
+            body: 'Organizations that operate RCAN-compatible registries, deploy RCAN-identified robots, or otherwise depend on the root registry infrastructure. Pay annual dues (tiered by organization size; sliding scale available for non-profits and academic institutions). Elect the manufacturer and academic board seats.',
+          },
+          {
+            tier: 'Contributors',
+            color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/8',
+            body: 'Individuals who contribute to the RCAN specification, registry software, documentation, or tooling. Recognized in the project\'s public contributor list. Elect the civil society board seat. No financial obligation.',
+          },
+        ].map(m => (
+          <div class="p-5 bg-bg-card border border-border rounded-xl">
+            <h3 class:list={["inline-block text-sm font-semibold px-2.5 py-1 rounded border mb-2", m.color]}>{m.tier}</h3>
+            <p class="text-sm text-text-muted leading-relaxed">{m.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Registry of Last Resort -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Registry of Last Resort</h2>
+      <p class="text-text-muted mb-6">
+        The RRF's core operational guarantee is <strong class="text-text">continuity of the root registry</strong>,
+        independent of any single organization's survival, including the RRF itself.
+      </p>
+      <div class="space-y-3">
+        {[
+          { n: '1', title: 'Data escrow', body: 'A full, cryptographically signed snapshot of the root registry database shall be deposited with at least two independent escrow agents on a weekly basis. The escrow format shall be an open, documented schema with no proprietary dependencies.' },
+          { n: '2', title: 'Software escrow', body: 'The complete registry software stack shall be escrowed alongside the data. Any organization shall be able to reconstruct and operate a functionally equivalent root registry from the escrowed materials.' },
+          { n: '3', title: 'Succession plan', body: 'The RRF charter shall name a successor organization (e.g., ISOC, Linux Foundation, or a designated academic consortium) that shall assume operations if the RRF dissolves without an alternative arrangement.' },
+          { n: '4', title: 'No data hostage', body: 'Registry data shall never be used as collateral, transferred to a for-profit entity without member consent, or made subject to any license that would restrict the community\'s ability to migrate to a successor registry.' },
+        ].map(item => (
+          <div class="flex gap-3 text-sm">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-primary/15 border border-primary/30 text-accent font-mono text-xs flex items-center justify-center mt-0.5">{item.n}</span>
+            <div><strong class="text-text">{item.title}:</strong> <span class="text-text-muted">{item.body}</span></div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- EU AI Act -->
+    <section id="eu-ai-act" class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">EU AI Act Relevance</h2>
+      <div class="p-5 bg-primary/8 border border-primary/20 rounded-xl mb-4">
+        <h3 class="font-semibold text-text mb-2">Article 49 — Registration of High-Risk AI Systems</h3>
+        <p class="text-sm text-text-muted leading-relaxed">
+          Article 49 requires providers of high-risk AI systems to register those systems in the EU database before placing them on the market.
+          Autonomous robots that fall under Annex III, Category 3 (management and operation of critical infrastructure) or other categories
+          involving physical interaction with persons are likely to qualify as high-risk AI systems.
+        </p>
+      </div>
+      <p class="text-sm text-text-muted leading-relaxed mb-3">
+        The current EU database is EU-operated and EU-jurisdictional. This creates compliance complexity for manufacturers outside the EU and
+        for multi-jurisdiction deployments. An independent, internationally governed body such as the RRF could serve as a
+        <strong class="text-text">candidate supplementary registration body</strong>, accepted by regulators across jurisdictions,
+        reducing the compliance burden for global robot deployments.
+      </p>
+      <p class="text-sm text-text-muted leading-relaxed">
+        RCAN's Robot Registry Numbers (RRNs) and RURIs provide the technical identity layer that registration frameworks require:
+        a unique, persistent, globally resolvable identifier per robot; a structured namespace enabling rapid lookup by regulatory authorities;
+        and an audit chain linking physical robot to registered identity.
+      </p>
+    </section>
+
+    <!-- Legal structure -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Legal Structure Options</h2>
+      <p class="text-text-muted mb-4">The RRF is exploring the following incorporation options:</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        {[
+          { option: 'US 501(c)(3)', pros: 'Established framework, donor tax deductions, strong legal precedent for foundations', cons: 'US-centric, potential regulatory tension for international governance body' },
+          { option: 'US 501(c)(6)', pros: 'Better fit for membership-based industry organizations, more flexibility', cons: 'Less donor-friendly, still US-centric' },
+          { option: 'Swiss Foundation', pros: 'Internationally neutral jurisdiction, proven model for global tech governance (W3C, CERN)', cons: 'Higher setup complexity, different member contribution rules' },
+          { option: 'EU Association', pros: 'Directly relevant to EU AI Act compliance efforts', cons: 'Ties governance to EU jurisdiction, complicates global representation' },
+        ].map(item => (
+          <div class="p-4 bg-bg-card border border-border rounded-xl">
+            <h3 class="font-mono text-sm font-medium text-accent mb-2">{item.option}</h3>
+            <p class="text-xs text-emerald-400 mb-1">✓ {item.pros}</p>
+            <p class="text-xs text-text-faint">— {item.cons}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Get Involved -->
+    <section id="get-involved" class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">How to Get Involved</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left py-2.5 px-3 text-xs font-mono text-text-faint uppercase tracking-wider">Role</th>
+              <th class="text-left py-2.5 px-3 text-xs font-mono text-text-faint uppercase tracking-wider">What to do</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {[
+              { role: 'Co-founder', action: 'Comment on GitHub issue #13 expressing intent to co-found; include your organization name and primary interest', href: 'https://github.com/continuonai/rcan-spec/issues/13' },
+              { role: 'Endorsing organization', action: 'Post a short statement of endorsement on issue #13; no financial commitment required at this stage', href: 'https://github.com/continuonai/rcan-spec/issues/13' },
+              { role: 'Technical contributor', action: 'Open a pull request against docs/governance/ with proposed amendments', href: 'https://github.com/continuonai/rcan-spec' },
+              { role: 'Standards body representative', action: 'Contact the RCAN maintainers directly via the repository to discuss formal liaison', href: 'https://github.com/continuonai/rcan-spec' },
+              { role: 'Interested observer', action: 'Star the rcan-spec repository and subscribe to issue #13 for updates', href: 'https://github.com/continuonai/rcan-spec/issues/13' },
+            ].map(row => (
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="py-3 px-3">
+                  <span class="text-accent font-medium">{row.role}</span>
+                </td>
+                <td class="py-3 px-3 text-text-muted">
+                  {row.action} <a href={row.href} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline text-xs">→</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6 p-4 bg-bg-card border border-border rounded-xl">
+        <p class="text-xs font-mono text-text-faint italic">
+          This charter was drafted by the RCAN specification maintainers as a starting point for community discussion.
+          It does not represent a final legal document. Nothing herein creates any binding obligation on any party.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+</BaseLayout>

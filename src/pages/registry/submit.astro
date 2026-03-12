@@ -1,0 +1,237 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Register a Robot" description="Register your robot with the Robot Registry Foundation and receive a globally unique Robot Registration Number (RRN).">
+
+  <div class="pt-8 max-w-2xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <a href="/registry/" class="hover:text-accent transition-colors">Registry</a>
+      <span>/</span>
+      <span class="text-text">Submit</span>
+    </div>
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-3">Register a Robot</h1>
+    <p class="text-text-muted mb-2 leading-relaxed">
+      Submit your robot for a permanent, globally unique Robot Registration Number (RRN).
+      Free and open to any robot, any manufacturer.
+    </p>
+    <p class="text-sm text-text-faint mb-10">
+      RRN assignment takes 1–3 business days. You'll receive your RRN at the email provided.
+    </p>
+
+    <!-- Form -->
+    <form id="registration-form" class="space-y-6" novalidate>
+
+      <!-- Basic info -->
+      <div class="bg-bg-card border border-border rounded-xl p-6 space-y-5">
+        <h2 class="font-semibold text-text text-sm uppercase tracking-widest font-mono text-text-faint mb-4">Robot Identity</h2>
+
+        <div>
+          <label for="name" class="block text-sm font-medium text-text mb-1.5">
+            Robot Name <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            required
+            placeholder="e.g. OpenCastor Bob"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors font-sans"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="manufacturer" class="block text-sm font-medium text-text mb-1.5">
+              Manufacturer <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="manufacturer"
+              name="manufacturer"
+              required
+              placeholder="e.g. ContinuonAI"
+              class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label for="model" class="block text-sm font-medium text-text mb-1.5">
+              Model <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="model"
+              name="model"
+              required
+              placeholder="e.g. opencastor-rpi5"
+              class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-text mb-1.5">
+            Description <span class="text-red-400">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            required
+            rows="3"
+            placeholder="Describe what this robot is and does..."
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors resize-y font-sans"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="serial" class="block text-sm font-medium text-text mb-1.5">
+              Serial Number <span class="text-text-faint text-xs">(optional)</span>
+            </label>
+            <input
+              type="text"
+              id="serial"
+              name="serial"
+              placeholder="e.g. SN-12345"
+              class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label for="production_year" class="block text-sm font-medium text-text mb-1.5">
+              Production Year
+            </label>
+            <input
+              type="number"
+              id="production_year"
+              name="production_year"
+              min="1950"
+              max="2100"
+              placeholder="2026"
+              class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Specs -->
+      <div class="bg-bg-card border border-border rounded-xl p-6 space-y-5">
+        <h2 class="font-semibold text-sm uppercase tracking-widest font-mono text-text-faint mb-4">Technical Specs</h2>
+
+        <div>
+          <label for="compute" class="block text-sm font-medium text-text mb-1.5">
+            Compute Platform
+          </label>
+          <input
+            type="text"
+            id="compute"
+            name="compute"
+            placeholder="e.g. Raspberry Pi 5 16GB + Hailo-8"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+          />
+        </div>
+
+        <div>
+          <label for="sensors" class="block text-sm font-medium text-text mb-1.5">
+            Sensors <span class="text-text-faint text-xs">(comma-separated)</span>
+          </label>
+          <input
+            type="text"
+            id="sensors"
+            name="sensors"
+            placeholder="e.g. OAK-D RGB+Depth, Hailo-8 NPU, IMU"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+          />
+        </div>
+
+        <div>
+          <label for="tags" class="block text-sm font-medium text-text mb-1.5">
+            Tags <span class="text-text-faint text-xs">(comma-separated)</span>
+          </label>
+          <input
+            type="text"
+            id="tags"
+            name="tags"
+            placeholder="e.g. rpi5, hailo, oak-d, rcan-compliant"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+          />
+        </div>
+      </div>
+
+      <!-- Contact + RCAN -->
+      <div class="bg-bg-card border border-border rounded-xl p-6 space-y-5">
+        <h2 class="font-semibold text-sm uppercase tracking-widest font-mono text-text-faint mb-4">Contact & Protocol</h2>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-text mb-1.5">
+            Contact Email <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="you@example.com"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors"
+          />
+          <p class="text-xs text-text-faint mt-1.5">Your RRN will be sent to this address. Not published publicly.</p>
+        </div>
+
+        <div>
+          <label for="ruri" class="block text-sm font-medium text-text mb-1.5">
+            RCAN RURI <span class="text-text-faint text-xs">(optional)</span>
+          </label>
+          <input
+            type="text"
+            id="ruri"
+            name="ruri"
+            placeholder="rcan://rcan.dev/manufacturer/model/name"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-bg border border-border focus:border-accent/50 focus:ring-1 focus:ring-accent/30 text-text placeholder:text-text-faint text-sm outline-none transition-colors font-mono text-xs"
+          />
+          <p class="text-xs text-text-faint mt-1.5">
+            If this robot implements the <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol</a>, provide its RURI.
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full py-3.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition-colors duration-150 flex items-center justify-center gap-2"
+      >
+        Submit Registration
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <p class="text-xs text-center text-text-faint">
+        By submitting, you confirm this robot exists and the information is accurate.
+        Registry data is released under CC0.
+      </p>
+    </form>
+
+    <!-- Success state (hidden) -->
+    <div id="success-state" class="hidden text-center py-16 border border-emerald-500/20 rounded-xl bg-emerald-500/5">
+      <div class="text-5xl mb-5">✅</div>
+      <h3 class="font-display text-2xl font-semibold text-text mb-2">Robot in the queue</h3>
+      <p class="text-text-muted leading-relaxed max-w-md mx-auto">
+        RRN assignment takes 1–3 business days. You'll receive your RRN at the email provided.
+        Welcome to the Robot Registry.
+      </p>
+    </div>
+  </div>
+
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('registration-form') as HTMLFormElement | null;
+  const success = document.getElementById('success-state');
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    form.classList.add('hidden');
+    success?.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>

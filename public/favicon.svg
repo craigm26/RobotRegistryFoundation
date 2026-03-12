@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Shield shape for foundation/trust -->
+  <path d="M16 2L4 7v9c0 6.627 5.373 12 12 12s12-5.373 12-12V7L16 2z" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
+  <!-- Robot face -->
+  <rect x="10" y="10" width="12" height="10" rx="2" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
+  <!-- Eyes -->
+  <circle cx="13" cy="14" r="1.5" fill="#60a5fa"/>
+  <circle cx="19" cy="14" r="1.5" fill="#60a5fa"/>
+  <!-- Mouth -->
+  <path d="M13 18h6" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Antenna -->
+  <line x1="16" y1="10" x2="16" y2="7" stroke="#93c5fd" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="16" cy="6.5" r="1" fill="#3b82f6"/>
+</svg>

@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RobotCard from '../../components/RobotCard.astro';
+import { getCollection } from 'astro:content';
+
+const robots = await getCollection('robots');
+const sortedRobots = robots.sort((a, b) => a.data.rrn.localeCompare(b.data.rrn));
+
+const allTags = [...new Set(robots.flatMap(r => r.data.tags))].sort();
+const allManufacturers = [...new Set(robots.map(r => r.data.manufacturer))].sort();
+---
+
+<BaseLayout title="Browse Registry" description="Browse all registered robots in the global Robot Registry Foundation database.">
+
+  <div class="pt-8">
+    <!-- Header -->
+    <div class="mb-10">
+      <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-3">
+        <a href="/" class="hover:text-accent transition-colors">RRF</a>
+        <span>/</span>
+        <span class="text-text">Registry</span>
+      </div>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-2">Robot Registry</h1>
+          <p class="text-text-muted">
+            {robots.length} robot{robots.length !== 1 ? 's' : ''} registered · Global, open, permanent
+          </p>
+        </div>
+        <a
+          href="/registry/submit/"
+          class="flex-shrink-0 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Register a Robot
+        </a>
+      </div>
+    </div>
+
+    {robots.length === 0 ? (
+      <!-- Empty state -->
+      <div class="text-center py-24 border border-border rounded-xl bg-bg-card">
+        <div class="text-5xl mb-5">🤖</div>
+        <h3 class="font-display text-2xl font-semibold text-text mb-2">The registry is open</h3>
+        <p class="text-text-muted mb-6">Be among the first to register your robot.</p>
+        <a href="/registry/submit/" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors">
+          Register Now
+        </a>
+      </div>
+    ) : (
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {sortedRobots.map(robot => (
+          <RobotCard
+            rrn={robot.data.rrn}
+            name={robot.data.name}
+            manufacturer={robot.data.manufacturer}
+            description={robot.data.description}
+            verification_status={robot.data.verification_status}
+            tags={robot.data.tags}
+            status={robot.data.status}
+          />
+        ))}
+      </div>
+    )}
+
+    <!-- Pagination hint -->
+    {robots.length > 0 && (
+      <p class="text-center text-xs text-text-faint mt-10 font-mono">
+        Showing {robots.length} of {robots.length} registered robots · Registry data released under CC0
+      </p>
+    )}
+  </div>
+
+</BaseLayout>

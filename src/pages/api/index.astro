@@ -1,0 +1,237 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const endpoints = [
+  {
+    method: 'GET',
+    path: '/api/v1/robots',
+    summary: 'List all registered robots',
+    description: 'Returns a paginated list of all robots in the registry. Supports filtering by manufacturer, verification_status, tags, and status.',
+    params: [
+      { name: 'limit', type: 'integer', required: false, default: '50', desc: 'Maximum number of results (max 200)' },
+      { name: 'offset', type: 'integer', required: false, default: '0', desc: 'Pagination offset' },
+      { name: 'manufacturer', type: 'string', required: false, desc: 'Filter by manufacturer name (exact match)' },
+      { name: 'verification_status', type: 'string', required: false, desc: 'Filter by tier: community | verified | manufacturer | certified' },
+      { name: 'tags', type: 'string', required: false, desc: 'Comma-separated list of tags (AND logic)' },
+    ],
+    example: `{
+  "total": 1,
+  "offset": 0,
+  "limit": 50,
+  "robots": [
+    {
+      "rrn": "RRN-00000001",
+      "name": "OpenCastor Bob",
+      "manufacturer": "ContinuonAI",
+      "verification_status": "community",
+      "status": "active",
+      "tags": ["rpi5", "hailo", "rcan-compliant"]
+    }
+  ]
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/robots/:rrn',
+    summary: 'Get one robot by RRN',
+    description: 'Returns the full registry record for a specific robot identified by its Robot Registration Number.',
+    params: [
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number (e.g. RRN-00000001)' },
+    ],
+    example: `{
+  "rrn": "RRN-00000001",
+  "name": "OpenCastor Bob",
+  "manufacturer": "ContinuonAI",
+  "model": "opencastor-rpi5",
+  "description": "Reference implementation of an RCAN-compliant robot...",
+  "status": "active",
+  "production_year": 2026,
+  "specs": {
+    "compute": "Raspberry Pi 5 16GB + Hailo-8",
+    "sensors": ["OAK-D RGB+Depth", "Hailo-8 NPU"]
+  },
+  "verification_status": "community",
+  "ruri": "rcan://rcan.dev/continuonai/opencastor-rpi5/bob",
+  "tags": ["rpi5", "hailo", "oak-d", "rcan-compliant"],
+  "submitted_date": "2026-03-06"
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/robots',
+    summary: 'Register a new robot',
+    description: 'Submit a new robot for RRN assignment. Returns a pending registration record. RRN is assigned within 1–3 business days.',
+    params: [
+      { name: 'name', type: 'string', required: true, desc: 'Robot name' },
+      { name: 'manufacturer', type: 'string', required: true, desc: 'Manufacturer name' },
+      { name: 'model', type: 'string', required: true, desc: 'Model identifier' },
+      { name: 'description', type: 'string', required: true, desc: 'Robot description' },
+      { name: 'contact_email', type: 'string', required: true, desc: 'Contact for RRN delivery' },
+      { name: 'specs', type: 'object', required: false, desc: 'Technical specifications' },
+      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable' },
+      { name: 'tags', type: 'array', required: false, desc: 'Classification tags' },
+    ],
+    example: `{
+  "status": "pending",
+  "submission_id": "sub_8f3k2m",
+  "message": "Registration received. RRN will be assigned within 1–3 business days.",
+  "submitted_at": "2026-03-12T14:22:00Z"
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/metrics',
+    summary: 'Registry statistics',
+    description: 'Returns aggregate statistics about the registry.',
+    params: [],
+    example: `{
+  "total_robots": 1,
+  "by_verification_status": {
+    "community": 1,
+    "verified": 0,
+    "manufacturer": 0,
+    "certified": 0
+  },
+  "by_status": {
+    "active": 1,
+    "retired": 0,
+    "prototype": 0
+  },
+  "last_updated": "2026-03-06T00:00:00Z"
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/resolve/:rrn',
+    summary: 'Federated RRN resolution',
+    description: 'Resolves an RRN using the federation protocol. Queries the most authoritative available node and returns the canonical record with its provenance chain.',
+    params: [
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number to resolve' },
+      { name: 'full_chain', type: 'boolean', required: false, default: 'false', desc: 'Include full federation provenance chain' },
+    ],
+    example: `{
+  "rrn": "RRN-00000001",
+  "resolved_from": "root.rrf.registry",
+  "canonical": true,
+  "record": { ... },
+  "chain": [
+    { "node": "root.rrf.registry", "signed_at": "2026-03-06T00:00:00Z" }
+  ]
+}`,
+  },
+];
+
+const methodColors: Record<string, string> = {
+  GET: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  POST: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  PUT: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  DELETE: 'bg-red-500/10 text-red-400 border-red-500/30',
+};
+---
+
+<BaseLayout
+  title="API Reference"
+  description="Robot Registry Foundation REST API — list robots, get records, register robots, resolve RRNs across the federation."
+>
+
+  <div class="pt-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <span class="text-text">API</span>
+    </div>
+
+    <div class="max-w-3xl mx-auto">
+      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Registry API</h1>
+      <p class="text-lg text-text-muted mb-4 leading-relaxed">
+        Simple REST API for accessing the Robot Registry. Read-only endpoints are open.
+        Write endpoints require an API key.
+      </p>
+
+      <!-- Info strip -->
+      <div class="grid grid-cols-3 gap-4 mb-12">
+        {[
+          { label: 'Base URL', value: 'https://api.robotregistryfoundation.org' },
+          { label: 'Version', value: 'v1 (early access)' },
+          { label: 'Rate limit', value: '60 req/min' },
+        ].map(item => (
+          <div class="p-3.5 bg-bg-card border border-border rounded-lg">
+            <div class="text-xs text-text-faint font-mono mb-1">{item.label}</div>
+            <div class="text-xs text-text font-mono">{item.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Note -->
+      <div class="flex gap-3 p-4 border border-amber-500/30 bg-amber-500/8 rounded-lg mb-10 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 flex-shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span class="text-amber-300/80">
+          API is in early access. Endpoints are stable but the registry has limited data while the Foundation is in formation.
+          <a href="/registry/submit/" class="underline hover:text-amber-300 ml-1">Register your robot to grow the registry →</a>
+        </span>
+      </div>
+
+      <!-- Endpoints -->
+      <div class="space-y-8">
+        {endpoints.map(endpoint => (
+          <div class="border border-border rounded-xl overflow-hidden">
+            <!-- Endpoint header -->
+            <div class="flex items-center gap-3 p-5 bg-bg-card border-b border-border">
+              <span class:list={["text-xs font-mono font-bold px-2.5 py-1 rounded border flex-shrink-0", methodColors[endpoint.method] ?? '']}>
+                {endpoint.method}
+              </span>
+              <code class="text-sm font-mono text-text flex-1">{endpoint.path}</code>
+            </div>
+
+            <div class="p-5 space-y-5">
+              <div>
+                <h3 class="font-semibold text-text mb-1">{endpoint.summary}</h3>
+                <p class="text-sm text-text-muted">{endpoint.description}</p>
+              </div>
+
+              {endpoint.params.length > 0 && (
+                <div>
+                  <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-3">Parameters</h4>
+                  <div class="space-y-2">
+                    {endpoint.params.map(param => (
+                      <div class="flex gap-3 text-xs">
+                        <code class="text-accent font-mono w-28 flex-shrink-0">{param.name}</code>
+                        <span class="text-text-faint w-16 flex-shrink-0">{param.type}</span>
+                        <span class:list={["w-16 flex-shrink-0 font-mono", param.required ? 'text-red-400' : 'text-text-faint']}>
+                          {param.required ? 'required' : 'optional'}
+                        </span>
+                        <span class="text-text-muted">{param.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-2">Example Response</h4>
+                <pre class="text-xs font-mono bg-bg rounded-lg p-4 overflow-x-auto text-text-muted border border-border leading-relaxed">{endpoint.example}</pre>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Auth note -->
+      <div class="mt-10 p-5 bg-bg-card border border-border rounded-xl">
+        <h3 class="font-semibold text-text mb-2 text-sm">Authentication</h3>
+        <p class="text-sm text-text-muted leading-relaxed mb-3">
+          GET endpoints are open (no authentication required). POST endpoints require an API key passed as a Bearer token:
+        </p>
+        <code class="block text-xs font-mono bg-bg rounded-md p-3 text-accent border border-border">
+          Authorization: Bearer &lt;your-api-key&gt;
+        </code>
+        <p class="text-xs text-text-faint mt-2">
+          API keys are issued during the formation period.
+          <a href="/registry/submit/" class="text-accent hover:underline">Submit a robot</a> to request early access.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>

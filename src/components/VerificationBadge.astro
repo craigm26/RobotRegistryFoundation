@@ -1,0 +1,43 @@
+---
+interface Props {
+  status: 'community' | 'verified' | 'manufacturer' | 'certified';
+  size?: 'sm' | 'md';
+}
+
+const { status, size = 'md' } = Astro.props;
+
+const tiers: Record<string, { icon: string; label: string; classes: string }> = {
+  community: {
+    icon: '⬜',
+    label: 'Community',
+    classes: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+  },
+  verified: {
+    icon: '🟡',
+    label: 'Verified',
+    classes: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  },
+  manufacturer: {
+    icon: '🔵',
+    label: 'Manufacturer',
+    classes: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  },
+  certified: {
+    icon: '✅',
+    label: 'Certified',
+    classes: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  },
+};
+
+const tier = tiers[status] ?? tiers.community;
+const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-xs px-2.5 py-1';
+---
+
+<span class:list={[
+  "inline-flex items-center gap-1 rounded-full border font-medium font-mono",
+  tier.classes,
+  sizeClasses,
+]}>
+  <span>{tier.icon}</span>
+  <span>{tier.label}</span>
+</span>

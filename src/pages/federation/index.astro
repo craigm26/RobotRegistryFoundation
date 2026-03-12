@@ -1,0 +1,166 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const nodeTypes = [
+  {
+    type: 'Root',
+    icon: '🏛️',
+    color: 'border-blue-500/30 bg-blue-500/5 text-blue-400',
+    description: 'The authoritative root of the registry hierarchy. Operated by the RRF. Signs all canonical RRN assignments and issues namespace delegations to authoritative nodes.',
+    who: 'RRF only',
+    authority: 'Full — issues new RRNs, delegates namespace, signs certificates',
+    count: '1 (operated by RRF)',
+  },
+  {
+    type: 'Authoritative',
+    icon: '🔑',
+    color: 'border-amber-500/30 bg-amber-500/5 text-amber-400',
+    description: 'Delegated authority over a specific manufacturer prefix or geographic namespace. Operates independently but syncs records with the root. Can issue RRNs within its delegated range.',
+    who: 'Supporting Member manufacturers and regional federations',
+    authority: 'Delegated — RRNs within assigned prefix only',
+    count: 'Unlimited by design',
+  },
+  {
+    type: 'Resolver',
+    icon: '🔍',
+    color: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400',
+    description: 'Full read-replica of the registry. Can resolve any RRN. Used for high-availability lookup endpoints. Cannot issue new RRNs. Common pattern for robot fleets needing local resolution.',
+    who: 'Any organization',
+    authority: 'None — read-only, cannot assign RRNs',
+    count: 'Unlimited',
+  },
+  {
+    type: 'Cache',
+    icon: '⚡',
+    color: 'border-purple-500/30 bg-purple-500/5 text-purple-400',
+    description: 'Partial, TTL-based cache of registry records. Trades completeness and freshness for speed. Used in bandwidth-constrained environments or offline-capable deployments.',
+    who: 'Any organization — common in embedded and edge deployments',
+    authority: 'None — cached read-only, may be stale',
+    count: 'Unlimited',
+  },
+];
+---
+
+<BaseLayout
+  title="Federation Protocol"
+  description="How multiple Robot Registry Foundation nodes work together — distributed, redundant, no single point of failure."
+>
+
+  <div class="pt-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <span class="text-text">Federation</span>
+    </div>
+
+    <div class="max-w-3xl mx-auto">
+      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Federation Protocol</h1>
+      <p class="text-lg text-text-muted mb-4 leading-relaxed">
+        The Robot Registry is not a single database. It is a federated network of nodes that cross-verify,
+        stay in sync, and ensure no single point of failure can disrupt robot identity resolution.
+      </p>
+      <p class="text-sm text-text-muted mb-12">
+        For full technical specification, see
+        <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">rcan.dev §17 Distributed Registry Node Protocol →</a>
+      </p>
+
+      <!-- How it works overview -->
+      <div class="bg-bg-card border border-border rounded-xl p-7 mb-10">
+        <h2 class="font-display text-2xl font-semibold text-text mb-5">How It Works</h2>
+        <div class="space-y-4 text-text-muted text-sm leading-relaxed">
+          <p>
+            Each registry node maintains a signed, verifiable copy of the records it is authoritative for.
+            Nodes propagate updates using a structured gossip protocol with cryptographic verification at every hop.
+            A robot's RRN can be resolved by any node in the federation — the resolution chain returns the
+            most-recently-confirmed authoritative record.
+          </p>
+          <p>
+            The root node is operated by the RRF and is the trust anchor. But because every node verifies signatures
+            independently, the federation continues to function correctly even if the root node is temporarily unreachable.
+            Cached records remain valid until their TTL expires.
+          </p>
+          <p>
+            This mirrors how DNS works for domain names: a hierarchy of authority, distributed resolution, and
+            graceful degradation when parts of the network are unavailable.
+          </p>
+        </div>
+      </div>
+
+      <!-- Node types -->
+      <h2 class="font-display text-2xl font-semibold text-text mb-6">Node Types</h2>
+      <div class="space-y-5 mb-12">
+        {nodeTypes.map(node => (
+          <div class:list={["border rounded-xl overflow-hidden", node.color.split(' ')[0], node.color.split(' ')[1]]}>
+            <div class="p-5">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-2xl">{node.icon}</span>
+                <div>
+                  <span class:list={["font-mono text-sm font-semibold", node.color.split(' ')[2]]}>{node.type} Node</span>
+                  <span class="text-xs text-text-faint ml-2 font-mono">{node.count}</span>
+                </div>
+              </div>
+              <p class="text-text-muted text-sm leading-relaxed mb-3">{node.description}</p>
+              <div class="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span class="text-text-faint font-mono">Operated by:</span>
+                  <span class="text-text ml-1">{node.who}</span>
+                </div>
+                <div>
+                  <span class="text-text-faint font-mono">Authority:</span>
+                  <span class="text-text ml-1">{node.authority}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Run your own node -->
+      <div class="bg-bg-card border border-border rounded-xl p-7 mb-10">
+        <h2 class="font-display text-2xl font-semibold text-text mb-4">Run Your Own Registry Node</h2>
+        <p class="text-text-muted text-sm leading-relaxed mb-5">
+          Any organization can run a resolver or cache node. This improves the resilience of robot identity
+          resolution for your fleet, reduces latency in your deployment environment, and ensures your robots
+          can resolve identities even when disconnected from the internet.
+        </p>
+
+        <div class="space-y-3 mb-6">
+          {[
+            { step: '1', title: 'Choose your node type', body: 'Most organizations start with a Resolver node — a full read-replica that syncs from the root.' },
+            { step: '2', title: 'Deploy the registry software', body: 'The RRF registry software is open source (OSI-approved license). Docker images and Helm charts available.' },
+            { step: '3', title: 'Configure synchronization', body: 'Point your node at the RRF root or an existing resolver. Sync interval is configurable; default is 5 minutes.' },
+            { step: '4', title: 'Register your node (optional)', body: 'Register your resolver with the RRF to be listed in the public node directory and receive update notifications.' },
+          ].map(s => (
+            <div class="flex gap-3 text-sm">
+              <span class="flex-shrink-0 w-6 h-6 rounded bg-primary/15 border border-primary/30 text-accent font-mono text-xs flex items-center justify-center mt-0.5">{s.step}</span>
+              <div><strong class="text-text">{s.title}:</strong> <span class="text-text-muted">{s.body}</span></div>
+            </div>
+          ))}
+        </div>
+
+        <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-sm text-accent hover:underline">
+          Full technical documentation at rcan.dev §17
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+
+      <!-- API for federation -->
+      <div class="p-5 bg-primary/8 border border-primary/20 rounded-xl">
+        <h3 class="font-semibold text-text mb-2 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Federated Resolution API
+        </h3>
+        <p class="text-sm text-text-muted mb-3">The RRF provides a federated RRN resolution endpoint:</p>
+        <code class="block text-xs font-mono bg-bg rounded-md p-3 text-accent">
+          GET /api/v1/resolve/:rrn
+        </code>
+        <p class="text-xs text-text-faint mt-2">
+          Returns the authoritative record from the most-recently-synced node in the federation.
+          See <a href="/api/" class="text-accent hover:underline">API docs</a> for full reference.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>

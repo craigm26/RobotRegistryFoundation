@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Global Robot Registry"
+  description="The Robot Registry Foundation assigns globally unique identifiers to robots worldwide — like ICANN for the internet's domain names, but for physical machines."
+>
+
+  <!-- Hero -->
+  <section class="pt-16 pb-20 text-center relative">
+    <!-- Subtle badge -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+      Foundation in formation · Seeking co-founders
+    </div>
+
+    <h1 class="font-display text-5xl md:text-7xl font-semibold text-text leading-[1.05] tracking-tight mb-6 max-w-4xl mx-auto">
+      The Global Robot Registry
+      <span class="block text-accent mt-2">Independent Infrastructure<br class="hidden md:block" /> for Robot Identity</span>
+    </h1>
+
+    <p class="text-lg md:text-xl text-text-muted max-w-2xl mx-auto leading-relaxed mb-10">
+      The Robot Registry Foundation assigns globally unique identifiers to robots worldwide —
+      like ICANN for the internet's domain names, but for physical machines.
+    </p>
+
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a
+        href="/registry/submit/"
+        class="px-7 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors duration-150 flex items-center gap-2"
+      >
+        Register Your Robot
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+      <a
+        href="/registry/"
+        class="px-7 py-3 rounded-lg border border-border-strong text-text hover:border-accent/40 hover:text-accent font-medium text-sm transition-colors duration-150"
+      >
+        View the Registry
+      </a>
+    </div>
+  </section>
+
+  <!-- What We Do -->
+  <section class="py-16 border-t border-border">
+    <div class="text-center mb-12">
+      <h2 class="font-display text-3xl md:text-4xl font-semibold text-text mb-3">What the RRF Does</h2>
+      <p class="text-text-muted max-w-xl mx-auto">Neutral, open governance for the robot identity namespace.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-bg-card border border-border rounded-xl p-7 hover:border-border-strong transition-colors">
+        <div class="text-3xl mb-4">🔖</div>
+        <h3 class="font-display text-xl font-semibold text-text mb-2">Assign</h3>
+        <p class="text-text-muted text-sm leading-relaxed">
+          Issue globally unique Robot Registration Numbers (RRNs) to any robot, any manufacturer, any runtime.
+          One canonical identifier. Persistent. Cross-vendor.
+        </p>
+      </div>
+
+      <div class="bg-bg-card border border-border rounded-xl p-7 hover:border-border-strong transition-colors">
+        <div class="text-3xl mb-4">🔐</div>
+        <h3 class="font-display text-xl font-semibold text-text mb-2">Verify</h3>
+        <p class="text-text-muted text-sm leading-relaxed">
+          4-tier verification from community self-reporting to full manufacturer certification and RCAN conformance audits.
+          Regulators and insurers can rely on the record.
+        </p>
+      </div>
+
+      <div class="bg-bg-card border border-border rounded-xl p-7 hover:border-border-strong transition-colors">
+        <div class="text-3xl mb-4">🌐</div>
+        <h3 class="font-display text-xl font-semibold text-text mb-2">Federate</h3>
+        <p class="text-text-muted text-sm leading-relaxed">
+          Multiple registry nodes cross-verify and stay in sync. No single point of failure.
+          Any organization can run a resolver. Data escrow guarantees continuity.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats row -->
+  <section class="py-10 border-y border-border my-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      {[
+        { value: '1', label: 'Registered Robot' },
+        { value: '4', label: 'Verification Tiers' },
+        { value: 'Open', label: 'REST API' },
+        { value: 'CC BY 4.0', label: 'Spec License' },
+      ].map(stat => (
+        <div class="text-center">
+          <div class="font-display text-4xl font-semibold text-accent mb-1">{stat.value}</div>
+          <div class="text-sm text-text-muted font-mono">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Why it matters -->
+  <section class="py-16">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="font-display text-3xl md:text-4xl font-semibold text-text mb-10 text-center">Why This Matters</h2>
+
+      <div class="space-y-6">
+        <div class="flex gap-5 p-6 bg-bg-card border border-border rounded-xl">
+          <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 font-mono text-sm font-bold">1</div>
+          <div>
+            <h3 class="font-semibold text-text mb-1">No global robot identity standard today</h3>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Every manufacturer runs its own registry under its own terms. There is no shared namespace, no interoperability guarantee, and no recourse when a manufacturer changes policies or exits the market. When a registry disappears, the identity records of deployed robots disappear with it.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-5 p-6 bg-bg-card border border-border rounded-xl">
+          <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-mono text-sm font-bold">2</div>
+          <div>
+            <h3 class="font-semibold text-text mb-1">Regulation requires traceable identity</h3>
+            <p class="text-sm text-text-muted leading-relaxed">
+              EU AI Act Art. 49 requires registration for high-risk AI systems. Autonomous robots that operate near people or critical infrastructure qualify. Without a neutral registration body, regulators cannot point to a trustworthy, independent authority — and manufacturers face fragmented, jurisdiction-by-jurisdiction compliance.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-5 p-6 bg-bg-card border border-border rounded-xl">
+          <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono text-sm font-bold">3</div>
+          <div>
+            <h3 class="font-semibold text-text mb-1">Single-entity control is fragile by design</h3>
+            <p class="text-sm text-text-muted leading-relaxed">
+              Infrastructure that depends on one commercial entity's survival cannot be trusted for critical functions. The RRF's multi-stakeholder governance, data escrow, and open-source software requirement ensure that robot identity infrastructure outlives any single organization — including the RRF itself.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA strip -->
+  <section class="py-16 text-center border-t border-border">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="font-display text-3xl font-semibold text-text mb-4">Ready to register your robot?</h2>
+      <p class="text-text-muted mb-8">Registration is free and open to any robot, any manufacturer. Get a permanent, globally unique RRN in 1–3 business days.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/registry/submit/"
+          class="px-7 py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors duration-150 flex items-center gap-2"
+        >
+          Register Your Robot →
+        </a>
+        <a href="/governance/" class="text-sm text-text-muted hover:text-accent transition-colors">
+          Read the governance charter
+        </a>
+      </div>
+      <p class="text-xs text-text-faint mt-8 font-mono">
+        The RRF is a proposed independent foundation. Currently in formation — seeking co-founders and endorsements.
+      </p>
+    </div>
+  </section>
+
+</BaseLayout>

@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VerificationBadge from '../../components/VerificationBadge.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const robots = await getCollection('robots');
+  return robots.map(robot => ({
+    params: { rrn: robot.data.rrn },
+    props: { robot: robot.data },
+  }));
+}
+
+const { robot } = Astro.props;
+
+const recordJson = JSON.stringify(robot, null, 2);
+const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(recordJson)}`;
+---
+
+<BaseLayout
+  title={`${robot.rrn} — ${robot.name}`}
+  description={`${robot.name} by ${robot.manufacturer}. ${robot.description}`}
+>
+
+  <div class="pt-8 max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <a href="/registry/" class="hover:text-accent transition-colors">Registry</a>
+      <span>/</span>
+      <span class="text-text">{robot.rrn}</span>
+    </div>
+
+    <!-- Header card -->
+    <div class="bg-bg-card border border-border rounded-xl p-7 mb-6">
+      <div class="flex flex-wrap items-start gap-3 mb-4">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/15 border border-primary/30 text-accent font-mono text-sm font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          {robot.rrn}
+        </span>
+        <VerificationBadge status={robot.verification_status} />
+        <span class:list={[
+          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border font-mono",
+          robot.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+          robot.status === 'prototype' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+          'bg-gray-500/10 text-gray-400 border-gray-500/20'
+        ]}>
+          <span class:list={[
+            "w-1.5 h-1.5 rounded-full",
+            robot.status === 'active' ? 'bg-emerald-500' :
+            robot.status === 'prototype' ? 'bg-amber-500' : 'bg-gray-500'
+          ]}></span>
+          {robot.status}
+        </span>
+      </div>
+
+      <h1 class="font-display text-4xl font-semibold text-text mb-1">{robot.name}</h1>
+      <p class="text-text-muted font-mono text-sm mb-4">{robot.manufacturer} · {robot.model}</p>
+      <p class="text-text-muted leading-relaxed">{robot.description}</p>
+
+      {robot.tags && robot.tags.length > 0 && (
+        <div class="mt-4 flex flex-wrap gap-2">
+          {robot.tags.map(tag => (
+            <span class="text-xs px-2.5 py-1 rounded bg-accent/8 text-text-faint border border-accent/10 font-mono">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <!-- Specs -->
+      {robot.specs && (
+        <div class="bg-bg-card border border-border rounded-xl p-6">
+          <h2 class="text-xs font-semibold uppercase tracking-widest font-mono text-text-faint mb-4">Technical Specs</h2>
+          <dl class="space-y-3">
+            {robot.specs.compute && (
+              <div>
+                <dt class="text-xs text-text-faint font-mono mb-0.5">Compute</dt>
+                <dd class="text-sm text-text">{robot.specs.compute}</dd>
+              </div>
+            )}
+            {robot.specs.sensors && robot.specs.sensors.length > 0 && (
+              <div>
+                <dt class="text-xs text-text-faint font-mono mb-0.5">Sensors</dt>
+                <dd class="text-sm text-text">{robot.specs.sensors.join(', ')}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      )}
+
+      <!-- Registry record -->
+      <div class="bg-bg-card border border-border rounded-xl p-6">
+        <h2 class="text-xs font-semibold uppercase tracking-widest font-mono text-text-faint mb-4">Registry Record</h2>
+        <dl class="space-y-3">
+          {robot.submitted_date && (
+            <div>
+              <dt class="text-xs text-text-faint font-mono mb-0.5">Registered</dt>
+              <dd class="text-sm text-text font-mono">{robot.submitted_date}</dd>
+            </div>
+          )}
+          {robot.production_year && (
+            <div>
+              <dt class="text-xs text-text-faint font-mono mb-0.5">Production Year</dt>
+              <dd class="text-sm text-text font-mono">{robot.production_year}</dd>
+            </div>
+          )}
+          {robot.submitted_by && (
+            <div>
+              <dt class="text-xs text-text-faint font-mono mb-0.5">Submitted By</dt>
+              <dd class="text-sm text-text font-mono">{robot.submitted_by}</dd>
+            </div>
+          )}
+          {robot.ruri && (
+            <div>
+              <dt class="text-xs text-text-faint font-mono mb-0.5">RURI</dt>
+              <dd class="text-xs text-accent font-mono break-all">{robot.ruri}</dd>
+            </div>
+          )}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Verification + QR -->
+    <div class="bg-bg-card border border-border rounded-xl p-6 mb-6">
+      <h2 class="text-xs font-semibold uppercase tracking-widest font-mono text-text-faint mb-4">Verification</h2>
+      <div class="flex flex-col md:flex-row gap-6 items-start">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-3">
+            <VerificationBadge status={robot.verification_status} />
+            <span class="text-sm text-text-muted">
+              {robot.verification_status === 'community' && 'Self-reported. Robot exists and was submitted by a real person. Not independently verified.'}
+              {robot.verification_status === 'verified' && 'Basic verification: manufacturer exists, model is real, serial number cross-checked.'}
+              {robot.verification_status === 'manufacturer' && 'Manufacturer organization has been verified by the RRF.'}
+              {robot.verification_status === 'certified' && 'Full conformance audit passed. RCAN L1/L2/L3 certified.'}
+            </span>
+          </div>
+          <p class="text-xs text-text-faint">
+            Want to upgrade verification?
+            <a href="/verification/" class="text-accent hover:underline">Learn how verification works →</a>
+          </p>
+        </div>
+        <!-- QR placeholder -->
+        <div class="flex-shrink-0 w-28 h-28 border border-border rounded-lg bg-bg flex flex-col items-center justify-center text-center p-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-text-faint mb-1"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="6" y="6" width="1" height="1"/><rect x="17" y="6" width="1" height="1"/><rect x="6" y="17" width="1" height="1"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="20"/><line x1="17" y1="17" x2="20" y2="17"/></svg>
+          <span class="text-xs text-text-faint">QR Verify</span>
+          <span class="text-xs text-text-faint/60">(coming soon)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download JSON -->
+    <div class="flex items-center gap-4">
+      <a
+        href={dataUri}
+        download={`${robot.rrn}.json`}
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-text-muted hover:text-accent hover:border-border-strong transition-colors font-mono"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download JSON record
+      </a>
+      <a href="/registry/" class="text-sm text-text-faint hover:text-accent transition-colors">
+        ← Back to Registry
+      </a>
+    </div>
+
+  </div>
+
+</BaseLayout>

@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="About the Robot Registry Foundation — who built it, why, and how it relates to the RCAN protocol."
+>
+
+  <div class="pt-8 max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <span class="text-text">About</span>
+    </div>
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">About the Foundation</h1>
+    <p class="text-lg text-text-muted mb-12 leading-relaxed">
+      Who built this and why.
+    </p>
+
+    <!-- Origin story -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Origin</h2>
+      <div class="space-y-4 text-text-muted leading-relaxed">
+        <p>
+          This started with a robot called <strong class="text-text">OpenCastor Bob</strong> — a Raspberry Pi 5 running
+          a navigation stack with a Hailo-8 NPU and an OAK-D camera. When Bob needed to identify itself to other
+          systems and be registered somewhere, it became clear there was nowhere independent to register it.
+        </p>
+        <p>
+          Building the registration system led to the <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol specification</a> —
+          a structured way for robots to communicate identity, announce capabilities, and participate in federated
+          swarms. But a protocol without governance is just a spec.
+        </p>
+        <p>
+          The internet solved this with ICANN. Open source solved it with the Linux Foundation and Apache Software Foundation.
+          DNS, npm, Maven Central, PyPI — every critical piece of shared infrastructure eventually needed a neutral,
+          multi-stakeholder body to govern it. Robotics is approaching that inflection point.
+        </p>
+        <p>
+          The <strong class="text-text">Robot Registry Foundation</strong> is the proposed answer: an independent body
+          to operate the root robot registry with the same structural guarantees that ICANN provides for domain names.
+        </p>
+      </div>
+    </section>
+
+    <!-- Who is behind this -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Who's Behind This</h2>
+
+      <div class="flex gap-5 p-6 bg-bg-card border border-border rounded-xl">
+        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-accent font-mono text-lg font-bold">C</div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="font-semibold text-text">Craig Merry</h3>
+            <span class="text-xs font-mono text-text-faint">(@craigm26)</span>
+          </div>
+          <p class="text-sm text-text-muted leading-relaxed">
+            Software engineer and robotics hobbyist. Built OpenCastor, wrote the RCAN spec, and initiated
+            the Robot Registry Foundation as the governance layer the ecosystem needs.
+          </p>
+          <div class="flex gap-3 mt-3">
+            <a href="https://github.com/craigm26" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:underline">GitHub →</a>
+            <a href="https://github.com/continuonai/rcan-spec" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:underline">rcan-spec →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 p-5 border border-dashed border-border rounded-xl text-center">
+        <p class="text-text-muted text-sm mb-3">
+          The RRF needs co-founders. This is a multi-stakeholder project — it should not be one person's project.
+        </p>
+        <a href="/governance/#get-involved" class="text-sm text-accent hover:underline">
+          How to become a co-founder →
+        </a>
+      </div>
+    </section>
+
+    <!-- RRF vs RCAN -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">RRF vs. RCAN Protocol</h2>
+
+      <div class="p-5 bg-primary/8 border border-primary/20 rounded-xl mb-6">
+        <p class="text-sm font-medium text-text leading-relaxed">
+          The RRF and the RCAN protocol are related but independent.
+          The RRF operates the registry. The RCAN protocol defines how robots communicate.
+          You can implement RCAN without registering here.
+          You can register here without implementing RCAN.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-5 bg-bg-card border border-border rounded-xl">
+          <h3 class="font-mono text-sm font-medium text-accent mb-3">Robot Registry Foundation (RRF)</h3>
+          <ul class="space-y-2 text-sm text-text-muted">
+            <li class="flex gap-2"><span class="text-accent">→</span> Assigns globally unique RRNs</li>
+            <li class="flex gap-2"><span class="text-accent">→</span> Operates the root registry</li>
+            <li class="flex gap-2"><span class="text-accent">→</span> Provides verification services</li>
+            <li class="flex gap-2"><span class="text-accent">→</span> Governs the robot identity namespace</li>
+            <li class="flex gap-2"><span class="text-accent">→</span> Federates with other registry nodes</li>
+          </ul>
+          <p class="text-xs text-text-faint mt-3">This site: robotregistryfoundation.org</p>
+        </div>
+
+        <div class="p-5 bg-bg-card border border-border rounded-xl">
+          <h3 class="font-mono text-sm font-medium text-text-muted mb-3">RCAN Protocol</h3>
+          <ul class="space-y-2 text-sm text-text-muted">
+            <li class="flex gap-2"><span class="text-text-faint">→</span> Defines how robots communicate identity</li>
+            <li class="flex gap-2"><span class="text-text-faint">→</span> Robot Uniform Resource Identifiers (RURIs)</li>
+            <li class="flex gap-2"><span class="text-text-faint">→</span> Swarm coordination protocol</li>
+            <li class="flex gap-2"><span class="text-text-faint">→</span> Conformance test suite</li>
+            <li class="flex gap-2"><span class="text-text-faint">→</span> SDK and implementation guides</li>
+          </ul>
+          <p class="text-xs text-text-faint mt-3">
+            Protocol spec: <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">rcan.dev</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Status -->
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Current Status</h2>
+      <div class="space-y-2 text-sm">
+        {[
+          { done: false, item: 'Identifying co-founders and endorsing organizations' },
+          { done: false, item: 'Soliciting feedback on governance model and board composition' },
+          { done: false, item: 'Mapping regulatory requirements across jurisdictions (EU, US, Japan, South Korea)' },
+          { done: false, item: 'Identifying potential escrow agents and successor organizations' },
+          { done: false, item: 'Exploring incorporation options (US 501(c)(6), Swiss foundation, EU association)' },
+        ].map(item => (
+          <div class="flex gap-3 items-start">
+            <span class:list={[
+              "flex-shrink-0 w-4 h-4 rounded border mt-0.5",
+              item.done ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-border'
+            ]}>
+              {item.done && <span class="text-xs">✓</span>}
+            </span>
+            <span class:list={["text-text-muted", item.done ? 'line-through opacity-60' : '']}>{item.item}</span>
+          </div>
+        ))}
+      </div>
+      <p class="text-xs text-text-faint mt-4 italic">No commitments have been made. This is an invitation to collaborate.</p>
+    </section>
+
+  </div>
+
+</BaseLayout>

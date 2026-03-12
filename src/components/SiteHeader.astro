@@ -1,0 +1,113 @@
+---
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string) {
+  if (href === '/') return currentPath === '/';
+  return currentPath.startsWith(href);
+}
+
+const navLinks = [
+  { href: '/registry/', label: 'Registry' },
+  { href: '/registry/submit/', label: 'Submit a Robot' },
+  { href: '/governance/', label: 'Governance' },
+  { href: '/verification/', label: 'Verification' },
+  { href: '/federation/', label: 'Federation' },
+  { href: '/about/', label: 'About' },
+  { href: '/api/', label: 'API' },
+];
+---
+
+<header class="fixed top-0 w-full z-50 border-b border-border bg-bg/85 backdrop-blur-md" id="site-header">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+    <!-- Wordmark -->
+    <a href="/" class="flex items-center gap-3 group">
+      <!-- Shield logo -->
+      <div class="w-8 h-8 relative flex-shrink-0">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 group-hover:drop-shadow-[0_0_10px_rgba(59,130,246,0.7)] transition-all duration-300">
+          <path d="M16 2L4 7v9c0 6.627 5.373 12 12 12s12-5.373 12-12V7L16 2z" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
+          <rect x="10" y="10" width="12" height="10" rx="2" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
+          <circle cx="13" cy="14" r="1.5" fill="#60a5fa"/>
+          <circle cx="19" cy="14" r="1.5" fill="#60a5fa"/>
+          <path d="M13 18h6" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="16" y1="10" x2="16" y2="7" stroke="#93c5fd" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="16" cy="6.5" r="1" fill="#3b82f6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-sm font-mono font-medium tracking-widest text-accent leading-none">RRF</div>
+        <div class="text-xs text-text-muted leading-none mt-0.5 font-sans">Robot Registry Foundation</div>
+      </div>
+    </a>
+
+    <!-- Desktop Nav -->
+    <nav class="hidden lg:flex items-center gap-0.5">
+      {navLinks.map(link => (
+        <a
+          href={link.href}
+          class:list={[
+            "px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150",
+            link.label === 'Submit a Robot'
+              ? isActive(link.href)
+                ? "bg-primary text-white"
+                : "bg-primary/20 text-accent border border-accent/30 hover:bg-primary/30"
+              : isActive(link.href)
+                ? "text-accent bg-accent/10"
+                : "text-text-muted hover:text-text hover:bg-white/5"
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <!-- Mobile Menu Button -->
+    <button id="nav-toggle" class="lg:hidden p-2 text-text-muted hover:text-accent transition-colors" aria-label="Toggle menu">
+      <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="fixed left-0 right-0 bottom-0 top-16 bg-bg border-t border-border flex-col p-6 gap-1 overflow-y-auto z-[9999] hidden" style="overscroll-behavior: contain;">
+  {navLinks.map(link => (
+    <a
+      href={link.href}
+      class:list={[
+        "text-base font-medium transition-colors py-3 border-b border-border block",
+        isActive(link.href) ? "text-accent" : "text-text-muted hover:text-accent"
+      ]}
+    >
+      {link.label}
+    </a>
+  ))}
+</div>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden', !isOpen);
+    menu?.classList.toggle('flex', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    iconOpen?.classList.toggle('hidden', isOpen);
+    iconClose?.classList.toggle('hidden', !isOpen);
+  });
+
+  window.addEventListener('scroll', () => {
+    const header = document.getElementById('site-header');
+    header?.classList.toggle('shadow-lg', window.scrollY > 10);
+  }, { passive: true });
+</script>
