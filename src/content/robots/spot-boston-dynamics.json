@@ -1,5 +1,5 @@
 {
-  "rrn": "RRN-00000002",
+  "rrn": "RRN-000000000002",
   "name": "Spot",
   "manufacturer": "Boston Dynamics",
   "model": "spot-enterprise",
@@ -11,6 +11,7 @@
     "sensors": ["360° cameras", "depth sensing", "IMU"]
   },
   "verification_status": "community",
+  "ruri": "rcan://rcan.dev/boston-dynamics/spot-enterprise/rrn-000000000002",
   "tags": ["quadruped", "industrial", "inspection"],
   "submitted_by": "community",
   "submitted_date": "2026-03-12"

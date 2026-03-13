@@ -1,5 +1,5 @@
 {
-  "rrn": "RRN-00000003",
+  "rrn": "RRN-000000000003",
   "name": "Unitree Go2",
   "manufacturer": "Unitree Robotics",
   "model": "go2-edu",
@@ -11,6 +11,7 @@
     "sensors": ["4D LiDAR", "depth camera", "IMU"]
   },
   "verification_status": "community",
+  "ruri": "rcan://rcan.dev/unitree/go2-edu/rrn-000000000003",
   "tags": ["quadruped", "ros2", "research"],
   "submitted_by": "community",
   "submitted_date": "2026-03-12"
