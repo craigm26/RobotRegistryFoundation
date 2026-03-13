@@ -22,7 +22,7 @@ const endpoints = [
   "limit": 50,
   "robots": [
     {
-      "rrn": "RRN-00000001",
+      "rrn": "RRN-000000000001",
       "name": "OpenCastor Bob",
       "manufacturer": "ContinuonAI",
       "verification_status": "community",
@@ -38,10 +38,10 @@ const endpoints = [
     summary: 'Get one robot by RRN',
     description: 'Returns the full registry record for a specific robot identified by its Robot Registration Number.',
     params: [
-      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number (e.g. RRN-00000001)' },
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number (e.g. RRN-000000000001)' },
     ],
     example: `{
-  "rrn": "RRN-00000001",
+  "rrn": "RRN-000000000001",
   "name": "OpenCastor Bob",
   "manufacturer": "ContinuonAI",
   "model": "opencastor-rpi5",
@@ -112,7 +112,7 @@ const endpoints = [
       { name: 'full_chain', type: 'boolean', required: false, default: 'false', desc: 'Include full federation provenance chain' },
     ],
     example: `{
-  "rrn": "RRN-00000001",
+  "rrn": "RRN-000000000001",
   "resolved_from": "root.rrf.registry",
   "canonical": true,
   "record": { ... },
