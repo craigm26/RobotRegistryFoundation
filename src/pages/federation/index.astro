@@ -155,7 +155,11 @@ const nodeTypes = [
         <code class="block text-xs font-mono bg-bg rounded-md p-3 text-accent">
           GET /api/v1/resolve/:rrn
         </code>
-        <p class="text-xs text-text-faint mt-2">
+        <p class="text-xs text-text-faint mt-2 mb-2">
+          Where <code class="text-accent">:rrn</code> is a 12-digit canonical Robot Registration Number,
+          e.g. <code class="text-accent">RRN-000000000001</code>.
+        </p>
+        <p class="text-xs text-text-faint mt-0">
           Returns the authoritative record from the most-recently-synced node in the federation.
           See <a href="/api/" class="text-accent hover:underline">API docs</a> for full reference.
         </p>
