@@ -17,7 +17,7 @@ const robotsCollection = defineCollection({
       weight_kg: z.number().optional(),
       dimensions: z.string().optional(),
     }).optional(),
-    verification_status: z.enum(['community', 'verified', 'manufacturer', 'certified']).default('community'),
+    verification_status: z.enum(['community', 'verified', 'certified', 'accredited']).default('community'),
     ruri: z.string().nullable().optional(),
     tags: z.array(z.string()).default([]),
     submitted_by: z.string().optional(),
