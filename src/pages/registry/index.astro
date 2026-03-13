@@ -38,7 +38,7 @@ const allManufacturers = [...new Set(robots.map(r => r.data.manufacturer))].sort
     </div>
 
     {robots.length === 0 ? (
-      <!-- Empty state -->
+      <!-- Empty state (no robots at all) -->
       <div class="text-center py-24 border border-border rounded-xl bg-bg-card">
         <div class="text-5xl mb-5">🤖</div>
         <h3 class="font-display text-2xl font-semibold text-text mb-2">The registry is open</h3>
@@ -48,27 +48,181 @@ const allManufacturers = [...new Set(robots.map(r => r.data.manufacturer))].sort
         </a>
       </div>
     ) : (
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {sortedRobots.map(robot => (
-          <RobotCard
-            rrn={robot.data.rrn}
-            name={robot.data.name}
-            manufacturer={robot.data.manufacturer}
-            description={robot.data.description}
-            verification_status={robot.data.verification_status}
-            tags={robot.data.tags}
-            status={robot.data.status}
-          />
-        ))}
-      </div>
-    )}
+      <>
+        <!-- Search & Filter Controls -->
+        <div class="mb-6 flex flex-col gap-4">
+          <!-- Search input -->
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              id="registry-search"
+              type="search"
+              placeholder="Search by name, manufacturer, model, or tag…"
+              aria-label="Search robots by name, manufacturer, model, or tag"
+              class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-bg-card border border-border text-text placeholder:text-text-faint focus:outline-none focus:border-accent transition-colors text-sm font-mono"
+            />
+          </div>
 
-    <!-- Pagination hint -->
-    {robots.length > 0 && (
-      <p class="text-center text-xs text-text-faint mt-10 font-mono">
-        Showing {robots.length} of {robots.length} registered robots · Registry data released under CC0
-      </p>
+          <!-- Verification filter pills -->
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by verification status">
+            {['all', 'community', 'verified', 'manufacturer', 'certified'].map(v => (
+              <button
+                class="registry-filter-pill px-3 py-1 rounded-full text-xs font-mono border transition-colors"
+                data-filter={v}
+                aria-pressed={v === 'all' ? 'true' : 'false'}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <!-- Robot grid -->
+        <div id="registry-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {sortedRobots.map(robot => (
+            <div
+              class="registry-card"
+              data-name={robot.data.name.toLowerCase()}
+              data-manufacturer={robot.data.manufacturer.toLowerCase()}
+              data-model={(robot.data.model ?? '').toLowerCase()}
+              data-tags={(robot.data.tags ?? []).join(' ').toLowerCase()}
+              data-verification={robot.data.verification_status}
+            >
+              <RobotCard
+                rrn={robot.data.rrn}
+                name={robot.data.name}
+                manufacturer={robot.data.manufacturer}
+                description={robot.data.description}
+                verification_status={robot.data.verification_status}
+                tags={robot.data.tags}
+                status={robot.data.status}
+              />
+            </div>
+          ))}
+        </div>
+
+        <!-- Empty state (no search results) -->
+        <div id="registry-empty" class="hidden text-center py-24 border border-border rounded-xl bg-bg-card mt-2">
+          <div class="text-5xl mb-5">🔍</div>
+          <h3 class="font-display text-2xl font-semibold text-text mb-2">No robots found</h3>
+          <p class="text-text-muted mb-6">Try a different search term or filter.</p>
+          <button id="registry-clear" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors">
+            Clear filters
+          </button>
+        </div>
+
+        <!-- Pagination hint -->
+        <p id="registry-count" class="text-center text-xs text-text-faint mt-10 font-mono">
+          Showing {robots.length} of {robots.length} registered robots · Registry data released under CC0
+        </p>
+      </>
     )}
   </div>
 
 </BaseLayout>
+
+<style>
+  .registry-filter-pill {
+    background-color: transparent;
+    color: var(--color-text-muted, #9ca3af);
+    border-color: var(--color-border, #374151);
+  }
+  .registry-filter-pill[aria-pressed="true"] {
+    background-color: var(--color-accent, #3b82f6);
+    color: #fff;
+    border-color: var(--color-accent, #3b82f6);
+  }
+  .registry-filter-pill:hover:not([aria-pressed="true"]) {
+    border-color: var(--color-accent, #3b82f6);
+    color: var(--color-accent, #3b82f6);
+  }
+</style>
+
+<script>
+  (() => {
+    const searchInput = document.getElementById('registry-search') as HTMLInputElement | null;
+    const grid = document.getElementById('registry-grid');
+    const emptyState = document.getElementById('registry-empty');
+    const countEl = document.getElementById('registry-count');
+    const clearBtn = document.getElementById('registry-clear');
+    const pills = document.querySelectorAll<HTMLButtonElement>('.registry-filter-pill');
+
+    if (!searchInput || !grid || !emptyState) return;
+
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.registry-card'));
+    const total = cards.length;
+
+    let currentQuery = '';
+    let currentFilter = 'all';
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
+    function updateCount(visible: number) {
+      if (countEl) {
+        countEl.textContent = `Showing ${visible} of ${total} registered robots · Registry data released under CC0`;
+      }
+    }
+
+    function applyFilters() {
+      const q = currentQuery.trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const name = card.dataset.name ?? '';
+        const manufacturer = card.dataset.manufacturer ?? '';
+        const model = card.dataset.model ?? '';
+        const tags = card.dataset.tags ?? '';
+        const verification = card.dataset.verification ?? '';
+
+        const matchesSearch =
+          !q ||
+          name.includes(q) ||
+          manufacturer.includes(q) ||
+          model.includes(q) ||
+          tags.includes(q);
+
+        const matchesFilter =
+          currentFilter === 'all' || verification === currentFilter;
+
+        if (matchesSearch && matchesFilter) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      emptyState.classList.toggle('hidden', visibleCount > 0);
+      grid.classList.toggle('hidden', visibleCount === 0);
+      updateCount(visibleCount);
+    }
+
+    // Search with debounce
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        currentQuery = searchInput.value;
+        applyFilters();
+      }, 200);
+    });
+
+    // Verification filter pills
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        currentFilter = pill.dataset.filter ?? 'all';
+        pills.forEach(p => p.setAttribute('aria-pressed', p === pill ? 'true' : 'false'));
+        applyFilters();
+      });
+    });
+
+    // Clear button in empty state
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        currentQuery = '';
+        currentFilter = 'all';
+        pills.forEach(p => p.setAttribute('aria-pressed', p.dataset.filter === 'all' ? 'true' : 'false'));
+        applyFilters();
+      });
+    }
+  })();
+</script>
