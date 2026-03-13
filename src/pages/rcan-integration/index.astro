@@ -194,6 +194,106 @@ print(result.rrn)  <span class="text-text-faint"># "RRN-000XXXXX"</span></pre>
     </div>
   </section>
 
+  <!-- §19 INVOKE Flow -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-4">§19 INVOKE — Remote Skill Execution</h2>
+      <p class="text-text-muted text-sm leading-relaxed mb-8">
+        RCAN §19 defines how a principal triggers a named skill on a robot and receives a structured result. Robots registered with the RRF can expose INVOKE endpoints, allowing authorized callers to execute skills by RURI + RRN.
+      </p>
+
+      <div class="space-y-6 mb-8">
+        <div>
+          <div class="text-xs font-mono text-text-muted/50 uppercase tracking-widest mb-2">INVOKE request</div>
+          <pre class="bg-bg-card border border-border rounded-xl p-5 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{`{
+  "type": "INVOKE",
+  "skill": "pick_and_place",
+  "params": { "target": "red_cube" },
+  "timeout_ms": 5000,
+  "msg_id": "invoke_abc123"
+}`}</pre>
+        </div>
+        <div>
+          <div class="text-xs font-mono text-text-muted/50 uppercase tracking-widest mb-2">INVOKE_RESULT (success)</div>
+          <pre class="bg-bg-card border border-border rounded-xl p-5 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{`{
+  "type": "INVOKE_RESULT",
+  "skill": "pick_and_place",
+  "status": "success",
+  "reply_to": "invoke_abc123",
+  "duration_ms": 1230
+}`}</pre>
+        </div>
+        <div>
+          <div class="text-xs font-mono text-text-muted/50 uppercase tracking-widest mb-2">INVOKE_RESULT (failure)</div>
+          <pre class="bg-bg-card border border-border rounded-xl p-5 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{`{
+  "type": "INVOKE_RESULT",
+  "skill": "pick_and_place",
+  "status": "failure",
+  "reply_to": "invoke_abc123",
+  "duration_ms": 312,
+  "error": { "code": 7006, "name": "SkillFailed", "message": "Gripper could not secure the target object" }
+}`}</pre>
+        </div>
+      </div>
+
+      <div class="bg-accent/5 border border-accent/20 rounded-xl p-5">
+        <p class="text-sm text-text-muted leading-relaxed">
+          <span class="text-accent font-semibold">RBAC enforcement:</span> INVOKE messages are subject to RCAN role-based access control. A principal must hold the required capability lease for the target skill. RRF-registered robots can publish their skill manifests publicly, enabling third-party orchestration.
+        </p>
+      </div>
+
+      <div class="mt-5">
+        <a href="https://rcan.dev/spec/section-19/" target="_blank" rel="noopener noreferrer" class="text-sm text-accent hover:underline font-medium">
+          Full §19 INVOKE specification →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- §20 Telemetry -->
+  <section class="py-16 border-b border-border">
+    <div class="max-w-3xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-4">§20 Telemetry Field Registry</h2>
+      <p class="text-text-muted text-sm leading-relaxed mb-8">
+        RCAN §20 defines standard telemetry objects — joint state, robot state, and Prometheus exposition — that robots emit on a predictable cadence. RRF-registered robots may publish a telemetry endpoint URL in their registry record so observers can subscribe without prior coordination.
+      </p>
+
+      <div class="space-y-6 mb-8">
+        <div>
+          <div class="text-xs font-mono text-text-muted/50 uppercase tracking-widest mb-2">Joint telemetry object</div>
+          <pre class="bg-bg-card border border-border rounded-xl p-5 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{`{
+  "joint": "shoulder_pan",
+  "position_rad": 0.785,
+  "velocity_rad_s": 0.02,
+  "effort_nm": 0.41,
+  "temperature_c": 38.5,
+  "error_flags": 0,
+  "timestamp_us": 1741737600000000
+}`}</pre>
+        </div>
+        <div>
+          <div class="text-xs font-mono text-text-muted/50 uppercase tracking-widest mb-2">Prometheus exposition (excerpt)</div>
+          <pre class="bg-bg-card border border-border rounded-xl p-5 text-xs font-mono text-text-muted overflow-x-auto leading-relaxed">{`rcan_acb_position_rad{joint="shoulder_pan",ruri="rcan://robot.local"} 0.785
+rcan_acb_velocity_rad_s{joint="shoulder_pan",ruri="rcan://robot.local"} 0.02
+rcan_robot_battery_v{ruri="rcan://robot.local"} 14.2
+rcan_robot_uptime_ms{ruri="rcan://robot.local"} 3600000`}</pre>
+        </div>
+      </div>
+
+      <div class="bg-accent/5 border border-accent/20 rounded-xl p-5">
+        <p class="text-sm text-text-muted leading-relaxed">
+          <span class="text-accent font-semibold">RRF integration:</span> A robot's registry record can include a <code class="text-xs font-mono bg-bg-card border border-border rounded px-1">telemetry_url</code> field. This lets dashboards and monitoring systems discover the Prometheus scrape endpoint directly from the RRN lookup — no separate service discovery required.
+        </p>
+      </div>
+
+      <div class="mt-5">
+        <a href="https://rcan.dev/spec/section-20/" target="_blank" rel="noopener noreferrer" class="text-sm text-accent hover:underline font-medium">
+          Full §20 Telemetry Field Registry →
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- OpenCastor Reference Implementation Callout -->
   <section class="py-16 border-b border-border">
     <div class="max-w-3xl">
