@@ -219,6 +219,88 @@ const methodColors: Record<string, string> = {
         ))}
       </div>
 
+      <!-- §21 RCAN MessageType wire values -->
+      <div class="mt-12">
+        <h2 class="font-display text-2xl font-semibold text-text mb-2">§21 RCAN MessageType Wire Values</h2>
+        <p class="text-sm text-text-muted mb-6 leading-relaxed">
+          RCAN-compliant robots interact with the registry via two dedicated MessageType values defined in
+          <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN spec §21</a>.
+          These wire values are used over the RCAN WebSocket transport; the REST endpoints above are the HTTP equivalent.
+        </p>
+        <div class="overflow-x-auto rounded-xl border border-border">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-bg-card border-b border-border">
+                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">MessageType</th>
+                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Wire Value</th>
+                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Spec</th>
+                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Required Scope</th>
+                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Payload Fields</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_REGISTER</td>
+                <td class="px-4 py-3 font-mono text-xs text-text">13</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.4</a>
+                </td>
+                <td class="px-4 py-3 font-mono text-xs text-text-muted">admin</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <code class="text-accent">rrn</code> (str),&nbsp;
+                  <code class="text-accent">ruri</code> (str),&nbsp;
+                  <code class="text-accent">public_key</code> (str),&nbsp;
+                  <code class="text-accent">metadata</code> (obj)
+                </td>
+              </tr>
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_REGISTER_RESULT</td>
+                <td class="px-4 py-3 font-mono text-xs text-text">—</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.4</a>
+                </td>
+                <td class="px-4 py-3 font-mono text-xs text-text-muted">—</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <code class="text-accent">rrn</code> (str),&nbsp;
+                  <code class="text-accent">status</code> (<code>"registered"</code>&nbsp;|&nbsp;<code>"updated"</code>&nbsp;|&nbsp;<code>"conflict"</code>),&nbsp;
+                  <code class="text-accent">verification_tier</code> (str)
+                </td>
+              </tr>
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_RESOLVE</td>
+                <td class="px-4 py-3 font-mono text-xs text-text">14</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.5</a>
+                </td>
+                <td class="px-4 py-3 font-mono text-xs text-text-muted">status</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <code class="text-accent">query</code> (str — RRN or RURI)
+                </td>
+              </tr>
+              <tr class="hover:bg-bg-card/50 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_RESOLVE_RESULT</td>
+                <td class="px-4 py-3 font-mono text-xs text-text">—</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.5</a>
+                </td>
+                <td class="px-4 py-3 font-mono text-xs text-text-muted">—</td>
+                <td class="px-4 py-3 text-xs text-text-muted">
+                  <code class="text-accent">rrn</code> (str),&nbsp;
+                  <code class="text-accent">ruri</code> (str),&nbsp;
+                  <code class="text-accent">status</code> (str),&nbsp;
+                  <code class="text-accent">verification_tier</code> (str),&nbsp;
+                  <code class="text-accent">public_key</code> (str)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-text-faint mt-3">
+          Wire values 13–14 were assigned for §21 before §19.4 (<code>INVOKE_CANCEL = 15</code>) was finalised.
+          See the full <a href="https://rcan.dev/spec/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN spec</a> for the complete MessageType enum.
+        </p>
+      </div>
+
       <!-- Auth note -->
       <div class="mt-10 p-5 bg-bg-card border border-border rounded-xl">
         <h3 class="font-semibold text-text mb-2 text-sm">Authentication</h3>
