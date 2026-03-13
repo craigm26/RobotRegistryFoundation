@@ -13,6 +13,8 @@ const endpoints = [
       { name: 'manufacturer', type: 'string', required: false, desc: 'Filter by manufacturer name (exact match)' },
       { name: 'verification_status', type: 'string', required: false, desc: 'Filter by tier: community | verified | manufacturer | certified' },
       { name: 'tags', type: 'string', required: false, desc: 'Comma-separated list of tags (AND logic)' },
+      { name: 'sort_by', type: 'string', required: false, default: 'submitted_date', desc: 'Field to sort by: submitted_date | name | manufacturer | verification_status' },
+      { name: 'sort_order', type: 'string', required: false, default: 'desc', desc: 'Sort direction: asc | desc' },
     ],
     example: `{
   "total": 1,
