@@ -1,18 +1,24 @@
 {
   "rrn": "RRN-000000000001",
+  "rrn_uri": "rrn://craigm26/robot/opencastor-rpi5-hailo/bob-001",
   "name": "OpenCastor Bob",
-  "manufacturer": "ContinuonAI",
-  "model": "opencastor-rpi5",
-  "description": "Reference implementation of an RCAN-compliant robot running OpenCastor on Raspberry Pi 5 with Hailo-8 NPU and OAK-D camera.",
+  "manufacturer": "craigm26",
+  "model": "opencastor-rpi5-hailo",
+  "description": "Mobile RC robot — Raspberry Pi 5 (16GB) + Hailo-8 NPU. PCA9685 ESC and steering, CSI camera. Reference deployment of OpenCastor running RCAN v1.2.",
   "status": "active",
   "production_year": 2026,
   "specs": {
-    "compute": "Raspberry Pi 5 16GB + Hailo-8",
-    "sensors": ["OAK-D RGB+Depth", "Hailo-8 NPU"]
+    "compute": "Raspberry Pi 5 16GB + Hailo-8 NPU",
+    "sensors": ["CSI Camera 640×480@30fps", "Hailo-8 NPU"],
+    "actuators": ["PCA9685 RC ESC (throttle)", "PCA9685 Servo (steering)"],
+    "platform": "Ackermann chassis — 260mm wheelbase, 180mm track"
   },
   "verification_status": "community",
-  "ruri": "rcan://rcan.dev/continuonai/opencastor-rpi5/bob",
-  "tags": ["rpi5", "hailo", "oak-d", "rcan-compliant"],
+  "ruri": "rcan://robot.local:8000/bob",
+  "rcan_version": "1.2",
+  "opencastor_version": "2026.3.13.11",
+  "tags": ["mobile", "rc_car", "raspberry_pi", "hailo", "pca9685", "csi_camera", "ackermann", "opencastor"],
   "submitted_by": "craigm26",
-  "submitted_date": "2026-03-06"
+  "submitted_date": "2026-03-13",
+  "registered_at": "2026-03-13T14:41:00Z"
 }
