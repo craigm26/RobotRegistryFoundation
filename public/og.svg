@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <!-- Subtle grid -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <!-- Hero glow -->
+  <ellipse cx="600" cy="315" rx="500" ry="250" fill="#1e40af" fill-opacity="0.15"/>
+
+  <!-- Shield + robot logo (scaled up) -->
+  <g transform="translate(80, 140) scale(6)">
+    <path d="M16 2L4 7v9c0 6.627 5.373 12 12 12s12-5.373 12-12V7L16 2z" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
+    <rect x="10" y="10" width="12" height="10" rx="2" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
+    <circle cx="13" cy="14" r="1.5" fill="#60a5fa"/>
+    <circle cx="19" cy="14" r="1.5" fill="#60a5fa"/>
+    <path d="M13 18h6" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="16" y1="10" x2="16" y2="7" stroke="#93c5fd" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="16" cy="6.5" r="1" fill="#3b82f6"/>
+  </g>
+
+  <!-- Title -->
+  <text x="320" y="260" font-family="Georgia, serif" font-size="64" font-weight="700" fill="#f8fafc">Robot Registry Foundation</text>
+  <!-- Tagline -->
+  <text x="320" y="330" font-family="Arial, sans-serif" font-size="28" fill="#94a3b8">Globally unique identifiers for every robot.</text>
+  <!-- URL -->
+  <text x="320" y="430" font-family="Arial, sans-serif" font-size="22" fill="#3b82f6">robotregistryfoundation.org</text>
+
+  <!-- Decorative line -->
+  <line x1="320" y1="360" x2="880" y2="360" stroke="#1e40af" stroke-width="2"/>
+</svg>
