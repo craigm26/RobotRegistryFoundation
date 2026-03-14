@@ -35,5 +35,13 @@
   ],
   "submitted_by": "craigm26",
   "submitted_date": "2026-03-13",
-  "registered_at": "2026-03-13T14:41:00Z"
+  "registered_at": "2026-03-13T14:41:00Z",
+  "hardware_safety": {
+    "physical_estop": false,
+    "hardware_watchdog_mcu": false,
+    "force_torque_sensors": false,
+    "human_proximity_sensors": "none",
+    "sil_level": "none",
+    "voltage_monitoring": false
+  }
 }

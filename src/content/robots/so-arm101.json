@@ -8,11 +8,27 @@
   "production_year": 2025,
   "specs": {
     "compute": "Raspberry Pi 5 (typical)",
-    "sensors": ["wrist camera (optional)", "Feetech servo encoders"]
+    "sensors": [
+      "wrist camera (optional)",
+      "Feetech servo encoders"
+    ]
   },
   "verification_status": "community",
   "ruri": "rcan://rcan.dev/therobotstudio/so-arm101/rrn-000000000004",
-  "tags": ["arm", "lerobot", "open-source", "imitation-learning"],
+  "tags": [
+    "arm",
+    "lerobot",
+    "open-source",
+    "imitation-learning"
+  ],
   "submitted_by": "community",
-  "submitted_date": "2026-03-12"
+  "submitted_date": "2026-03-12",
+  "hardware_safety": {
+    "physical_estop": false,
+    "hardware_watchdog_mcu": false,
+    "force_torque_sensors": false,
+    "human_proximity_sensors": "none",
+    "sil_level": "none",
+    "voltage_monitoring": false
+  }
 }
