@@ -63,6 +63,30 @@ Open an issue or start a discussion on GitHub.
 
 The full draft charter is at [robotregistryfoundation.org/governance/](https://robotregistryfoundation.org/governance/).
 
+## Ecosystem
+
+The RRF is part of a broader open robotics stack:
+
+| Project | Role | Link |
+|---|---|---|
+| **RCAN Protocol** | Communication & auth standard (v1.4) | [rcan.dev](https://rcan.dev) |
+| **OpenCastor** | Python robot runtime (RCAN reference implementation) | [github.com/craigm26/OpenCastor](https://github.com/craigm26/OpenCastor) |
+| **OpenCastor Fleet UI** | Web app for remote robot management | [app.opencastor.com](https://app.opencastor.com) |
+| **rcan-py** | Python RCAN SDK | [PyPI: rcan](https://pypi.org/project/rcan/) |
+| **rcan-ts** | TypeScript RCAN SDK | [npm: @continuonai/rcan](https://www.npmjs.com/package/@continuonai/rcan) |
+| **Robot Registry Foundation** | Global robot identity (this repo) | [robotregistryfoundation.org](https://robotregistryfoundation.org) |
+
+### Registered Robots (Examples)
+
+Real robots running this stack with publicly registered RRNs:
+
+| RRN | Name | Runtime | Notes |
+|---|---|---|---|
+| RRN-000000000001 | Bob | OpenCastor v2026.3.16.1 | Raspberry Pi 5, Gemini 2.5 Flash brain |
+| RRN-000000000005 | Alex | OpenCastor v2026.3.16.1 | Raspberry Pi 5 + SO-ARM101 5-DOF arm |
+
+Register your robot at [rcan.dev/registry](https://rcan.dev/registry).
+
 ## License
 
 Site content: CC BY 4.0. Code: MIT.
