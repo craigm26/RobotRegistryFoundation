@@ -1,0 +1,317 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// ---------------------------------------------------------------------------
+// RCAN v1.5 — Robot Identity Revocation + Key Management API
+// Spec reference: GAP-02 (§13 Robot Identity Revocation), GAP-09 (§8.6 Key Lifecycle)
+// ---------------------------------------------------------------------------
+
+const revocationEndpoints = [
+  {
+    method: 'GET',
+    path: '/api/v1/robots/:rrn/revocation-status',
+    summary: 'Get revocation status',
+    description: 'Returns the current revocation status of a robot. Robots MUST check this endpoint on startup and cache the result for up to 1 hour (configurable via max-age). If the registry is unreachable, robots may continue operation for up to max_revocation_staleness_s (default 3600s) before entering quarantine mode.',
+    auth: 'None (public)',
+    params: [
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number (e.g. RRN-000000000001)' },
+    ],
+    example: `{
+  "rrn": "RRN-000000000001",
+  "status": "active",
+  "revoked_at": null,
+  "reason": null,
+  "authority": "RRF Registry",
+  "checked_at": "2026-03-16T20:00:00Z",
+  "cache_max_age_s": 3600
+}`,
+    errorExample: `// Revoked robot:
+{
+  "rrn": "RRN-000000000099",
+  "status": "revoked",
+  "revoked_at": "2026-03-15T08:30:00Z",
+  "reason": "Stolen — private key compromised",
+  "authority": "RRF Registry (owner request)",
+  "checked_at": "2026-03-16T20:00:00Z",
+  "cache_max_age_s": 300
+}
+
+// Possible status values: "active" | "revoked" | "suspended"
+// suspended = temporarily restricted; ESTOP still accepted, commands blocked
+// revoked   = permanent; all commands blocked; ESTOP still accepted
+// active    = normal operation`,
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/robots/:rrn/revoke',
+    summary: 'Revoke a robot (registry admin only)',
+    description: 'Marks a robot as revoked or suspended. Requires registry admin or verified owner JWT (role: creator). On success, the registry broadcasts a ROBOT_REVOCATION (MessageType 19) message to all connected peers so they can invalidate cached consent and public key material. ESTOP commands from revoked robots are still accepted by peers; RESUME commands are rejected.',
+    auth: 'Bearer JWT — role: creator or registry admin',
+    params: [
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number to revoke' },
+      { name: 'status', type: 'string', required: true, desc: '"revoked" or "suspended"' },
+      { name: 'reason', type: 'string', required: true, desc: 'Human-readable reason for revocation (max 500 chars)' },
+      { name: 'authority', type: 'string', required: false, desc: 'Issuing authority identifier (defaults to authenticated JWT sub)' },
+    ],
+    example: `// Request body:
+{
+  "status": "revoked",
+  "reason": "Stolen — private key believed compromised after device loss on 2026-03-15",
+  "authority": "craigm26 (owner)"
+}
+
+// Response:
+{
+  "rrn": "RRN-000000000001",
+  "status": "revoked",
+  "revoked_at": "2026-03-16T20:05:00Z",
+  "reason": "Stolen — private key believed compromised after device loss on 2026-03-15",
+  "authority": "craigm26 (owner)",
+  "broadcast_sent": true,
+  "broadcast_message_type": 19
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/robots/:rrn/keys',
+    summary: 'List public keys for a robot (JWKS)',
+    description: 'Returns the JSON Web Key Set (JWKS, RFC 7517) for all signing keys associated with this robot — current and historical. Used for delegation chain verification (GAP-01), offline operation key caching (GAP-06), and audit trail signature verification (GAP-21). Keys include validity windows; expired keys are retained for replay_window_s × 2 to allow in-flight validation.',
+    auth: 'None (public)',
+    params: [
+      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number' },
+      { name: 'active_only', type: 'boolean', required: false, desc: 'If true, returns only non-expired, non-revoked keys (default: false)' },
+    ],
+    example: `{
+  "rrn": "RRN-000000000001",
+  "keys": [
+    {
+      "key_id": "kid-2026-03-001",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "use": "sig",
+      "alg": "EdDSA",
+      "x": "base64url-encoded-public-key",
+      "valid_from": "2026-03-01T00:00:00Z",
+      "valid_until": "2027-03-01T00:00:00Z",
+      "revoked_at": null,
+      "is_current": true
+    },
+    {
+      "key_id": "kid-2026-01-001",
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "use": "sig",
+      "alg": "EdDSA",
+      "x": "base64url-encoded-old-key",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-03-01T00:00:00Z",
+      "revoked_at": null,
+      "is_current": false
+    }
+  ],
+  "current_key_id": "kid-2026-03-001",
+  "jwks_uri": "https://api.robotregistryfoundation.org/api/v1/robots/RRN-000000000001/keys"
+}`,
+  },
+];
+
+const methodColors: Record<string, string> = {
+  GET: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  POST: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  PUT: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  DELETE: 'bg-red-500/10 text-red-400 border-red-500/30',
+};
+---
+
+<BaseLayout
+  title="Revocation & Key API"
+  description="RCAN v1.5 Robot Identity Revocation and Key Management API — revocation status, revoke endpoint, public key JWKS."
+>
+
+  <div class="pt-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <a href="/api/" class="hover:text-accent transition-colors">API</a>
+      <span>/</span>
+      <span class="text-text">Revocation</span>
+    </div>
+
+    <div class="max-w-3xl mx-auto">
+      <!-- Page header -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-3">
+          <h1 class="font-display text-4xl md:text-5xl font-semibold text-text">Revocation & Key API</h1>
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-violet-500/10 text-violet-400 border border-violet-500/30 flex-shrink-0">
+            RCAN v1.5
+          </span>
+        </div>
+        <p class="text-lg text-text-muted leading-relaxed">
+          Robot identity revocation and public key management endpoints.
+          Defined by <strong class="text-text">GAP-02</strong> (Robot Identity Revocation, §13)
+          and <strong class="text-text">GAP-09</strong> (Key Lifecycle, §8.6) of the RCAN v1.5 spec.
+        </p>
+      </div>
+
+      <!-- Spec summary card -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        {[
+          { label: 'Spec', value: 'RCAN v1.5 §13 + §8.6' },
+          { label: 'MessageType 19', value: 'ROBOT_REVOCATION broadcast' },
+          { label: 'Cache TTL', value: '1h (active), 5m (revoked)' },
+        ].map(item => (
+          <div class="p-3.5 bg-bg-card border border-border rounded-lg">
+            <div class="text-xs text-text-faint font-mono mb-1">{item.label}</div>
+            <div class="text-xs text-text font-mono">{item.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Safety invariants callout -->
+      <div class="flex gap-3 p-4 border border-red-500/30 bg-red-500/8 rounded-lg mb-10 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400 flex-shrink-0 mt-0.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <div class="text-red-300/80 space-y-1">
+          <p class="font-semibold text-red-300">Protocol 66 Safety Invariants</p>
+          <ul class="space-y-0.5 text-xs list-disc list-inside">
+            <li>ESTOP from a revoked robot is <strong>always accepted</strong> by peers — revocation never blocks safety halt.</li>
+            <li>RESUME from a revoked robot is <strong>always rejected</strong> — the robot cannot clear its own emergency stop.</li>
+            <li>Revocation check occurs <strong>after</strong> replay check but <strong>before</strong> command execution.</li>
+            <li>Offline robots may continue operation for up to <code class="bg-red-900/30 px-1 rounded">max_revocation_staleness_s</code> (default 3600s) before quarantine.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Endpoints -->
+      <div class="space-y-8">
+        {revocationEndpoints.map(endpoint => (
+          <div class="border border-border rounded-xl overflow-hidden">
+            <!-- Endpoint header -->
+            <div class="flex items-center gap-3 p-5 bg-bg-card border-b border-border">
+              <span class:list={["text-xs font-mono font-bold px-2.5 py-1 rounded border flex-shrink-0", methodColors[endpoint.method] ?? '']}>
+                {endpoint.method}
+              </span>
+              <code class="text-sm font-mono text-text flex-1">{endpoint.path}</code>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 flex-shrink-0">
+                v1.5
+              </span>
+            </div>
+
+            <div class="p-5 space-y-5">
+              <div>
+                <h3 class="font-semibold text-text mb-1">{endpoint.summary}</h3>
+                <p class="text-sm text-text-muted">{endpoint.description}</p>
+              </div>
+
+              <!-- Auth requirement -->
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-text-faint font-mono uppercase tracking-wider">Auth:</span>
+                <code class:list={[
+                  "px-2 py-0.5 rounded font-mono",
+                  endpoint.auth === 'None (public)'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/30',
+                ]}>
+                  {endpoint.auth}
+                </code>
+              </div>
+
+              {endpoint.params.length > 0 && (
+                <div>
+                  <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-3">Parameters</h4>
+                  <div class="space-y-2">
+                    {endpoint.params.map(param => (
+                      <div class="flex gap-3 text-xs">
+                        <code class="text-accent font-mono w-28 flex-shrink-0">{param.name}</code>
+                        <span class="text-text-faint w-16 flex-shrink-0">{param.type}</span>
+                        <span class:list={["w-16 flex-shrink-0 font-mono", param.required ? 'text-red-400' : 'text-text-faint']}>
+                          {param.required ? 'required' : 'optional'}
+                        </span>
+                        <span class="text-text-muted">{param.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-2">Example</h4>
+                <pre class="text-xs font-mono bg-bg rounded-lg p-4 overflow-x-auto text-text-muted border border-border leading-relaxed">{endpoint.example}</pre>
+              </div>
+
+              {endpoint.errorExample && (
+                <div>
+                  <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-2">Status Values / Notes</h4>
+                  <pre class="text-xs font-mono bg-bg rounded-lg p-4 overflow-x-auto text-text-muted border border-border leading-relaxed">{endpoint.errorExample}</pre>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- ROBOT_REVOCATION broadcast note -->
+      <div class="mt-12 p-5 bg-bg-card border border-border rounded-xl">
+        <h3 class="font-semibold text-text mb-2 text-sm flex items-center gap-2">
+          <span class="font-mono text-xs px-2 py-0.5 bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded">MessageType 19</span>
+          ROBOT_REVOCATION Broadcast
+        </h3>
+        <p class="text-sm text-text-muted leading-relaxed mb-3">
+          When a robot is revoked via <code class="text-accent">POST /api/v1/robots/:rrn/revoke</code>, the registry
+          broadcasts a <code class="text-accent">ROBOT_REVOCATION</code> message (MessageType 19, RCAN v1.5 §13.4)
+          to all registered peers. Receiving robots <strong class="text-text">MUST</strong>:
+        </p>
+        <ul class="text-sm text-text-muted space-y-1 list-disc list-inside ml-2">
+          <li>Invalidate all cached consent grants from the revoked RRN</li>
+          <li>Invalidate the revoked robot's cached public key material</li>
+          <li>Reject all future commands originating from the revoked RRN (except ESTOP)</li>
+          <li>Log a <code class="text-accent">ROBOT_REVOKED</code> audit event with the revocation timestamp</li>
+        </ul>
+        <div class="mt-4">
+          <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-2">ROBOT_REVOCATION Wire Format</h4>
+          <pre class="text-xs font-mono bg-bg rounded-lg p-4 overflow-x-auto text-text-muted border border-border leading-relaxed">{`{
+  "msg_type": 19,
+  "rcan_version": "1.5",
+  "msg_id": "uuid-v4",
+  "timestamp": "2026-03-16T20:05:00Z",
+  "sender_type": "service",
+  "service_id": "rrf-registry",
+  "payload": {
+    "revoked_rrn": "RRN-000000000001",
+    "status": "revoked",
+    "revoked_at": "2026-03-16T20:05:00Z",
+    "reason": "Stolen — private key believed compromised",
+    "authority": "craigm26 (owner)"
+  }
+}`}</pre>
+        </div>
+      </div>
+
+      <!-- Related endpoints -->
+      <div class="mt-8 p-5 bg-bg-card border border-border rounded-xl">
+        <h3 class="font-semibold text-text mb-3 text-sm">Related API Endpoints</h3>
+        <div class="space-y-2 text-sm">
+          {[
+            { path: '/api/v1/robots/:rrn', desc: 'Full robot record (includes revocation_status, key_id)' },
+            { path: '/api/v1/robots/:rrn/keys', desc: 'JWKS for delegation chain verification (this page)' },
+            { path: '/api/v1/public-keys', desc: 'Registry-wide signing keys for offline caching (GAP-06)' },
+          ].map(item => (
+            <div class="flex gap-3">
+              <code class="text-accent font-mono text-xs w-56 flex-shrink-0">{item.path}</code>
+              <span class="text-text-muted text-xs">{item.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Back to API index -->
+      <div class="mt-8">
+        <a href="/api/" class="text-sm text-accent hover:underline flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to API Reference
+        </a>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>

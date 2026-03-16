@@ -124,6 +124,95 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
       </div>
     </div>
 
+    <!-- RCAN v1.5 Status (shown only when v1.5 fields are present) -->
+    {(robot.rcan_version || robot.revocation_status || robot.supports_qos_2 !== undefined) && (
+      <div class="bg-bg-card border border-border rounded-xl p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="text-xs font-semibold uppercase tracking-widest font-mono text-text-faint">RCAN Protocol Status</h2>
+          {robot.rcan_version && (
+            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-violet-500/10 text-violet-400 border border-violet-500/20">
+              RCAN v{robot.rcan_version}
+            </span>
+          )}
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <!-- Revocation status -->
+          <div class="col-span-2 md:col-span-1">
+            <dt class="text-xs text-text-faint font-mono mb-1">Revocation Status</dt>
+            <dd>
+              {(!robot.revocation_status || robot.revocation_status === 'active') && (
+                <span class="inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  active
+                </span>
+              )}
+              {robot.revocation_status === 'revoked' && (
+                <span class="inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                  revoked
+                </span>
+              )}
+              {robot.revocation_status === 'suspended' && (
+                <span class="inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  suspended
+                </span>
+              )}
+            </dd>
+          </div>
+
+          <!-- Capability badges -->
+          <div>
+            <dt class="text-xs text-text-faint font-mono mb-1">Capabilities</dt>
+            <dd class="flex flex-wrap gap-1.5">
+              {robot.supports_qos_2 && (
+                <span class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono"
+                      title="Supports QoS level 2 (exactly-once) for ESTOP delivery">
+                  ESTOP QoS ✓
+                </span>
+              )}
+              {robot.supports_delegation && (
+                <span class="text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono"
+                      title="Supports command delegation chains (GAP-01)">
+                  Delegation
+                </span>
+              )}
+              {robot.offline_capable && (
+                <span class="text-xs px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 font-mono"
+                      title="Can operate offline with cached credentials (GAP-06)">
+                  Offline Mode
+                </span>
+              )}
+              {!robot.supports_qos_2 && !robot.supports_delegation && !robot.offline_capable && (
+                <span class="text-xs text-text-faint font-mono">v1.4 (no v1.5 extensions)</span>
+              )}
+            </dd>
+          </div>
+
+          <!-- Key ID -->
+          {robot.key_id && (
+            <div>
+              <dt class="text-xs text-text-faint font-mono mb-1">Signing Key ID</dt>
+              <dd class="text-xs text-accent font-mono break-all">{robot.key_id}</dd>
+            </div>
+          )}
+        </div>
+
+        {robot.key_id && (
+          <div class="mt-4 pt-4 border-t border-border">
+            <a
+              href={`/api/v1/robots/${robot.rrn}/keys`}
+              class="text-xs text-accent hover:underline font-mono flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              View JWKS (public key history) →
+            </a>
+          </div>
+        )}
+      </div>
+    )}
+
     <!-- Verification + QR -->
     <div class="bg-bg-card border border-border rounded-xl p-6 mb-6">
       <h2 class="text-xs font-semibold uppercase tracking-widest font-mono text-text-faint mb-4">Verification</h2>

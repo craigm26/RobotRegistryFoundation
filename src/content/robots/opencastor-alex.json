@@ -1,16 +1,17 @@
 {
   "rrn": "RRN-000000000005",
+  "rrn_uri": "rrn://craigm26/robot/opencastor-rpi5-ackermann/alex-001",
   "name": "OpenCastor Alex",
   "manufacturer": "craigm26",
   "model": "opencastor-rpi5-ackermann",
-  "description": "Autonomous Ackermann robot \u2014 Raspberry Pi 5 (16GB) + OAK-D RGB+Depth camera. OpenCastor runtime v2026.3.13.11. Primary host for OAK-D perception training datasets.",
+  "description": "Autonomous Ackermann robot — Raspberry Pi 5 (16GB) + OAK-D RGB+Depth camera. OpenCastor runtime v2026.3.13.11. Primary host for OAK-D perception training datasets. RCAN v1.5 compliant.",
   "status": "active",
   "production_year": 2026,
   "specs": {
     "compute": "Raspberry Pi 5 16GB",
     "sensors": [
       "OAK-D RGB+Depth camera",
-      "Depth 3.7\u20134.2m range"
+      "Depth 3.7–4.2m range"
     ],
     "actuators": [
       "Ackermann steering",
@@ -20,18 +21,24 @@
   },
   "verification_status": "verified",
   "ruri": "rcan://alex.local:8000/alex",
+  "rcan_version": "1.5",
+  "opencastor_version": "2026.3.13.12",
+  "revocation_status": "active",
+  "key_id": "kid-alex-2026-03-001",
+  "key_history": [],
+  "supports_qos_2": true,
+  "supports_delegation": true,
+  "offline_capable": true,
   "tags": [
     "rpi5",
     "hailo",
     "oak-d",
     "rcan-compliant",
-    "rcan-verified"
+    "rcan-verified",
+    "rcan-v1.5"
   ],
   "submitted_by": "craigm26",
   "submitted_date": "2026-03-12",
-  "rrn_uri": "rrn://craigm26/robot/opencastor-rpi5-ackermann/alex-001",
-  "opencastor_version": "2026.3.13.12",
-  "rcan_version": "1.4",
   "registered_at": "2026-03-13T14:41:00Z",
   "hardware_safety": {
     "physical_estop": false,
