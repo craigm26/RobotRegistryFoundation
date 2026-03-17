@@ -22,7 +22,7 @@
   "verification_status": "community",
   "ruri": "rcan://robot.local:8000/bob",
   "rcan_version": "1.6",
-  "opencastor_version": "2026.4.1.0",
+  "opencastor_version": "2026.3.17.1",
   "revocation_status": "active",
   "key_id": "kid-bob-2026-03-001",
   "key_history": [],

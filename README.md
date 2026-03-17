@@ -17,7 +17,7 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 ## How to Register a Robot
 
-1. Install and configure OpenCastor: `pip install opencastor==2026.4.1.0 && castor setup`
+1. Install and configure OpenCastor: `pip install opencastor==2026.3.17.1 && castor setup`
 2. The setup wizard assigns an RRN and registers it automatically
 3. Or register directly at [rcan.dev/registry](https://rcan.dev/registry)
 
@@ -32,7 +32,7 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 | `hardware_safety` | object | P66 manifest — ESTOP config, LoA requirements |
 | `rcan_version` | string | Highest RCAN spec version supported |
 | `verification_tier` | string | `community` / `verified` / `partner` / `certified` |
-| `runtime` | string | e.g. `opencastor/2026.4.1.0` |
+| `runtime` | string | e.g. `opencastor/2026.3.17.1` |
 | `registered_at` | ISO 8601 | Registration timestamp |
 | `revoked` | boolean | Whether this robot's identity is revoked |
 
@@ -53,8 +53,8 @@ Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoun
 
 | RRN | Name | Runtime | Hardware |
 |---|---|---|---|
-| RRN-000000000001 | Bob | OpenCastor v2026.4.1.0 | Raspberry Pi 5, Gemini 2.5 Flash |
-| RRN-000000000005 | Alex | OpenCastor v2026.4.1.0 | Raspberry Pi 5 + SO-ARM101 5-DOF arm |
+| RRN-000000000001 | Bob | OpenCastor v2026.3.17.1 | Raspberry Pi 5, Gemini 2.5 Flash |
+| RRN-000000000005 | Alex | OpenCastor v2026.3.17.1 | Raspberry Pi 5 + SO-ARM101 5-DOF arm |
 
 Browse all: [robotregistryfoundation.org/registry/](https://robotregistryfoundation.org/registry/)
 
@@ -93,7 +93,7 @@ npm run build    # production → dist/
 |---|---|---|
 | **RRF** (this) | v1.6.0 | Global robot identity registry |
 | [RCAN Protocol](https://rcan.dev/spec/) | v1.6.0 | Open robot communication standard |
-| [OpenCastor](https://github.com/craigm26/OpenCastor) | v2026.4.1.0 | Robot runtime, RCAN reference implementation |
+| [OpenCastor](https://github.com/craigm26/OpenCastor) | v2026.3.17.1 | Robot runtime, RCAN reference implementation |
 | [rcan-py](https://github.com/continuonai/rcan-py) | v0.6.0 | Python RCAN SDK |
 | [rcan-ts](https://github.com/continuonai/rcan-ts) | v0.6.0 | TypeScript RCAN SDK |
 | [Fleet UI](https://app.opencastor.com) | live | Web fleet dashboard |

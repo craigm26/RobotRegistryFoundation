@@ -35,7 +35,7 @@ All new fields are added to the `robots/{rrn}` collection with backward-compatib
 
 ### rcan_version Update
 
-Set `rcan_version` to `"1.6"` for robots running OpenCastor v2026.4.1.0 or later.
+Set `rcan_version` to `"1.6"` for robots running OpenCastor v2026.3.17.1 or later.
 
 ---
 
