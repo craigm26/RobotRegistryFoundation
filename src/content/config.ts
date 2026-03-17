@@ -56,6 +56,18 @@ const robotsCollection = defineCollection({
     supports_delegation: z.boolean().default(false),
     /** Whether this robot can operate in offline mode with cached credentials */
     offline_capable: z.boolean().default(false),
+
+    // ── RCAN v1.6 fields (GAP-14, GAP-16, GAP-17, GAP-18) ──────────────────
+    /** Supported RCAN transport encodings, e.g. ["http", "compact"] (GAP-17) */
+    supported_transports: z.array(z.string()).default(["http"]),
+    /** Minimum Level of Assurance required for control-scope commands (GAP-16) */
+    min_loa_for_control: z.number().default(1),
+    /** Whether LoA enforcement is active (false = log-only, true = enforce) (GAP-16) */
+    loa_enforcement: z.boolean().default(false),
+    /** Whether this robot accepts multi-modal (image/audio) commands (GAP-18) */
+    multimodal_enabled: z.boolean().default(true),
+    /** Registry tier this robot is registered under: root | authoritative | community (GAP-14) */
+    registry_tier: z.string().default("community"),
   }),
 });
 
