@@ -185,7 +185,7 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
                 </span>
               )}
               {!robot.supports_qos_2 && !robot.supports_delegation && !robot.offline_capable && (
-                <span class="text-xs text-text-faint font-mono">v1.4 (no v1.5 extensions)</span>
+                <span class="text-xs text-text-faint font-mono">{robot.rcan_version ? `v${robot.rcan_version}` : 'v1.6'}</span>
               )}
             </dd>
           </div>

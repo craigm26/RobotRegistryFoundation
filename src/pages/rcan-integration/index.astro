@@ -12,7 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <div class="max-w-3xl">
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-        RCAN v1.4 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
+        RCAN v1.6 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
       </div>
       <h1 class="font-display text-4xl md:text-5xl font-semibold text-text leading-tight tracking-tight mb-5">
         How the RRF and RCAN<br class="hidden md:block" /> Work Together
@@ -48,8 +48,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Any language or runtime</li>
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Ed25519 message signing</li>
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Hierarchical URIs (RURIs)</li>
-            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Current spec: <span class="font-mono text-xs">v1.4</span></li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Current spec: <span class="font-mono text-xs">v1.6</span></li>
           </ul>
+          <div class="mt-4 pt-4 border-t border-border/60">
+            <p class="text-xs text-text-faint font-mono uppercase tracking-widest mb-2">v1.6 registry-relevant features</p>
+            <ul class="space-y-1 text-xs text-text-muted">
+              <li class="flex gap-2"><span class="text-accent/70">→</span> Federated consent protocol (FEDERATION_SYNC, cross-registry JWT trust)</li>
+              <li class="flex gap-2"><span class="text-accent/70">→</span> Human identity LoA 1/2/3 (FIDO2, <code class="font-mono text-[10px]">min_loa_for_control</code>)</li>
+              <li class="flex gap-2"><span class="text-accent/70">→</span> Robot identity revocation API (<code class="font-mono text-[10px]">revocation_status</code>)</li>
+              <li class="flex gap-2"><span class="text-accent/70">→</span> Bandwidth-constrained transports (LoRa, BLE, CBOR)</li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -306,7 +315,7 @@ rcan_robot_uptime_ms{ruri="rcan://robot.local"} 3600000`}</pre>
           <div class="font-mono text-xs text-accent uppercase tracking-widest mb-2">RCAN Reference Implementation</div>
           <h3 class="font-display text-xl font-semibold text-text mb-2">OpenCastor</h3>
           <p class="text-sm text-text-muted leading-relaxed">
-            Full RCAN v1.4 conformance · RBAC + capability leases · Virtual FS with safety kernel · RRF <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21</a> registry integration · Runs on Raspberry Pi, x86, and more.
+            Full RCAN v1.6 conformance · RBAC + capability leases · Virtual FS with safety kernel · RRF <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21</a> registry integration · Runs on Raspberry Pi, x86, and more.
           </p>
         </div>
         <div class="flex flex-col gap-3 flex-shrink-0">
