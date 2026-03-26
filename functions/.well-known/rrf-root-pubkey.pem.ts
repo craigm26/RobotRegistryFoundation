@@ -16,8 +16,14 @@ export interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
-  // Prefer KV (runtime-rotatable), fall back to env var (set at deploy time)
-  const pem = (await env.RRF_KV.get("rrf:root:pubkey", "text")) ?? env.RRF_ROOT_PUBKEY ?? null;
+  // Prefer KV (runtime-rotatable), fall back to env var (base64 DER, reconstructed to PEM)
+  let pem = await env.RRF_KV.get("rrf:root:pubkey", "text");
+
+  if (!pem && env.RRF_ROOT_PUBKEY) {
+    // RRF_ROOT_PUBKEY stored as standard base64 DER — reconstruct PEM
+    const b64 = env.RRF_ROOT_PUBKEY.trim();
+    pem = `-----BEGIN PUBLIC KEY-----\n${b64}\n-----END PUBLIC KEY-----\n`;
+  }
 
   if (!pem) {
     return new Response("RRF root key not provisioned", {
