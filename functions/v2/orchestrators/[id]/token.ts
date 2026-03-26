@@ -88,9 +88,10 @@ async function buildSignedJWT(
 
   let sig: string;
   if (signingKey) {
+    // Key is stored as base64-encoded PKCS8 DER
     const keyBytes = Uint8Array.from(atob(signingKey), (c) => c.charCodeAt(0));
     const key = await crypto.subtle.importKey(
-      "raw", keyBytes, { name: "Ed25519" }, false, ["sign"],
+      "pkcs8", keyBytes, { name: "Ed25519" }, false, ["sign"],
     );
     const encoder = new TextEncoder();
     const sigBuffer = await crypto.subtle.sign("Ed25519", key, encoder.encode(signingInput));

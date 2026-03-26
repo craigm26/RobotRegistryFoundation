@@ -49,6 +49,17 @@ async function handleGet(env: Env, rrn: string): Promise<Response> {
 }
 
 async function handlePost(request: Request, env: Env, rrn: string): Promise<Response> {
+  try {
+    return await _handlePost(request, env, rrn);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: "Internal error", detail: msg }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+async function _handlePost(request: Request, env: Env, rrn: string): Promise<Response> {
   const authHeader = request.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Authorization required" }), {
@@ -127,9 +138,10 @@ async function signWithRRFKey(data: string, signingKey?: string): Promise<string
   }
 
   // Production: Ed25519 signing via Web Crypto
+  // Key is stored as base64-encoded PKCS8 DER
   const keyBytes = Uint8Array.from(atob(signingKey), (c) => c.charCodeAt(0));
   const key = await crypto.subtle.importKey(
-    "raw", keyBytes,
+    "pkcs8", keyBytes,
     { name: "Ed25519" },
     false, ["sign"],
   );
