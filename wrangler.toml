@@ -1,3 +1,15 @@
 name = "robot-registry-foundation"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
+
+# KV namespace for robot registry, firmware manifests, SBOMs, orchestrators
+# Create with: wrangler kv:namespace create RRF_KV
+# Then replace <KV_NAMESPACE_ID> with the output id
+[[kv_namespaces]]
+binding = "RRF_KV"
+id      = "<RRF_KV_NAMESPACE_ID>"  # TODO: replace after `wrangler kv:namespace create RRF_KV`
+
+# Production signing key (Ed25519, base64)
+# Set with: wrangler secret put RRF_SIGNING_KEY
+# [vars]
+# RRF_SIGNING_KEY = ""  # set via `wrangler secret put` — never commit to repo
