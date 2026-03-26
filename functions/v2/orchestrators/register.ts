@@ -12,7 +12,7 @@
  * Key: orchestrator:{id}  →  OrchestratorRecord JSON
  */
 
-import { nanoid } from "https://cdn.jsdelivr.net/npm/nanoid@5/nanoid.js";
+import { nanoid } from "nanoid";
 
 export interface Env {
   RRF_KV: KVNamespace;
