@@ -10,22 +10,19 @@
 
 export interface Env {
   RRF_KV: KVNamespace;
+  RRF_ROOT_PUBKEY?: string;  // env var fallback for bootstrap
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
-  const pem = await env.RRF_KV.get("rrf:root:pubkey", "text");
+  // Prefer KV (runtime-rotatable), fall back to env var (set at deploy time)
+  const pem = (await env.RRF_KV.get("rrf:root:pubkey", "text")) ?? env.RRF_ROOT_PUBKEY ?? null;
 
   if (!pem) {
-    // Return placeholder during bootstrap (before key is provisioned)
-    const placeholder =
-      "-----BEGIN PUBLIC KEY-----\n" +
-      "# RRF root Ed25519 key not yet provisioned.\n" +
-      "# Run: wrangler kv:key put --binding RRF_KV rrf:root:pubkey '<pem>'\n" +
-      "-----END PUBLIC KEY-----\n";
-    return new Response(placeholder, {
-      headers: { "Content-Type": "application/x-pem-file", "Cache-Control": "no-cache" },
+    return new Response("RRF root key not provisioned", {
+      status: 503,
+      headers: { "Content-Type": "text/plain", "Cache-Control": "no-cache" },
     });
   }
 
