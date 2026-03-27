@@ -150,7 +150,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const icon = TYPE_ICON[entry.entity_type] ?? '📦';
     const sub = summaryLine(entry);
     const date = new Date(entry.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const detailUrl = `/registry/${entry.entity_type}/${entry.id}/`;
+    const detailUrl = `/registry/entity/?type=${entry.entity_type}&id=${entry.id}`;
 
     return `
       <div class="entity-card bg-bg-card border border-border rounded-xl p-5 transition-colors"
