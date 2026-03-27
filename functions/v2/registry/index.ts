@@ -97,13 +97,17 @@ function summarize(record: Record<string, unknown>, type: RegistryEntry["entity_
       summary = { type: record.type, manufacturer: record.manufacturer,
                   parent_rrn: record.parent_rrn };
       break;
-    case "model":
-      name = `${record.name} v${record.version}`;
+    case "model": {
+      const ver = String(record.version ?? "");
+      name = `${record.name} ${ver.startsWith("v") ? ver : "v" + ver}`;
+      }
       summary = { model_family: record.model_family, provider: record.provider,
                   parameter_count_b: record.parameter_count_b, quantization: record.quantization };
       break;
-    case "harness":
-      name = `${record.name} v${record.version}`;
+    case "harness": {
+      const ver2 = String(record.version ?? "");
+      name = `${record.name} ${ver2.startsWith("v") ? ver2 : "v" + ver2}`;
+      }
       summary = { harness_type: record.harness_type, rcan_version: record.rcan_version,
                   open_source: record.open_source };
       break;
