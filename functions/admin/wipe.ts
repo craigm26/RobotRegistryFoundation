@@ -12,7 +12,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const deleted: string[] = [];
-  for (const prefix of ["robot:", "component:", "model:", "harness:", "counter:"]) {
+  // Explicitly delete counters by name (KV list has eventual consistency issues)
+  for (const counterKey of ["counter:rrn", "counter:rcn", "counter:rmn", "counter:rhn"]) {
+    await env.RRF_KV.delete(counterKey);
+    deleted.push(counterKey + " (explicit)");
+  }
+
+  // List-based deletion for entity records
+  for (const prefix of ["robot:", "component:", "model:", "harness:"]) {
     let cursor: string | undefined;
     do {
       const list: KVNamespaceListResult<unknown, string> = await env.RRF_KV.list({
