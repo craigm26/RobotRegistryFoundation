@@ -99,14 +99,16 @@ function summarize(record: Record<string, unknown>, type: RegistryEntry["entity_
       break;
     case "model": {
       const ver = String(record.version ?? "");
-      name = `${record.name} ${ver.startsWith("v") ? ver : "v" + ver}`;
+      // Prepend "v" only if version starts with a digit (e.g. "0.1.0" → "v0.1.0")
+      // If it already starts with "v" or is a named identifier (e.g. "claude-opus-4-6"), use as-is
+      name = `${record.name} ${/^[0-9]/.test(ver) ? "v" + ver : ver}`;
       }
       summary = { model_family: record.model_family, provider: record.provider,
                   parameter_count_b: record.parameter_count_b, quantization: record.quantization };
       break;
     case "harness": {
       const ver2 = String(record.version ?? "");
-      name = `${record.name} ${ver2.startsWith("v") ? ver2 : "v" + ver2}`;
+      name = `${record.name} ${/^[0-9]/.test(ver2) ? "v" + ver2 : ver2}`;
       }
       summary = { harness_type: record.harness_type, rcan_version: record.rcan_version,
                   open_source: record.open_source };
