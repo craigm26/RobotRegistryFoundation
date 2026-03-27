@@ -244,15 +244,19 @@ const isDevelopersActive = developerLinks.some(link => isActive(link.href));
       if (!response.ok) throw new Error('Failed to fetch stats');
       
       const data = await response.json();
-      
-      // Map API response to fallback zeros if undefined
-      const robots = data.robots || data.robotCount || data.robotsCount || 0;
-      const components = data.components || data.componentCount || data.componentsCount || 0;
-      const models = data.models || data.modelCount || data.modelsCount || 0;
-      const harnesses = data.harnesses || data.harnessCount || data.harnessesCount || 0;
-      
+      // /v2/registry returns { entity_types_count: { robot, component, model, harness } }
+      const c = data.entity_types_count ?? {};
+      const robots     = c.robot     ?? 0;
+      const components = c.component ?? 0;
+      const models     = c.model     ?? 0;
+      const harnesses  = c.harness   ?? 0;
+      const total = robots + components + models + harnesses;
       statsEl.classList.remove('animate-pulse');
-      statsEl.textContent = `${robots.toLocaleString()} robots · ${components.toLocaleString()} components · ${models.toLocaleString()} models · ${harnesses.toLocaleString()} harnesses registered`;
+      if (total === 0) {
+        statsEl.textContent = 'Registry open — be the first to register';
+      } else {
+        statsEl.textContent = `${robots} robot${robots!==1?'s':''} · ${components} component${components!==1?'s':''} · ${models} AI model${models!==1?'s':''} · ${harnesses} harness${harnesses!==1?'es':''} registered`;
+      }
     } catch (error) {
       statsEl.classList.remove('animate-pulse');
       statsEl.textContent = 'Registry statistics temporarily unavailable';

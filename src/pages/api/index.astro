@@ -70,7 +70,7 @@ const endpoints = [
       { name: 'description', type: 'string', required: true, desc: 'Robot description' },
       { name: 'contact_email', type: 'string', required: true, desc: 'Contact for RRN delivery' },
       { name: 'specs', type: 'object', required: false, desc: 'Technical specifications' },
-      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable (RCAN v2.2+). v1.6 robots may also include supported_transports, min_loa_for_control, and revocation_status fields in the record.' },
+      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable (RCAN v2.2). Supports RRN, RCN, RMN, RHN entity identifiers.' },
       { name: 'tags', type: 'array', required: false, desc: 'Classification tags' },
     ],
     example: `{
@@ -175,6 +175,18 @@ const methodColors: Record<string, string> = {
       </div>
 
       <!-- Endpoints -->
+    <!-- v2 API notice -->
+    <div class="mb-8 p-4 rounded-lg border border-accent/20 bg-accent/5">
+      <div class="flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <p class="text-sm font-medium text-accent mb-1">v2 API available — 4 entity types</p>
+          <p class="text-xs text-text-muted">The <code class="text-accent font-mono">/v2/</code> API supports all four RCAN entity types: <strong>RRN</strong> (robots), <strong>RCN</strong> (components), <strong>RMN</strong> (AI models), <strong>RHN</strong> (harnesses). Endpoints: <code class="text-accent font-mono text-xs break-all">POST /v2/robots/register · POST /v2/components/register · POST /v2/models/register · POST /v2/harnesses/register · GET /v2/registry</code></p>
+        </div>
+      </div>
+    </div>
+
+
       <div class="space-y-8">
         {endpoints.map(endpoint => (
           <div class="border border-border rounded-xl overflow-hidden">
@@ -317,5 +329,27 @@ const methodColors: Record<string, string> = {
       </div>
     </div>
   </div>
+
+
+<script>
+  // Copy-to-clipboard for code blocks
+  document.querySelectorAll('pre code').forEach(codeEl => {
+    const pre = codeEl.parentElement;
+    if (!pre) return;
+    pre.style.position = 'relative';
+    const btn = document.createElement('button');
+    btn.textContent = 'Copy';
+    btn.className = 'absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-mono bg-bg border border-border text-text-muted hover:text-accent hover:border-accent/50 transition-colors opacity-0 group-hover:opacity-100 copy-btn';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    pre.classList.add('group');
+    pre.appendChild(btn);
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(codeEl.textContent ?? '');
+      btn.textContent = 'Copied!';
+      btn.classList.add('text-emerald-400');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('text-emerald-400'); }, 1500);
+    });
+  });
+</script>
 
 </BaseLayout>

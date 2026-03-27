@@ -9,17 +9,63 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   <!-- Hero -->
   <section class="pt-16 pb-12 border-b border-border">
-    <div class="max-w-3xl">
-      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
-        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-        RCAN v2.2 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <!-- Left: copy -->
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+          RCAN v2.2 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
+        </div>
+        <h1 class="font-display text-4xl md:text-5xl font-semibold text-text leading-tight tracking-tight mb-5">
+          How the RRF and RCAN<br class="hidden md:block" /> Work Together
+        </h1>
+        <p class="text-lg text-text-muted leading-relaxed">
+          Two independent standards designed to work together. Use either alone or both together for globally identifiable, cryptographically verifiable robot identity.
+        </p>
       </div>
-      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text leading-tight tracking-tight mb-5">
-        How the RRF and RCAN<br class="hidden md:block" /> Work Together
-      </h1>
-      <p class="text-lg text-text-muted leading-relaxed max-w-2xl">
-        Two independent standards designed to compose. Use either alone or both together for globally identifiable, cryptographically verifiable robot identity.
-      </p>
+      <!-- Right: integration flow diagram -->
+      <div class="hidden md:flex flex-col gap-3 p-6 bg-bg-card rounded-xl border border-border font-mono text-sm">
+        <!-- Robot -->
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-bg border border-border">
+          <span class="text-xl">🤖</span>
+          <div>
+            <div class="text-text font-semibold text-xs">Robot</div>
+            <div class="text-text-faint text-xs">e.g. OpenCastor Bob</div>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1 pl-7">
+          <!-- RRF branch -->
+          <div class="flex items-start gap-2">
+            <div class="flex flex-col items-center mt-1">
+              <div class="w-px h-3 bg-accent/40"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
+            </div>
+            <div class="flex-1 text-xs text-text-muted">Registers at RRF → gets <span class="text-accent font-semibold">RRN-000000000001</span></div>
+          </div>
+          <!-- RCAN branch -->
+          <div class="flex items-start gap-2 mt-1">
+            <div class="flex flex-col items-center mt-1">
+              <div class="w-px h-3 bg-purple-400/40"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+            </div>
+            <div class="flex-1 text-xs text-text-muted">Signs messages with <span class="text-purple-400 font-semibold">ML-DSA-65</span> key</div>
+          </div>
+          <!-- Combined -->
+          <div class="flex items-start gap-2 mt-1">
+            <div class="flex flex-col items-center mt-1">
+              <div class="w-px h-3 bg-emerald-400/40"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+            </div>
+            <div class="flex-1 text-xs text-text-muted">Verifier: RRN → fetches pubkey from RRF → validates RCAN message ✓</div>
+          </div>
+        </div>
+        <!-- Result -->
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 mt-1">
+          <span class="text-emerald-400 text-lg">✓</span>
+          <div class="text-xs text-emerald-400 font-semibold">Globally identifiable + cryptographically verified</div>
+        </div>
+        <div class="text-xs text-text-faint text-center mt-1">RRF (identity) + RCAN (signing) working together</div>
+      </div>
     </div>
   </section>
 
