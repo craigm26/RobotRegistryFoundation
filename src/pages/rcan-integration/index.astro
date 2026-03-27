@@ -12,7 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <div class="max-w-3xl">
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-        RCAN v1.6 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
+        RCAN v2.2 · <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">§21</a> Stable
       </div>
       <h1 class="font-display text-4xl md:text-5xl font-semibold text-text leading-tight tracking-tight mb-5">
         How the RRF and RCAN<br class="hidden md:block" /> Work Together
@@ -46,12 +46,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <ul class="space-y-2 text-sm text-text-muted leading-relaxed">
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Defines how robots identify, sign, and prove behavior</li>
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Any language or runtime</li>
-            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Ed25519 message signing</li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> ML-DSA-65 message signing (NIST FIPS 204)</li>
             <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Hierarchical URIs (RURIs)</li>
-            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Current spec: <span class="font-mono text-xs">v1.6</span></li>
+            <li class="flex gap-2"><span class="text-accent mt-0.5">→</span> Current spec: <span class="font-mono text-xs">v2.2</span> · 4 entity types (RRN/RCN/RMN/RHN)</li>
           </ul>
           <div class="mt-4 pt-4 border-t border-border/60">
-            <p class="text-xs text-text-faint font-mono uppercase tracking-widest mb-2">v1.6 registry-relevant features</p>
+            <p class="text-xs text-text-faint font-mono uppercase tracking-widest mb-2">v2.2 registry-relevant features</p>
             <ul class="space-y-1 text-xs text-text-muted">
               <li class="flex gap-2"><span class="text-accent/70">→</span> Federated consent protocol (FEDERATION_SYNC, cross-registry JWT trust)</li>
               <li class="flex gap-2"><span class="text-accent/70">→</span> Human identity LoA 1/2/3 (FIDO2, <code class="font-mono text-[10px]">min_loa_for_control</code>)</li>
@@ -130,7 +130,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           },
           {
             step: '3',
-            title: 'Robot signs nonce with Ed25519 key',
+            title: 'Robot signs nonce with ML-DSA-65 key',
             code: '# Same key used for RCAN message signing\nsignature = ed25519_sign(private_key, nonce)',
           },
           {
@@ -308,14 +308,14 @@ rcan_robot_uptime_ms{ruri="rcan://robot.local"} 3600000`}</pre>
     <div class="max-w-3xl">
       <h2 class="font-display text-2xl md:text-3xl font-semibold text-text mb-4">Reference Implementation</h2>
       <p class="text-text-muted text-sm leading-relaxed mb-8">
-        OpenCastor is the official RCAN reference implementation — an open-source Python framework for building RCAN-compliant robots. It implements the full RCAN stack including RBAC, Ed25519 signing, safety invariants, and §21 registry integration.
+        OpenCastor is the official RCAN reference implementation — an open-source Python framework for building RCAN-compliant robots. It implements the full RCAN stack including RBAC, ML-DSA-65 signing (NIST FIPS 204), safety invariants, and §21 registry integration.
       </p>
       <div class="bg-accent/5 border border-accent/20 rounded-xl p-7 flex flex-col sm:flex-row sm:items-center gap-6">
         <div class="flex-1">
           <div class="font-mono text-xs text-accent uppercase tracking-widest mb-2">RCAN Reference Implementation</div>
           <h3 class="font-display text-xl font-semibold text-text mb-2">OpenCastor</h3>
           <p class="text-sm text-text-muted leading-relaxed">
-            Full RCAN v1.6 conformance · RBAC + capability leases · Virtual FS with safety kernel · RRF <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21</a> registry integration · Runs on Raspberry Pi, x86, and more.
+            Full RCAN v2.2 conformance · ML-DSA-65 PQ signing · RBAC + capability leases · Virtual FS with safety kernel · 4-type registry (RRN/RCN/RMN/RHN) · RRF <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21</a> registry integration · Runs on Raspberry Pi, x86, and more.
           </p>
         </div>
         <div class="flex flex-col gap-3 flex-shrink-0">

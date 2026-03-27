@@ -1,8 +1,8 @@
 ---
 /**
- * Registry Tier API Specification — RCAN v1.6
+ * Registry Tier API Specification — RCAN v2.2
  *
- * Documents the registry federation endpoints introduced in RCAN v1.6 (GAP-14).
+ * Documents the registry federation endpoints introduced in RCAN v2.2 (GAP-14).
  *
  * Registry Tiers:
  *   root          — The authoritative root registry (registry.opencastor.com).
@@ -11,7 +11,7 @@
  *   community     — Self-hosted registries with no root verification.
  *
  * Trust Anchors:
- *   Each registry publishes an Ed25519 public key at /.well-known/rcan-trust-anchor.
+ *   Each registry publishes an ML-DSA-65 public key (NIST FIPS 204) at /.well-known/rcan-trust-anchor.
  *   The root registry signs authoritative registry trust anchors.
  *   DNSSEC verification proves domain ownership.
  */
@@ -25,7 +25,7 @@ const endpoints = [
     summary: 'List known registries with tier and key fingerprint',
     description:
       'Returns a list of registries known to this RRF instance. ' +
-      'Each entry includes the registry domain, trust tier, Ed25519 public key fingerprint, ' +
+      'Each entry includes the registry domain, trust tier, ML-DSA-65 public key (NIST FIPS 204) fingerprint, ' +
       'and DNSSEC verification status. Root and authoritative registries include signed trust anchors.',
     auth: false,
     params: [
@@ -84,7 +84,7 @@ const endpoints = [
     path: '/api/v1/registries/{domain}/trust-anchor',
     summary: 'Get public key PEM and DNSSEC verification status for a registry',
     description:
-      'Returns the Ed25519 public key in PEM format and DNSSEC verification status ' +
+      'Returns the ML-DSA-65 public key (NIST FIPS 204) in PEM format and DNSSEC verification status ' +
       'for the specified registry domain. ' +
       'For authoritative registries, the root registry signature is included. ' +
       'Robots can use this endpoint to populate their TrustAnchorCache (GAP-14).',
@@ -104,7 +104,7 @@ const endpoints = [
   "domain": "registry.opencastor.com",
   "tier": "root",
   "public_key_pem": "-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEA...\\n-----END PUBLIC KEY-----",
-  "key_algorithm": "Ed25519",
+  "key_algorithm": "ML-DSA-65",
   "key_id": "kid-root-2026-01-001",
   "key_valid_from": "2026-01-01T00:00:00Z",
   "key_expires_at": null,
@@ -124,7 +124,7 @@ const endpoints = [
     summary: 'Root registry: verify an authoritative registry',
     description:
       'Root-registry-only endpoint. Verifies a candidate authoritative registry by:\n' +
-      '1. Fetching its /.well-known/rcan-trust-anchor (Ed25519 public key)\n' +
+      '1. Fetching its /.well-known/rcan-trust-anchor (ML-DSA-65 public key (NIST FIPS 204))\n' +
       '2. Verifying DNSSEC for the domain\n' +
       '3. Signing the registry\'s public key with the root private key\n' +
       '4. Recording the verification in the registry database\n\n' +
@@ -172,14 +172,14 @@ const endpoints = [
 ---
 
 <BaseLayout
-  title="Registry Tier API — RCAN v1.6"
-  description="Federation API for RCAN v1.6 registry tiers, trust anchors, and cross-registry verification (GAP-14)"
+  title="Registry Tier API — RCAN v2.2"
+  description="Federation API for RCAN v2.2 registry tiers, trust anchors, and cross-registry verification (GAP-14)"
 >
   <main class="max-w-4xl mx-auto px-4 py-12">
     <div class="mb-10">
-      <h1 class="text-3xl font-bold mb-3">Registry Tier API <span class="text-sm font-normal text-gray-500 ml-2">RCAN v1.6</span></h1>
+      <h1 class="text-3xl font-bold mb-3">Registry Tier API <span class="text-sm font-normal text-gray-500 ml-2">RCAN v2.2</span></h1>
       <p class="text-gray-600 mb-4">
-        Federation endpoints for RCAN v1.6 registry trust hierarchy (GAP-14).
+        Federation endpoints for RCAN v2.2 registry trust hierarchy (GAP-14).
         Enables cross-registry command validation via signed trust anchors.
       </p>
 
@@ -193,9 +193,9 @@ const endpoints = [
       </div>
 
       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <h2 class="font-semibold text-yellow-800 mb-2">Status: Specification (v1.6)</h2>
+        <h2 class="font-semibold text-yellow-800 mb-2">Status: Specification (v2.2)</h2>
         <p class="text-sm text-yellow-700">
-          These endpoints are specified for RCAN v1.6. The root registry endpoint
+          These endpoints are specified for RCAN v2.2 The root registry endpoint
           (<code>POST /api/v1/registries/{'{domain}'}/verify</code>) is only active on
           <code>registry.opencastor.com</code>. Community RRF instances expose GET-only
           trust anchor lookups.

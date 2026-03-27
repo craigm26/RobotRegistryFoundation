@@ -70,7 +70,7 @@ const endpoints = [
       { name: 'description', type: 'string', required: true, desc: 'Robot description' },
       { name: 'contact_email', type: 'string', required: true, desc: 'Contact for RRN delivery' },
       { name: 'specs', type: 'object', required: false, desc: 'Technical specifications' },
-      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable (RCAN v1.3+). v1.6 robots may also include supported_transports, min_loa_for_control, and revocation_status fields in the record.' },
+      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable (RCAN v2.2+). v1.6 robots may also include supported_transports, min_loa_for_control, and revocation_status fields in the record.' },
       { name: 'tags', type: 'array', required: false, desc: 'Classification tags' },
     ],
     example: `{
