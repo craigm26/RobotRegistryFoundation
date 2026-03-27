@@ -43,8 +43,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   for (const { type, kvKey } of prefixesToScan) {
     const list = await env.RRF_KV.list({ prefix: kvKey, limit: 200 });
 
-    // Also count via separate prefix scans for total counts
-    counts[type] = list.keys.length;
+    counts[type] = 0; // will be updated after fetching live records below
 
     const toFetch = list.keys.slice(0, limit - entries.length);
     const records = await Promise.all(
@@ -54,10 +53,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       }),
     );
 
+    let liveCount = 0;
     for (const record of records) {
       if (!record) continue;
+      liveCount++;
       entries.push(summarize(record, type));
     }
+    // Use live count (from actual get()) not list.keys.length — KV list is eventually consistent
+    counts[type] = liveCount;
 
     if (entries.length >= limit) break;
   }
