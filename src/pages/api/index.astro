@@ -1,355 +1,494 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const endpoints = [
+// v2 entity endpoints — RCAN v2.2 §21
+const entityEndpoints = [
+  // ── Robots (RRN) ──────────────────────────────────────────────────────────
   {
-    method: 'GET',
-    path: '/api/v1/robots',
-    summary: 'List all registered robots',
-    description: 'Returns a paginated list of all robots in the registry. Supports filtering by manufacturer, verification_status, tags, and status.',
-    params: [
-      { name: 'limit', type: 'integer', required: false, default: '50', desc: 'Maximum number of results (max 200)' },
-      { name: 'offset', type: 'integer', required: false, default: '0', desc: 'Pagination offset' },
-      { name: 'manufacturer', type: 'string', required: false, desc: 'Filter by manufacturer name (exact match)' },
-      { name: 'verification_status', type: 'string', required: false, desc: 'Filter by tier: community | verified | manufacturer | certified' },
-      { name: 'tags', type: 'string', required: false, desc: 'Comma-separated list of tags (AND logic)' },
-      { name: 'sort_by', type: 'string', required: false, default: 'submitted_date', desc: 'Field to sort by: submitted_date | name | manufacturer | verification_status' },
-      { name: 'sort_order', type: 'string', required: false, default: 'desc', desc: 'Sort direction: asc | desc' },
-    ],
-    example: `{
-  "total": 1,
-  "offset": 0,
-  "limit": 50,
-  "robots": [
-    {
-      "rrn": "RRN-000000000001",
-      "name": "OpenCastor Bob",
-      "manufacturer": "ContinuonAI",
-      "verification_status": "community",
-      "status": "active",
-      "tags": ["rpi5", "hailo", "oak-d", "rcan-compliant"]
-    }
-  ]
+    group: "Robots (RRN)",
+    color: "text-accent border-accent/30 bg-primary/10",
+    endpoints: [
+      {
+        method: "POST", path: "/v2/robots/register",
+        summary: "Register a robot — receive an RRN",
+        description: "Assigns the next sequential RRN (Robot Registration Number). Required fields: name, manufacturer, model, firmware_version, rcan_version. Optional: pq_signing_pub (ML-DSA-65 public key, base64), pq_kid, ruri, owner_uid.",
+        body: [
+          { name: "name",             type: "string",  required: true,  desc: "Human-readable robot name" },
+          { name: "manufacturer",     type: "string",  required: true,  desc: "Manufacturer or team name" },
+          { name: "model",            type: "string",  required: true,  desc: "Model/product identifier" },
+          { name: "firmware_version", type: "string",  required: true,  desc: "Installed firmware version string" },
+          { name: "rcan_version",     type: "string",  required: true,  desc: "RCAN spec version (must be \"2.2\")" },
+          { name: "pq_signing_pub",   type: "string",  required: false, desc: "ML-DSA-65 public key (base64-encoded, NIST FIPS 204)" },
+          { name: "pq_kid",           type: "string",  required: false, desc: "Key ID — 8-char hex (sha256 of pub key prefix)" },
+          { name: "ruri",             type: "string",  required: false, desc: "RCAN Robot URI: rcan://{domain}/{org}/{model}/{unit}" },
+          { name: "loa_enforcement",  type: "boolean", required: false, desc: "LoA enforcement enabled (default: true)" },
+          { name: "owner_uid",        type: "string",  required: false, desc: "Firebase UID of registrant" },
+        ],
+        example: `{
+  "rrn": "RRN-000000000001",
+  "registered_at": "2026-03-27T00:00:00.000Z",
+  "record_url": "https://robot-registry-foundation.pages.dev/v2/robots/RRN-000000000001"
 }`,
-  },
-  {
-    method: 'GET',
-    path: '/api/v1/robots/:rrn',
-    summary: 'Get one robot by RRN',
-    description: 'Returns the full registry record for a specific robot identified by its Robot Registration Number.',
-    params: [
-      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number (e.g. RRN-000000000001)' },
-    ],
-    example: `{
+      },
+      {
+        method: "GET", path: "/v2/robots/{rrn}",
+        summary: "Get full robot record by RRN",
+        description: "Returns the complete registry record for a robot. The RRN must follow the 12-digit zero-padded format (RRN-000000000001).",
+        body: [
+          { name: "rrn", type: "path", required: true, desc: "Robot Registration Number (RRN-XXXXXXXXXXXX)" },
+        ],
+        example: `{
   "rrn": "RRN-000000000001",
   "name": "OpenCastor Bob",
   "manufacturer": "ContinuonAI",
   "model": "opencastor-rpi5",
-  "description": "Reference implementation of an RCAN-compliant robot...",
-  "status": "active",
-  "production_year": 2026,
-  "specs": {
-    "compute": "Raspberry Pi 5 16GB + Hailo-8",
-    "sensors": ["OAK-D RGB+Depth", "Hailo-8 NPU"]
-  },
-  "verification_status": "community",
-  "ruri": "rcan://rcan.dev/myorg/my-robot-model/unit-001",
-  "tags": ["rpi5", "hailo", "oak-d", "rcan-compliant"],
-  "submitted_date": "2026-03-06"
+  "firmware_version": "v2026.3.27.1",
+  "rcan_version": "2.2",
+  "pq_kid": "7c21bf58",
+  "loa_enforcement": true,
+  "components": ["RCN-000000000001"],
+  "registered_at": "2026-03-27T00:00:00.000Z"
 }`,
-  },
-  {
-    method: 'POST',
-    path: '/api/v1/robots',
-    summary: 'Register a new robot',
-    description: 'Submit a new robot for RRN assignment. Returns a pending registration record. RRN is assigned within 1–3 business days.',
-    params: [
-      { name: 'name', type: 'string', required: true, desc: 'Robot name' },
-      { name: 'manufacturer', type: 'string', required: true, desc: 'Manufacturer name' },
-      { name: 'model', type: 'string', required: true, desc: 'Model identifier' },
-      { name: 'description', type: 'string', required: true, desc: 'Robot description' },
-      { name: 'contact_email', type: 'string', required: true, desc: 'Contact for RRN delivery' },
-      { name: 'specs', type: 'object', required: false, desc: 'Technical specifications' },
-      { name: 'ruri', type: 'string', required: false, desc: 'RCAN Robot URI if applicable (RCAN v2.2). Supports RRN, RCN, RMN, RHN entity identifiers.' },
-      { name: 'tags', type: 'array', required: false, desc: 'Classification tags' },
-    ],
-    example: `{
-  "status": "pending",
-  "submission_id": "sub_8f3k2m",
-  "message": "Registration received. RRN will be assigned within 1–3 business days.",
-  "submitted_at": "2026-03-12T14:22:00Z"
-}`,
-  },
-  {
-    method: 'GET',
-    path: '/api/v1/metrics',
-    summary: 'Registry statistics',
-    description: 'Returns aggregate statistics about the registry.',
-    params: [],
-    example: `{
-  "total_robots": 1,
-  "by_verification_status": {
-    "community": 1,
-    "verified": 0,
-    "manufacturer": 0,
-    "certified": 0
-  },
-  "by_status": {
-    "active": 1,
-    "retired": 0,
-    "prototype": 0
-  },
-  "last_updated": "2026-03-06T00:00:00Z"
-}`,
-  },
-  {
-    method: 'GET',
-    path: '/api/v1/resolve/:rrn',
-    summary: 'Federated RRN resolution',
-    description: 'Resolves an RRN using the federation protocol. Queries the most authoritative available node and returns the canonical record with its provenance chain.',
-    params: [
-      { name: 'rrn', type: 'path', required: true, desc: 'Robot Registration Number to resolve' },
-      { name: 'full_chain', type: 'boolean', required: false, default: 'false', desc: 'Include full federation provenance chain' },
-    ],
-    example: `{
+      },
+      {
+        method: "GET", path: "/v2/robots/{rrn}/sbom",
+        summary: "Get or publish robot SBOM",
+        description: "GET: retrieve the published SBOM for a robot. POST: publish a new SBOM (requires RRF bearer token). SBOM is countersigned by the RRF root key (ML-DSA-65).",
+        body: [],
+        example: `{
   "rrn": "RRN-000000000001",
-  "resolved_from": "root.rrf.registry",
-  "canonical": true,
-  "record": { ... },
-  "chain": [
-    { "node": "root.rrf.registry", "signed_at": "2026-03-06T00:00:00Z" }
-  ]
+  "sbom_format": "spdx-json",
+  "rrf_countersig": "Aj7IavBH...",
+  "published_at": "2026-03-27T00:00:00.000Z"
 }`,
+      },
+    ],
+  },
+  // ── Components (RCN) ──────────────────────────────────────────────────────
+  {
+    group: "Components (RCN)",
+    color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
+    endpoints: [
+      {
+        method: "POST", path: "/v2/components/register",
+        summary: "Register a hardware component — receive an RCN",
+        description: "Assigns the next sequential RCN (Robot Component Number). Links to a parent robot via parent_rrn. The parent robot must already be registered.",
+        body: [
+          { name: "parent_rrn",       type: "string",  required: true,  desc: "RRN of the owning robot (must exist in registry)" },
+          { name: "type",             type: "string",  required: true,  desc: "cpu | npu | gpu | camera | lidar | imu | actuator | sensor | battery | communication | other" },
+          { name: "model",            type: "string",  required: true,  desc: "Component model identifier" },
+          { name: "manufacturer",     type: "string",  required: true,  desc: "Component manufacturer" },
+          { name: "firmware_version", type: "string",  required: false, desc: "Component firmware version" },
+          { name: "serial_number",    type: "string",  required: false, desc: "Physical serial number (if available)" },
+          { name: "capabilities",     type: "array",   required: false, desc: "Capability tags (e.g. [\"rgb\", \"depth\", \"npu:hailo8\"])" },
+          { name: "specs",            type: "object",  required: false, desc: "Free-form hardware specs key-value map" },
+        ],
+        example: `{
+  "rcn": "RCN-000000000001",
+  "parent_rrn": "RRN-000000000001",
+  "registered_at": "2026-03-27T00:00:00.000Z",
+  "record_url": "https://robot-registry-foundation.pages.dev/v2/components/RCN-000000000001"
+}`,
+      },
+      {
+        method: "GET", path: "/v2/components/{rcn}",
+        summary: "Get component record by RCN",
+        description: "Returns the full registry record for a hardware component.",
+        body: [
+          { name: "rcn", type: "path", required: true, desc: "Robot Component Number (RCN-XXXXXXXXXXXX)" },
+        ],
+        example: `{
+  "rcn": "RCN-000000000001",
+  "parent_rrn": "RRN-000000000001",
+  "type": "npu",
+  "model": "Hailo-8",
+  "manufacturer": "Hailo",
+  "capabilities": ["tops:26", "power:2.5W"],
+  "registered_at": "2026-03-27T00:00:00.000Z"
+}`,
+      },
+    ],
+  },
+  // ── AI Models (RMN) ───────────────────────────────────────────────────────
+  {
+    group: "AI Models (RMN)",
+    color: "text-purple-400 border-purple-500/30 bg-purple-500/10",
+    endpoints: [
+      {
+        method: "POST", path: "/v2/models/register",
+        summary: "Register an AI model — receive an RMN",
+        description: "Assigns the next sequential RMN (Robot Model Number). Tracks the AI model provenance chain required by EU AI Act Art. 11.",
+        body: [
+          { name: "name",              type: "string",  required: true,  desc: "Model name (e.g. \"LeWorldModel\")" },
+          { name: "version",           type: "string",  required: true,  desc: "Semantic version string" },
+          { name: "model_family",      type: "string",  required: true,  desc: "vision | language | multimodal | vla | embedding | reward | world_model | diffusion | other" },
+          { name: "architecture",      type: "string",  required: false, desc: "Model architecture (e.g. \"jepa\", \"transformer\")" },
+          { name: "parameter_count_b", type: "number",  required: false, desc: "Parameter count in billions (e.g. 0.015 = 15M params)" },
+          { name: "quantization",      type: "string",  required: false, desc: "fp32 | fp16 | bf16 | int8 | int4 | gguf | bnb4 | other" },
+          { name: "license",           type: "string",  required: false, desc: "SPDX license identifier (e.g. \"apache-2.0\")" },
+          { name: "provider",          type: "string",  required: false, desc: "huggingface | ollama | openai | anthropic | local" },
+          { name: "provider_model_id", type: "string",  required: false, desc: "Provider-native model ID (e.g. \"meta-llama/Llama-3-8B-Instruct\")" },
+          { name: "repo_url",          type: "string",  required: false, desc: "Source repository URL" },
+          { name: "rcan_compatible",   type: "boolean", required: false, desc: "Model supports RCAN message signing (default: true)" },
+        ],
+        example: `{
+  "rmn": "RMN-000000000001",
+  "registered_at": "2026-03-27T00:00:00.000Z",
+  "record_url": "https://robot-registry-foundation.pages.dev/v2/models/RMN-000000000001"
+}`,
+      },
+      {
+        method: "GET", path: "/v2/models/{rmn}",
+        summary: "Get AI model record by RMN",
+        description: "Returns the full registry record for an AI model.",
+        body: [
+          { name: "rmn", type: "path", required: true, desc: "Robot Model Number (RMN-XXXXXXXXXXXX)" },
+        ],
+        example: `{
+  "rmn": "RMN-000000000001",
+  "name": "LeWorldModel",
+  "version": "v0.1.0",
+  "model_family": "world_model",
+  "architecture": "jepa",
+  "parameter_count_b": 0.015,
+  "rcan_compatible": true,
+  "registered_at": "2026-03-27T00:00:00.000Z"
+}`,
+      },
+    ],
+  },
+  // ── AI Harnesses (RHN) ────────────────────────────────────────────────────
+  {
+    group: "AI Harnesses (RHN)",
+    color: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10",
+    endpoints: [
+      {
+        method: "POST", path: "/v2/harnesses/register",
+        summary: "Register an AI harness — receive an RHN",
+        description: "Assigns the next sequential RHN (Robot Harness Number). A harness is an AI orchestration layer that runs on a robot (e.g. OpenCastor dual-brain). Links to the RMN(s) of models it uses.",
+        body: [
+          { name: "name",              type: "string",  required: true,  desc: "Harness name" },
+          { name: "version",           type: "string",  required: true,  desc: "Semantic version string" },
+          { name: "harness_type",      type: "string",  required: true,  desc: "vla | llm_planner | multimodal | hybrid | specialist | safety_monitor | orchestrator | other" },
+          { name: "rcan_version",      type: "string",  required: true,  desc: "Minimum RCAN version required (must be \"2.2\")" },
+          { name: "description",       type: "string",  required: false, desc: "Human-readable description" },
+          { name: "model_ids",         type: "array",   required: false, desc: "RMN[] — models used by this harness" },
+          { name: "compatible_robots", type: "array",   required: false, desc: "RRN[] — target robots (empty = universal)" },
+          { name: "open_source",       type: "boolean", required: false, desc: "Whether source code is publicly available" },
+          { name: "repo_url",          type: "string",  required: false, desc: "Source repository URL" },
+          { name: "license",           type: "string",  required: false, desc: "SPDX license identifier" },
+        ],
+        example: `{
+  "rhn": "RHN-000000000001",
+  "registered_at": "2026-03-27T00:00:00.000Z",
+  "record_url": "https://robot-registry-foundation.pages.dev/v2/harnesses/RHN-000000000001"
+}`,
+      },
+      {
+        method: "GET", path: "/v2/harnesses/{rhn}",
+        summary: "Get AI harness record by RHN",
+        description: "Returns the full registry record for an AI harness.",
+        body: [
+          { name: "rhn", type: "path", required: true, desc: "Robot Harness Number (RHN-XXXXXXXXXXXX)" },
+        ],
+        example: `{
+  "rhn": "RHN-000000000001",
+  "name": "OpenCastor Dual-Brain",
+  "version": "v2026.3.27.1",
+  "harness_type": "hybrid",
+  "rcan_version": "2.2",
+  "model_ids": ["RMN-000000000001"],
+  "open_source": true,
+  "registered_at": "2026-03-27T00:00:00.000Z"
+}`,
+      },
+    ],
+  },
+  // ── Unified Registry ─────────────────────────────────────────────────────
+  {
+    group: "Unified Registry",
+    color: "text-text border-border bg-bg-card",
+    endpoints: [
+      {
+        method: "GET", path: "/v2/registry",
+        summary: "List all entities across all types",
+        description: "Returns a unified listing of all registered entities (robots, components, models, harnesses), sorted by registration date (newest first). Filter by entity type using ?type=.",
+        body: [
+          { name: "type",  type: "query",   required: false, desc: "robot | component | model | harness — filter to one entity type" },
+          { name: "limit", type: "query",   required: false, desc: "Max results (default: 50, max: 200)" },
+        ],
+        example: `{
+  "entries": [
+    {
+      "id": "RHN-000000000001",
+      "entity_type": "harness",
+      "name": "OpenCastor Dual-Brain v2026.3.27.1",
+      "registered_at": "2026-03-27T00:00:00.000Z",
+      "summary": { "harness_type": "hybrid", "rcan_version": "2.2", "open_source": true }
+    }
+  ],
+  "total": 4,
+  "entity_types_count": { "robot": 1, "component": 1, "model": 1, "harness": 1 },
+  "rcan_version": "2.2"
+}`,
+      },
+    ],
   },
 ];
 
 const methodColors: Record<string, string> = {
-  GET: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  POST: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  PUT: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  DELETE: 'bg-red-500/10 text-red-400 border-red-500/30',
+  GET:    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30',
+  POST:   'bg-blue-500/10 text-blue-400 border border-blue-500/30',
+  PUT:    'bg-amber-500/10 text-amber-400 border border-amber-500/30',
+  DELETE: 'bg-red-500/10 text-red-400 border border-red-500/30',
 };
 ---
 
 <BaseLayout
   title="API Reference"
-  description="Robot Registry Foundation REST API — list robots, get records, register robots, resolve RRNs across the federation."
+  description="Robot Registry Foundation REST API v2 — register and query robots (RRN), components (RCN), AI models (RMN), and harnesses (RHN). RCAN v2.2 §21 entity numbering."
 >
 
   <div class="pt-8">
     <!-- Breadcrumb -->
-    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+    <nav class="flex items-center gap-2 text-xs text-text-muted font-mono mb-8">
       <a href="/" class="hover:text-accent transition-colors">RRF</a>
       <span>/</span>
-      <span class="text-text">API</span>
-    </div>
+      <span class="text-text">API Reference</span>
+    </nav>
 
-    <div class="max-w-3xl mx-auto">
-      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Registry API</h1>
-      <p class="text-lg text-text-muted mb-4 leading-relaxed">
-        Simple REST API for accessing the Robot Registry. Read-only endpoints are open.
-        Write endpoints require an API key.
+    <!-- Header -->
+    <div class="mb-10 pb-8 border-b border-border">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-5">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        v2 · RCAN v2.2 §21
+      </div>
+      <h1 class="font-display text-3xl md:text-4xl font-semibold text-text mb-3">API Reference</h1>
+      <p class="text-text-muted max-w-2xl">
+        Programmatic access to register and query all four RCAN entity types.
+        The v2 API is the only supported API — v1 was removed as of RCAN v2.0.
       </p>
 
-      <!-- Info strip -->
-      <div class="grid grid-cols-3 gap-4 mb-12">
-        {[
-          { label: 'Base URL', value: 'https://api.robotregistryfoundation.org' },
-          { label: 'Version', value: 'v1 (early access)' },
-          { label: 'Rate limit', value: '60 req/min' },
-        ].map(item => (
-          <div class="p-3.5 bg-bg-card border border-border rounded-lg">
-            <div class="text-xs text-text-faint font-mono mb-1">{item.label}</div>
-            <div class="text-xs text-text font-mono">{item.value}</div>
-          </div>
-        ))}
+      <!-- Quick info grid -->
+      <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="p-3 rounded-lg border border-border bg-bg-card">
+          <div class="text-xs text-text-muted mb-1">Base URL</div>
+          <code class="text-xs text-accent font-mono break-all">robot-registry-foundation.pages.dev</code>
+        </div>
+        <div class="p-3 rounded-lg border border-border bg-bg-card">
+          <div class="text-xs text-text-muted mb-1">Authentication</div>
+          <div class="text-xs text-text font-mono">Bearer token (write ops)</div>
+          <div class="text-xs text-text-muted">GET endpoints are open</div>
+        </div>
+        <div class="p-3 rounded-lg border border-border bg-bg-card">
+          <div class="text-xs text-text-muted mb-1">Rate limit</div>
+          <div class="text-xs text-text font-mono">60 req/min</div>
+        </div>
+        <div class="p-3 rounded-lg border border-border bg-bg-card">
+          <div class="text-xs text-text-muted mb-1">Response format</div>
+          <div class="text-xs text-text font-mono">application/json</div>
+        </div>
       </div>
+    </div>
 
-      <!-- Note -->
-      <div class="flex gap-3 p-4 border border-amber-500/30 bg-amber-500/8 rounded-lg mb-10 text-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 flex-shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <span class="text-amber-300/80">
-          API is in early access. Endpoints are stable but the registry has limited data while the Foundation is in formation.
-          <a href="/registry/submit/" class="underline hover:text-amber-300 ml-1">Register your robot to grow the registry →</a>
-        </span>
-      </div>
-
-      <!-- Endpoints -->
-    <!-- v2 API notice -->
-    <div class="mb-8 p-4 rounded-lg border border-accent/20 bg-accent/5">
+    <!-- v1 Deprecation notice -->
+    <div class="mb-10 p-4 rounded-lg border border-red-500/20 bg-red-500/5">
       <div class="flex items-start gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-400 flex-shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div>
-          <p class="text-sm font-medium text-accent mb-1">v2 API available — 4 entity types</p>
-          <p class="text-xs text-text-muted">The <code class="text-accent font-mono">/v2/</code> API supports all four RCAN entity types: <strong>RRN</strong> (robots), <strong>RCN</strong> (components), <strong>RMN</strong> (AI models), <strong>RHN</strong> (harnesses). Endpoints: <code class="text-accent font-mono text-xs break-all">POST /v2/robots/register · POST /v2/components/register · POST /v2/models/register · POST /v2/harnesses/register · GET /v2/registry</code></p>
+          <p class="text-sm font-semibold text-red-400 mb-1">API v1 removed (sunset: 2026-03-27)</p>
+          <p class="text-xs text-text-muted">
+            The <code class="text-red-400 font-mono">/v1/</code> API (RCAN v1.x era) is gone. Requests to <code class="text-red-400 font-mono">/v1/*</code> return <strong class="text-red-400">HTTP 410 Gone</strong> with a migration hint. All integrations must use <code class="text-accent font-mono">/v2/</code> endpoints documented below.
+            OpenCastor users: update to <code class="font-mono text-xs">v2026.3.27.1+</code> — all RRF calls already use v2.
+          </p>
         </div>
       </div>
     </div>
 
-
-      <div class="space-y-8">
-        {endpoints.map(endpoint => (
-          <div class="border border-border rounded-xl overflow-hidden">
-            <!-- Endpoint header -->
-            <div class="flex items-center gap-3 p-5 bg-bg-card border-b border-border">
-              <span class:list={["text-xs font-mono font-bold px-2.5 py-1 rounded border flex-shrink-0", methodColors[endpoint.method] ?? '']}>
-                {endpoint.method}
-              </span>
-              <code class="text-sm font-mono text-text flex-1">{endpoint.path}</code>
-            </div>
-
-            <div class="p-5 space-y-5">
-              <div>
-                <h3 class="font-semibold text-text mb-1">{endpoint.summary}</h3>
-                <p class="text-sm text-text-muted">{endpoint.description}</p>
-              </div>
-
-              {endpoint.params.length > 0 && (
-                <div>
-                  <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-3">Parameters</h4>
-                  <div class="space-y-2">
-                    {endpoint.params.map(param => (
-                      <div class="flex gap-3 text-xs">
-                        <code class="text-accent font-mono w-28 flex-shrink-0">{param.name}</code>
-                        <span class="text-text-faint w-16 flex-shrink-0">{param.type}</span>
-                        <span class:list={["w-16 flex-shrink-0 font-mono", param.required ? 'text-red-400' : 'text-text-faint']}>
-                          {param.required ? 'required' : 'optional'}
-                        </span>
-                        <span class="text-text-muted">{param.desc}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h4 class="text-xs font-mono text-text-faint uppercase tracking-wider mb-2">Example Response</h4>
-                <pre class="text-xs font-mono bg-bg rounded-lg p-4 overflow-x-auto text-text-muted border border-border leading-relaxed">{endpoint.example}</pre>
-              </div>
-            </div>
+    <!-- Entity type legend -->
+    <div class="mb-10">
+      <h2 class="font-display text-lg font-semibold text-text mb-4">Entity Types — RCAN v2.2 §21.2.2</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { prefix: "RRN", label: "Robot Registration Number", desc: "Whole robots — the primary unit of identity", color: "text-accent border-accent/30 bg-primary/10" },
+          { prefix: "RCN", label: "Robot Component Number",    desc: "Hardware components (CPU, NPU, sensors, actuators)", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
+          { prefix: "RMN", label: "Robot Model Number",        desc: "AI models used by robots (VLA, LLM, world model)", color: "text-purple-400 border-purple-500/30 bg-purple-500/10" },
+          { prefix: "RHN", label: "Robot Harness Number",      desc: "AI harness/orchestration layers (e.g. dual-brain)", color: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10" },
+        ].map(e => (
+          <div class={`p-3 rounded-lg border ${e.color}`}>
+            <div class="font-mono font-bold text-sm mb-1">{e.prefix}</div>
+            <div class="text-xs font-medium mb-1">{e.label}</div>
+            <div class="text-xs text-text-muted">{e.desc}</div>
+            <div class="mt-2 font-mono text-xs text-text-faint">{e.prefix}-000000000001</div>
           </div>
         ))}
       </div>
-
-      <!-- §21 RCAN MessageType wire values -->
-      <div class="mt-12">
-        <h2 class="font-display text-2xl font-semibold text-text mb-2">§21 RCAN MessageType Wire Values</h2>
-        <p class="text-sm text-text-muted mb-6 leading-relaxed">
-          RCAN-compliant robots interact with the registry via two dedicated MessageType values defined in
-          <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN spec §21</a>.
-          These wire values are used over the RCAN WebSocket transport; the REST endpoints above are the HTTP equivalent.
-        </p>
-        <div class="overflow-x-auto rounded-xl border border-border">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="bg-bg-card border-b border-border">
-                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">MessageType</th>
-                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Wire Value</th>
-                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Spec</th>
-                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Required Scope</th>
-                <th class="text-left text-xs font-mono text-text-faint uppercase tracking-wider px-4 py-3">Payload Fields</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr class="hover:bg-bg-card/50 transition-colors">
-                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_REGISTER</td>
-                <td class="px-4 py-3 font-mono text-xs text-text">13</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.4</a>
-                </td>
-                <td class="px-4 py-3 font-mono text-xs text-text-muted">admin</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <code class="text-accent">rrn</code> (str),&nbsp;
-                  <code class="text-accent">ruri</code> (str),&nbsp;
-                  <code class="text-accent">public_key</code> (str),&nbsp;
-                  <code class="text-accent">metadata</code> (obj)
-                </td>
-              </tr>
-              <tr class="hover:bg-bg-card/50 transition-colors">
-                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_REGISTER_RESULT</td>
-                <td class="px-4 py-3 font-mono text-xs text-text">—</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.4</a>
-                </td>
-                <td class="px-4 py-3 font-mono text-xs text-text-muted">—</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <code class="text-accent">rrn</code> (str),&nbsp;
-                  <code class="text-accent">status</code> (<code>"registered"</code>&nbsp;|&nbsp;<code>"updated"</code>&nbsp;|&nbsp;<code>"conflict"</code>),&nbsp;
-                  <code class="text-accent">verification_tier</code> (str)
-                </td>
-              </tr>
-              <tr class="hover:bg-bg-card/50 transition-colors">
-                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_RESOLVE</td>
-                <td class="px-4 py-3 font-mono text-xs text-text">14</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.5</a>
-                </td>
-                <td class="px-4 py-3 font-mono text-xs text-text-muted">status</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <code class="text-accent">query</code> (str — RRN or RURI)
-                </td>
-              </tr>
-              <tr class="hover:bg-bg-card/50 transition-colors">
-                <td class="px-4 py-3 font-mono text-xs text-accent">REGISTRY_RESOLVE_RESULT</td>
-                <td class="px-4 py-3 font-mono text-xs text-text">—</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">§21.5</a>
-                </td>
-                <td class="px-4 py-3 font-mono text-xs text-text-muted">—</td>
-                <td class="px-4 py-3 text-xs text-text-muted">
-                  <code class="text-accent">rrn</code> (str),&nbsp;
-                  <code class="text-accent">ruri</code> (str),&nbsp;
-                  <code class="text-accent">status</code> (str),&nbsp;
-                  <code class="text-accent">verification_tier</code> (str),&nbsp;
-                  <code class="text-accent">public_key</code> (str)
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="text-xs text-text-faint mt-3">
-          Wire values 13–14 were assigned for §21 before §19.4 (<code>INVOKE_CANCEL = 15</code>) was finalised.
-          See the full <a href="https://rcan.dev/spec/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN spec</a> for the complete MessageType enum.
-        </p>
-      </div>
-
-      <!-- Auth note -->
-      <div class="mt-10 p-5 bg-bg-card border border-border rounded-xl">
-        <h3 class="font-semibold text-text mb-2 text-sm">Authentication</h3>
-        <p class="text-sm text-text-muted leading-relaxed mb-3">
-          GET endpoints are open (no authentication required). POST endpoints require an API key passed as a Bearer token:
-        </p>
-        <code class="block text-xs font-mono bg-bg rounded-md p-3 text-accent border border-border">
-          Authorization: Bearer &lt;your-api-key&gt;
-        </code>
-        <p class="text-xs text-text-faint mt-2">
-          API keys are issued during the formation period.
-          <a href="/registry/submit/" class="text-accent hover:underline">Submit a robot</a> to request early access.
-        </p>
-      </div>
+      <p class="mt-3 text-xs text-text-muted">
+        All IDs are sequential, zero-padded 12-digit integers assigned by the registry. Format: <code class="font-mono">{'{PREFIX}'}-{'{'}<em>000000000001</em>{'}'}</code>. IDs are globally unique within their prefix and permanent.
+      </p>
     </div>
+
+    <!-- Endpoints by group -->
+    {entityEndpoints.map(group => (
+      <section class="mb-14">
+        <div class="flex items-center gap-3 mb-6">
+          <span class={`px-3 py-1 rounded-full border text-xs font-mono font-semibold ${group.color}`}>
+            {group.group}
+          </span>
+          <div class="flex-1 h-px bg-border"></div>
+        </div>
+
+        <div class="flex flex-col gap-8">
+          {group.endpoints.map(ep => (
+            <div class="rounded-xl border border-border bg-bg-card overflow-hidden">
+              <!-- Endpoint header -->
+              <div class="flex items-center gap-3 p-4 border-b border-border bg-bg">
+                <span class={`px-2 py-0.5 rounded text-xs font-mono font-bold border ${methodColors[ep.method]}`}>
+                  {ep.method}
+                </span>
+                <code class="text-sm font-mono text-text break-all">{ep.path}</code>
+                <span class="ml-auto text-xs text-text-muted hidden sm:block">{ep.summary}</span>
+              </div>
+
+              <div class="p-5 grid md:grid-cols-2 gap-6">
+                <!-- Description + params -->
+                <div>
+                  <p class="text-sm text-text-muted mb-4">{ep.description}</p>
+
+                  {ep.body.length > 0 && (
+                    <div>
+                      <div class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+                        {ep.body.some(p => p.type === "path" || p.type === "query") ? "Parameters" : "Request body fields"}
+                      </div>
+                      <div class="flex flex-col gap-2">
+                        {ep.body.map(p => (
+                          <div class="flex gap-2 text-xs">
+                            <code class="text-accent font-mono flex-shrink-0">{p.name}</code>
+                            <span class="text-text-faint font-mono">{p.type}</span>
+                            {p.required
+                              ? <span class="text-red-400 font-mono flex-shrink-0">required</span>
+                              : <span class="text-text-faint font-mono flex-shrink-0">optional</span>
+                            }
+                            <span class="text-text-muted">{p.desc}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <!-- Example response -->
+                <div>
+                  <div class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Example response</div>
+                  <pre class="group relative bg-bg rounded-lg border border-border p-3 overflow-x-auto text-xs"><code class="text-text-muted font-mono">{ep.example}</code></pre>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+
+    <!-- Auth section -->
+    <section class="mb-14 p-6 rounded-xl border border-border bg-bg-card">
+      <h2 class="font-display text-xl font-semibold text-text mb-3">Authentication</h2>
+      <p class="text-sm text-text-muted mb-4">
+        All <strong>GET</strong> endpoints are publicly accessible — no credentials required.
+        <strong>POST</strong> (registration) and <strong>PATCH</strong> endpoints require a bearer token issued by RRF.
+      </p>
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Authorization header</div>
+        <pre class="group relative bg-bg rounded-lg border border-border p-3 text-xs"><code class="text-accent font-mono">Authorization: Bearer &lt;your-rrf-token&gt;</code></pre>
+      </div>
+      <p class="text-xs text-text-muted">
+        To obtain a registration token, use <code class="font-mono text-accent">castor rrf register</code> (OpenCastor) or contact the RRF directly.
+        Tokens are tied to an RRN and scoped to that robot's records. Tokens have a maximum TTL of 1 year and must be rotated before expiry.
+      </p>
+    </section>
+
+    <!-- curl quick start -->
+    <section class="mb-14">
+      <h2 class="font-display text-xl font-semibold text-text mb-5">Quick start — curl examples</h2>
+      <div class="flex flex-col gap-4">
+        {[
+          {
+            label: "List all registry entries",
+            code: `curl https://robot-registry-foundation.pages.dev/v2/registry`,
+          },
+          {
+            label: "Get a robot by RRN",
+            code: `curl https://robot-registry-foundation.pages.dev/v2/robots/RRN-000000000001`,
+          },
+          {
+            label: "Register a robot",
+            code: `curl -X POST https://robot-registry-foundation.pages.dev/v2/robots/register \\
+  -H "Authorization: Bearer <token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "My Robot",
+    "manufacturer": "Acme Corp",
+    "model": "model-001",
+    "firmware_version": "v1.0.0",
+    "rcan_version": "2.2",
+    "pq_signing_pub": "<ML-DSA-65 base64 public key>"
+  }'`,
+          },
+          {
+            label: "Register a hardware component",
+            code: `curl -X POST https://robot-registry-foundation.pages.dev/v2/components/register \\
+  -H "Authorization: Bearer <token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "parent_rrn": "RRN-000000000001",
+    "type": "npu",
+    "model": "Hailo-8",
+    "manufacturer": "Hailo",
+    "capabilities": ["tops:26", "power:2.5W"]
+  }'`,
+          },
+        ].map(ex => (
+          <div>
+            <div class="text-xs text-text-muted mb-1">{ex.label}</div>
+            <pre class="group relative bg-bg rounded-lg border border-border p-4 overflow-x-auto text-xs"><code class="text-text font-mono">{ex.code}</code></pre>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- OpenCastor CLI shortcut -->
+    <section class="p-5 rounded-xl border border-accent/20 bg-accent/5">
+      <div class="flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent flex-shrink-0 mt-0.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <div>
+          <p class="text-sm font-medium text-accent mb-1">Using OpenCastor? The CLI handles registration automatically.</p>
+          <pre class="group relative bg-bg rounded-lg border border-border p-3 overflow-x-auto text-xs mt-2"><code class="text-text font-mono">{`castor rrf register --config bob.rcan.yaml   # register robot (RRN)
+castor components register                    # register components (RCN)
+castor sbom generate && castor sbom publish   # publish SBOM + get countersig`}</code></pre>
+          <p class="text-xs text-text-muted mt-2">
+            OpenCastor v2026.3.27.1+ uses the v2 API exclusively. See the <a href="https://opencastor.com/docs/" class="text-accent hover:underline">OpenCastor docs</a>.
+          </p>
+        </div>
+      </div>
+    </section>
   </div>
 
+</BaseLayout>
 
 <script>
-  // Copy-to-clipboard for code blocks
+  // Copy-to-clipboard on all code blocks
   document.querySelectorAll('pre code').forEach(codeEl => {
     const pre = codeEl.parentElement;
     if (!pre) return;
-    pre.style.position = 'relative';
     const btn = document.createElement('button');
     btn.textContent = 'Copy';
-    btn.className = 'absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-mono bg-bg border border-border text-text-muted hover:text-accent hover:border-accent/50 transition-colors opacity-0 group-hover:opacity-100 copy-btn';
-    btn.setAttribute('aria-label', 'Copy code to clipboard');
-    pre.classList.add('group');
+    btn.className = 'absolute top-2 right-2 px-2 py-0.5 rounded text-xs font-mono bg-bg border border-border text-text-muted hover:text-accent hover:border-accent/50 transition-colors opacity-0 group-hover:opacity-100';
+    btn.setAttribute('aria-label', 'Copy to clipboard');
+    pre.style.position = 'relative';
     pre.appendChild(btn);
     btn.addEventListener('click', async () => {
       await navigator.clipboard.writeText(codeEl.textContent ?? '');
       btn.textContent = 'Copied!';
-      btn.classList.add('text-emerald-400');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('text-emerald-400'); }, 1500);
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
     });
   });
 </script>
-
-</BaseLayout>
