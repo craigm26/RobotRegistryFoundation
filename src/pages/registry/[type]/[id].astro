@@ -1,0 +1,204 @@
+---
+/**
+ * Dynamic entity detail page — fetches live from /v2/{type}s/{id} at page load.
+ * Routes: /registry/robot/RRN-…, /registry/component/RCN-…,
+ *         /registry/model/RMN-…, /registry/harness/RHN-…
+ *
+ * This is a static Astro shell — all data is loaded client-side via fetch.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const { type, id } = Astro.params;
+const entityType = type ?? 'robot';
+const entityId = id ?? '';
+---
+
+<BaseLayout
+  title={`${entityId} — RRF Registry`}
+  description={`RCAN entity record: ${entityId}`}
+>
+  <div class="pt-8 max-w-3xl mx-auto" id="entity-root">
+    <!-- Loading state -->
+    <div id="entity-loading" class="animate-pulse">
+      <div class="h-3 bg-border rounded w-1/4 mb-6"></div>
+      <div class="bg-bg-card border border-border rounded-xl p-7 mb-6">
+        <div class="h-4 bg-border rounded w-1/3 mb-4"></div>
+        <div class="h-8 bg-border rounded w-1/2 mb-2"></div>
+        <div class="h-3 bg-border rounded w-2/3 mb-4"></div>
+        <div class="h-3 bg-border rounded w-full mb-2"></div>
+        <div class="h-3 bg-border rounded w-5/6"></div>
+      </div>
+    </div>
+
+    <!-- Populated by JS -->
+    <div id="entity-content" class="hidden"></div>
+
+    <!-- Error state -->
+    <div id="entity-error" class="hidden text-center py-24 border border-border rounded-xl bg-bg-card">
+      <div class="text-5xl mb-4">🔍</div>
+      <h2 class="font-display text-2xl font-semibold text-text mb-2">Not found</h2>
+      <p class="text-text-muted mb-6" id="entity-error-msg">This entity ID was not found in the registry.</p>
+      <a href="/registry/" class="text-accent hover:underline text-sm font-mono">← Back to Registry</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<script define:vars={{ entityType, entityId }}>
+(() => {
+  const ENDPOINT_MAP = {
+    robot:     `/v2/robots/${entityId}`,
+    component: `/v2/components/${entityId}`,
+    model:     `/v2/models/${entityId}`,
+    harness:   `/v2/harnesses/${entityId}`,
+  };
+
+  const PREFIX_COLOR = {
+    RRN: 'text-accent border-accent/30 bg-primary/10',
+    RCN: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
+    RMN: 'text-purple-400 border-purple-500/30 bg-purple-500/10',
+    RHN: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
+  };
+
+  function idBadge(id) {
+    const prefix = id.split('-')[0];
+    const cls = PREFIX_COLOR[prefix] ?? 'text-text-muted border-border bg-bg-card';
+    return `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border font-mono text-sm font-medium ${cls}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      ${id}
+    </span>`;
+  }
+
+  function fieldRow(label, value) {
+    if (!value && value !== false && value !== 0) return '';
+    const display = Array.isArray(value) ? value.join(', ') : String(value);
+    return `<div><dt class="text-xs text-text-faint font-mono mb-0.5">${label}</dt><dd class="text-sm text-text font-mono break-all">${display}</dd></div>`;
+  }
+
+  function renderRobot(r) {
+    return `
+      <div class="flex flex-wrap items-center gap-3 mb-4">${idBadge(r.rrn)}</div>
+      <h1 class="font-display text-4xl font-semibold text-text mb-1">${r.name}</h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${r.manufacturer} · ${r.model}</p>
+      <dl class="space-y-3 mt-6">
+        ${fieldRow('Firmware', r.firmware_version)}
+        ${fieldRow('RCAN Version', r.rcan_version)}
+        ${fieldRow('LoA Enforcement', r.loa_enforcement)}
+        ${fieldRow('RURI', r.ruri)}
+        ${fieldRow('PQ Key ID', r.pq_kid)}
+        ${fieldRow('Components', r.components)}
+        ${fieldRow('Registered', r.registered_at ? new Date(r.registered_at).toLocaleString() : '')}
+      </dl>`;
+  }
+
+  function renderComponent(r) {
+    return `
+      <div class="flex flex-wrap items-center gap-3 mb-4">${idBadge(r.rcn)}</div>
+      <h1 class="font-display text-3xl font-semibold text-text mb-1">${r.model}</h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${r.type} · ${r.manufacturer}</p>
+      <dl class="space-y-3 mt-6">
+        ${fieldRow('Parent Robot', r.parent_rrn)}
+        ${fieldRow('Type', r.type)}
+        ${fieldRow('Manufacturer', r.manufacturer)}
+        ${fieldRow('Firmware', r.firmware_version)}
+        ${fieldRow('Serial Number', r.serial_number)}
+        ${fieldRow('Capabilities', r.capabilities)}
+        ${fieldRow('Registered', r.registered_at ? new Date(r.registered_at).toLocaleString() : '')}
+      </dl>`;
+  }
+
+  function renderModel(r) {
+    return `
+      <div class="flex flex-wrap items-center gap-3 mb-4">${idBadge(r.rmn)}</div>
+      <h1 class="font-display text-3xl font-semibold text-text mb-1">${r.name} <span class="text-text-muted font-mono text-xl">v${r.version}</span></h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${r.model_family}${r.architecture ? ' · ' + r.architecture : ''}</p>
+      <dl class="space-y-3 mt-6">
+        ${fieldRow('Parameters', r.parameter_count_b ? r.parameter_count_b + 'B' : '')}
+        ${fieldRow('Quantization', r.quantization)}
+        ${fieldRow('License', r.license)}
+        ${fieldRow('Provider', r.provider)}
+        ${fieldRow('Provider Model ID', r.provider_model_id)}
+        ${fieldRow('Repo', r.repo_url)}
+        ${fieldRow('RCAN Compatible', r.rcan_compatible)}
+        ${fieldRow('Compatible Harnesses', r.compatible_harness_ids)}
+        ${fieldRow('Registered', r.registered_at ? new Date(r.registered_at).toLocaleString() : '')}
+      </dl>`;
+  }
+
+  function renderHarness(r) {
+    return `
+      <div class="flex flex-wrap items-center gap-3 mb-4">${idBadge(r.rhn)}</div>
+      <h1 class="font-display text-3xl font-semibold text-text mb-1">${r.name} <span class="text-text-muted font-mono text-xl">v${r.version}</span></h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${r.harness_type} · RCAN v${r.rcan_version}</p>
+      <dl class="space-y-3 mt-6">
+        ${fieldRow('Description', r.description)}
+        ${fieldRow('Models Used', r.model_ids)}
+        ${fieldRow('Compatible Robots', r.compatible_robots?.length ? r.compatible_robots : 'universal')}
+        ${fieldRow('Open Source', r.open_source)}
+        ${fieldRow('Repo', r.repo_url)}
+        ${fieldRow('License', r.license)}
+        ${fieldRow('Registered', r.registered_at ? new Date(r.registered_at).toLocaleString() : '')}
+      </dl>`;
+  }
+
+  const RENDERERS = { robot: renderRobot, component: renderComponent, model: renderModel, harness: renderHarness };
+
+  async function load() {
+    const loadingEl = document.getElementById('entity-loading');
+    const contentEl = document.getElementById('entity-content');
+    const errorEl = document.getElementById('entity-error');
+    const errorMsg = document.getElementById('entity-error-msg');
+
+    const endpoint = ENDPOINT_MAP[entityType];
+    if (!endpoint) {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (errorEl) errorEl.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch(endpoint);
+      if (loadingEl) loadingEl.classList.add('hidden');
+
+      if (!res.ok) {
+        if (errorEl) errorEl.classList.remove('hidden');
+        if (errorMsg) errorMsg.textContent = `Entity ${entityId} not found in the registry.`;
+        return;
+      }
+
+      const record = await res.json();
+      const renderer = RENDERERS[entityType];
+      if (!renderer || !contentEl) return;
+
+      const downloadJson = encodeURIComponent(JSON.stringify(record, null, 2));
+
+      contentEl.innerHTML = `
+        <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+          <a href="/" class="hover:text-accent transition-colors">RRF</a>
+          <span>/</span>
+          <a href="/registry/" class="hover:text-accent transition-colors">Registry</a>
+          <span>/</span>
+          <span class="text-text">${entityId}</span>
+        </div>
+        <div class="bg-bg-card border border-border rounded-xl p-7 mb-6">
+          ${renderer(record)}
+        </div>
+        <div class="flex items-center gap-4 mt-2">
+          <a href="data:application/json;charset=utf-8,${downloadJson}"
+             download="${entityId}.json"
+             class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-text-muted hover:text-accent hover:border-border-strong transition-colors font-mono">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download JSON
+          </a>
+          <a href="/registry/" class="text-sm text-text-faint hover:text-accent transition-colors">← Registry</a>
+        </div>
+      `;
+      contentEl.classList.remove('hidden');
+    } catch (err) {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (errorEl) errorEl.classList.remove('hidden');
+    }
+  }
+
+  load();
+})();
+</script>

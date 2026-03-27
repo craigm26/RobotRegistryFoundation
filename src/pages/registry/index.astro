@@ -1,16 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import RobotCard from '../../components/RobotCard.astro';
-import { getCollection } from 'astro:content';
-
-const robots = await getCollection('robots');
-const sortedRobots = robots.sort((a, b) => a.data.rrn.localeCompare(b.data.rrn));
-
-const allTags = [...new Set(robots.flatMap(r => r.data.tags))].sort();
-const allManufacturers = [...new Set(robots.map(r => r.data.manufacturer))].sort();
 ---
 
-<BaseLayout title="Browse Registry" description="Browse all registered robots in the global Robot Registry Foundation database.">
+<BaseLayout title="Browse Registry" description="Browse all registered entities in the Robot Registry Foundation — robots, components, AI models, and harnesses.">
 
   <div class="pt-8">
     <!-- Header -->
@@ -22,207 +14,279 @@ const allManufacturers = [...new Set(robots.map(r => r.data.manufacturer))].sort
       </div>
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-2">Robot Registry</h1>
-          <p class="text-text-muted">
-            {robots.length} robot{robots.length !== 1 ? 's' : ''} registered · Global, open, permanent
-          </p>
+          <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-2">Registry</h1>
+          <p id="registry-subtitle" class="text-text-muted">Loading… · Global, open, permanent</p>
         </div>
         <a
           href="/registry/submit/"
           class="flex-shrink-0 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors flex items-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Register a Robot
+          Register
         </a>
       </div>
     </div>
 
-    {robots.length === 0 ? (
-      <!-- Empty state (no robots at all) -->
-      <div class="text-center py-24 border border-border rounded-xl bg-bg-card">
-        <div class="text-5xl mb-5">🤖</div>
-        <h3 class="font-display text-2xl font-semibold text-text mb-2">The registry is open</h3>
-        <p class="text-text-muted mb-6">Be among the first to register your robot.</p>
-        <a href="/registry/submit/" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors">
-          Register Now
-        </a>
-      </div>
-    ) : (
-      <>
-        <!-- Search & Filter Controls -->
-        <div class="mb-6 flex flex-col gap-4">
-          <!-- Search input -->
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input
-              id="registry-search"
-              type="search"
-              placeholder="Search by name, manufacturer, model, or tag…"
-              aria-label="Search robots by name, manufacturer, model, or tag"
-              class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-bg-card border border-border text-text placeholder:text-text-faint focus:outline-none focus:border-accent transition-colors text-sm font-mono"
-            />
-          </div>
+    <!-- Entity type tabs -->
+    <div class="flex flex-wrap gap-2 mb-6" id="type-tabs" role="group" aria-label="Filter by entity type">
+      {['all', 'robot', 'component', 'model', 'harness'].map(t => (
+        <button
+          class="type-tab px-3 py-1 rounded-full text-xs font-mono border transition-colors"
+          data-type={t}
+          aria-pressed={t === 'all' ? 'true' : 'false'}
+        >
+          {t === 'all' ? 'all' : t === 'robot' ? '🤖 robots' : t === 'component' ? '🔌 components' : t === 'model' ? '🧠 models' : '⚙️ harnesses'}
+        </button>
+      ))}
+    </div>
 
-          <!-- Verification filter pills -->
-          <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by verification status">
-            {['all', 'community', 'verified', 'manufacturer', 'certified'].map(v => (
-              <button
-                class="registry-filter-pill px-3 py-1 rounded-full text-xs font-mono border transition-colors"
-                data-filter={v}
-                aria-pressed={v === 'all' ? 'true' : 'false'}
-              >
-                {v}
-              </button>
-            ))}
+    <!-- Search -->
+    <div class="relative mb-6">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        id="registry-search"
+        type="search"
+        placeholder="Search by name, ID, type…"
+        class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-bg-card border border-border text-text placeholder:text-text-faint focus:outline-none focus:border-accent transition-colors text-sm font-mono"
+      />
+    </div>
+
+    <!-- Loading skeleton -->
+    <div id="registry-loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {[...Array(6)].map(() => (
+        <div class="bg-bg-card border border-border rounded-xl p-5 animate-pulse">
+          <div class="h-3 bg-border rounded w-1/3 mb-3"></div>
+          <div class="h-5 bg-border rounded w-2/3 mb-2"></div>
+          <div class="h-3 bg-border rounded w-1/2 mb-4"></div>
+          <div class="flex gap-2">
+            <div class="h-5 bg-border rounded-full w-16"></div>
+            <div class="h-5 bg-border rounded-full w-20"></div>
           </div>
         </div>
+      ))}
+    </div>
 
-        <!-- Robot grid -->
-        <div id="registry-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {sortedRobots.map(robot => (
-            <div
-              class="registry-card"
-              data-name={robot.data.name.toLowerCase()}
-              data-manufacturer={robot.data.manufacturer.toLowerCase()}
-              data-model={(robot.data.model ?? '').toLowerCase()}
-              data-tags={(robot.data.tags ?? []).join(' ').toLowerCase()}
-              data-verification={robot.data.verification_status}
-            >
-              <RobotCard
-                rrn={robot.data.rrn}
-                name={robot.data.name}
-                manufacturer={robot.data.manufacturer}
-                description={robot.data.description}
-                verification_status={robot.data.verification_status}
-                tags={robot.data.tags}
-                status={robot.data.status}
-              />
-            </div>
-          ))}
-        </div>
+    <!-- Live grid (populated by JS) -->
+    <div id="registry-grid" class="hidden grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
 
-        <!-- Empty state (no search results) -->
-        <div id="registry-empty" class="hidden text-center py-24 border border-border rounded-xl bg-bg-card mt-2">
-          <div class="text-5xl mb-5">🔍</div>
-          <h3 class="font-display text-2xl font-semibold text-text mb-2">No robots found</h3>
-          <p class="text-text-muted mb-6">Try a different search term or filter.</p>
-          <button id="registry-clear" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors">
-            Clear filters
-          </button>
-        </div>
+    <!-- Empty state -->
+    <div id="registry-empty" class="hidden text-center py-24 border border-border rounded-xl bg-bg-card">
+      <div class="text-5xl mb-5">🤖</div>
+      <h3 class="font-display text-2xl font-semibold text-text mb-2">The registry is open</h3>
+      <p class="text-text-muted mb-6">Be among the first to register your robot, model, or harness.</p>
+      <a href="/registry/submit/" class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition-colors">
+        Register Now
+      </a>
+    </div>
 
-        <!-- Pagination hint -->
-        <p id="registry-count" class="text-center text-xs text-text-faint mt-10 font-mono">
-          Showing {robots.length} of {robots.length} registered robots · Registry data released under CC0
-        </p>
-      </>
-    )}
+    <!-- No results state -->
+    <div id="registry-noresults" class="hidden text-center py-20 border border-dashed border-border rounded-xl mt-2">
+      <div class="text-4xl mb-4">🔍</div>
+      <p class="text-text-muted mb-4">No results match your search.</p>
+      <button id="registry-clear" class="px-5 py-2 rounded-lg border border-border text-sm text-text-muted hover:text-accent hover:border-accent transition-colors">
+        Clear filters
+      </button>
+    </div>
+
+    <!-- Count -->
+    <p id="registry-count" class="hidden text-center text-xs text-text-faint mt-10 font-mono"></p>
   </div>
 
 </BaseLayout>
 
 <style>
-  .registry-filter-pill {
-    background-color: transparent;
+  .type-tab {
+    background: transparent;
     color: var(--color-text-muted, #9ca3af);
     border-color: var(--color-border, #374151);
   }
-  .registry-filter-pill[aria-pressed="true"] {
-    background-color: var(--color-accent, #3b82f6);
+  .type-tab[aria-pressed="true"] {
+    background: var(--color-accent, #3b82f6);
     color: #fff;
     border-color: var(--color-accent, #3b82f6);
   }
-  .registry-filter-pill:hover:not([aria-pressed="true"]) {
+  .type-tab:hover:not([aria-pressed="true"]) {
     border-color: var(--color-accent, #3b82f6);
     color: var(--color-accent, #3b82f6);
   }
+  .entity-card { cursor: pointer; }
+  .entity-card:hover { border-color: var(--color-accent, #3b82f6); }
 </style>
 
 <script>
-  (() => {
-    const searchInput = document.getElementById('registry-search') as HTMLInputElement | null;
-    const grid = document.getElementById('registry-grid');
-    const emptyState = document.getElementById('registry-empty');
+(() => {
+  const PREFIX_COLOR: Record<string, string> = {
+    RRN: 'text-accent border-accent/30 bg-primary/10',
+    RCN: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
+    RMN: 'text-purple-400 border-purple-500/30 bg-purple-500/10',
+    RHN: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
+  };
+
+  const TYPE_ICON: Record<string, string> = {
+    robot: '🤖', component: '🔌', model: '🧠', harness: '⚙️',
+  };
+
+  function summaryLine(entry: any): string {
+    const s = entry.summary ?? {};
+    if (entry.entity_type === 'robot') {
+      return [s.manufacturer, s.model, s.rcan_version ? `RCAN v${s.rcan_version}` : ''].filter(Boolean).join(' · ');
+    }
+    if (entry.entity_type === 'component') {
+      return [s.type, s.manufacturer, s.parent_rrn ? `parent: ${s.parent_rrn}` : ''].filter(Boolean).join(' · ');
+    }
+    if (entry.entity_type === 'model') {
+      const params = s.parameter_count_b ? `${s.parameter_count_b}B params` : '';
+      return [s.model_family, s.provider, params, s.quantization].filter(Boolean).join(' · ');
+    }
+    if (entry.entity_type === 'harness') {
+      return [s.harness_type, `RCAN v${s.rcan_version}`, s.open_source ? 'open-source' : ''].filter(Boolean).join(' · ');
+    }
+    return '';
+  }
+
+  function renderCard(entry: any): string {
+    const prefix = entry.id.split('-')[0];
+    const prefixCls = PREFIX_COLOR[prefix] ?? 'text-text-muted border-border bg-bg-card';
+    const icon = TYPE_ICON[entry.entity_type] ?? '📦';
+    const sub = summaryLine(entry);
+    const date = new Date(entry.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const detailUrl = `/registry/${entry.entity_type}/${entry.id}/`;
+
+    return `
+      <div class="entity-card bg-bg-card border border-border rounded-xl p-5 transition-colors"
+           data-id="${entry.id.toLowerCase()}"
+           data-name="${(entry.name ?? '').toLowerCase()}"
+           data-type="${entry.entity_type}"
+           data-summary="${sub.toLowerCase()}"
+           onclick="window.location.href='${detailUrl}'">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border font-mono text-xs font-medium ${prefixCls}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            ${entry.id}
+          </span>
+          <span class="text-lg" title="${entry.entity_type}">${icon}</span>
+        </div>
+        <h3 class="text-base font-semibold text-text mb-1 truncate">${entry.name}</h3>
+        ${sub ? `<p class="text-xs text-text-faint font-mono mb-3 truncate">${sub}</p>` : '<p class="mb-3"></p>'}
+        <div class="flex items-center justify-between mt-auto">
+          <span class="text-xs px-2 py-0.5 rounded-full bg-border/50 text-text-faint font-mono">${entry.entity_type}</span>
+          <span class="text-xs text-text-faint font-mono">${date}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadRegistry() {
+    const loadingEl = document.getElementById('registry-loading');
+    const gridEl = document.getElementById('registry-grid');
+    const emptyEl = document.getElementById('registry-empty');
+    const subtitleEl = document.getElementById('registry-subtitle');
     const countEl = document.getElementById('registry-count');
-    const clearBtn = document.getElementById('registry-clear');
-    const pills = document.querySelectorAll<HTMLButtonElement>('.registry-filter-pill');
+    if (!gridEl || !loadingEl || !emptyEl) return;
 
-    if (!searchInput || !grid || !emptyState) return;
+    try {
+      const res = await fetch('/v2/registry?limit=200');
+      const data = await res.json();
+      const entries: any[] = data.entries ?? [];
+      const counts = data.entity_types_count ?? {};
 
-    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.registry-card'));
-    const total = cards.length;
+      loadingEl.classList.add('hidden');
 
-    let currentQuery = '';
-    let currentFilter = 'all';
-    let debounceTimer: ReturnType<typeof setTimeout>;
+      if (entries.length === 0) {
+        emptyEl.classList.remove('hidden');
+        if (subtitleEl) subtitleEl.textContent = '0 entries · Global, open, permanent';
+        return;
+      }
 
-    function updateCount(visible: number) {
+      const total = entries.length;
+      if (subtitleEl) {
+        const parts = Object.entries(counts)
+          .filter(([, v]) => (v as number) > 0)
+          .map(([k, v]) => `${v} ${k}${(v as number) !== 1 ? 's' : ''}`);
+        subtitleEl.textContent = parts.join(' · ') + ' · Global, open, permanent';
+      }
+
+      // Store all entries on the grid for filtering
+      (gridEl as any)._allEntries = entries;
+      gridEl.innerHTML = entries.map(renderCard).join('');
+      gridEl.classList.remove('hidden');
+      gridEl.classList.add('grid');
+
       if (countEl) {
-        countEl.textContent = `Showing ${visible} of ${total} registered robots · Registry data released under CC0`;
+        countEl.textContent = `Showing ${total} of ${total} entries · Registry data released under CC0`;
+        countEl.classList.remove('hidden');
+      }
+
+      initFilters(entries);
+    } catch (err) {
+      loadingEl.classList.add('hidden');
+      if (gridEl) {
+        gridEl.innerHTML = `<div class="col-span-3 text-center py-16 text-text-muted">
+          <p class="text-sm">Failed to load registry. <a href="." class="text-accent hover:underline">Retry</a></p>
+        </div>`;
+        gridEl.classList.remove('hidden');
+        gridEl.classList.add('grid');
       }
     }
+  }
+
+  function initFilters(allEntries: any[]) {
+    const searchInput = document.getElementById('registry-search') as HTMLInputElement | null;
+    const gridEl = document.getElementById('registry-grid');
+    const noResultsEl = document.getElementById('registry-noresults');
+    const countEl = document.getElementById('registry-count');
+    const clearBtn = document.getElementById('registry-clear');
+    const tabs = document.querySelectorAll<HTMLButtonElement>('.type-tab');
+    if (!searchInput || !gridEl || !noResultsEl) return;
+
+    let currentQuery = '';
+    let currentType = 'all';
+    let debounce: ReturnType<typeof setTimeout>;
 
     function applyFilters() {
       const q = currentQuery.trim().toLowerCase();
-      let visibleCount = 0;
+      const cards = Array.from(gridEl!.querySelectorAll<HTMLElement>('.entity-card'));
+      let visible = 0;
 
       cards.forEach(card => {
-        const name = card.dataset.name ?? '';
-        const manufacturer = card.dataset.manufacturer ?? '';
-        const model = card.dataset.model ?? '';
-        const tags = card.dataset.tags ?? '';
-        const verification = card.dataset.verification ?? '';
-
-        const matchesSearch =
-          !q ||
-          name.includes(q) ||
-          manufacturer.includes(q) ||
-          model.includes(q) ||
-          tags.includes(q);
-
-        const matchesFilter =
-          currentFilter === 'all' || verification === currentFilter;
-
-        if (matchesSearch && matchesFilter) {
-          card.style.display = '';
-          visibleCount++;
-        } else {
-          card.style.display = 'none';
-        }
+        const matchType = currentType === 'all' || card.dataset.type === currentType;
+        const matchQ = !q || (card.dataset.id ?? '').includes(q) || (card.dataset.name ?? '').includes(q) || (card.dataset.summary ?? '').includes(q) || (card.dataset.type ?? '').includes(q);
+        const show = matchType && matchQ;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
       });
 
-      emptyState.classList.toggle('hidden', visibleCount > 0);
-      grid.classList.toggle('hidden', visibleCount === 0);
-      updateCount(visibleCount);
+      const total = allEntries.length;
+      noResultsEl!.classList.toggle('hidden', visible > 0);
+      gridEl!.classList.toggle('hidden', visible === 0);
+      if (countEl) {
+        countEl.textContent = `Showing ${visible} of ${total} entries · Registry data released under CC0`;
+      }
     }
 
-    // Search with debounce
     searchInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        currentQuery = searchInput.value;
-        applyFilters();
-      }, 200);
+      clearTimeout(debounce);
+      debounce = setTimeout(() => { currentQuery = searchInput.value; applyFilters(); }, 200);
     });
 
-    // Verification filter pills
-    pills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        currentFilter = pill.dataset.filter ?? 'all';
-        pills.forEach(p => p.setAttribute('aria-pressed', p === pill ? 'true' : 'false'));
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentType = tab.dataset.type ?? 'all';
+        tabs.forEach(t => t.setAttribute('aria-pressed', t === tab ? 'true' : 'false'));
         applyFilters();
       });
     });
 
-    // Clear button in empty state
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        currentQuery = '';
-        currentFilter = 'all';
-        pills.forEach(p => p.setAttribute('aria-pressed', p.dataset.filter === 'all' ? 'true' : 'false'));
+        if (searchInput) { searchInput.value = ''; currentQuery = ''; }
+        currentType = 'all';
+        tabs.forEach(t => t.setAttribute('aria-pressed', t.dataset.type === 'all' ? 'true' : 'false'));
         applyFilters();
       });
     }
-  })();
+  }
+
+  loadRegistry();
+})();
 </script>

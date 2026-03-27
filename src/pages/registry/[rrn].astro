@@ -1,9 +1,14 @@
 ---
+/**
+ * Legacy static robot detail page — now redirects to the new dynamic detail page.
+ * With an empty content collection this generates 0 static paths.
+ * New URL: /registry/robot/{RRN}/
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import VerificationBadge from '../../components/VerificationBadge.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
+  // Content collection is empty — returns [] → generates no static pages.
   const robots = await getCollection('robots');
   return robots.map(robot => ({
     params: { rrn: robot.data.rrn },
