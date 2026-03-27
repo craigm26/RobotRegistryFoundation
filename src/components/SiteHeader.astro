@@ -6,110 +6,214 @@ function isActive(href: string) {
   return currentPath.startsWith(href);
 }
 
-const navLinks = [
-  { href: '/registry/', label: 'Registry' },
-  { href: '/registry/submit/', label: 'Submit a Robot' },
-  { href: '/governance/', label: 'Governance' },
-  { href: '/verification/', label: 'Verification' },
-  { href: '/federation/', label: 'Federation' },
-  { href: '/rcan-integration/', label: 'RCAN Integration' },
-  { href: '/about/', label: 'About' },
+const developerLinks = [
   { href: '/api/', label: 'API' },
+  { href: '/rcan-integration/', label: 'RCAN Integration' },
+  { href: '/federation/', label: 'Federation' },
 ];
 
 const ecosystemLinks = [
   { href: 'https://opencastor.com', label: 'OpenCastor' },
   { href: 'https://rcan.dev', label: 'RCAN Spec' },
 ];
+
+const isDevelopersActive = developerLinks.some(link => isActive(link.href));
 ---
 
-<header class="fixed top-0 w-full z-50 border-b border-border bg-bg/85 backdrop-blur-md" id="site-header">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<header class="fixed top-0 w-full z-50 flex flex-col shadow-sm transition-shadow" id="site-header">
+  <div class="w-full border-b border-border bg-bg/95 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      
+      <!-- Wordmark -->
+      <a href="/" class="flex items-center gap-3 group">
+        <!-- Shield logo -->
+        <div class="w-8 h-8 relative flex-shrink-0">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 group-hover:drop-shadow-[0_0_10px_rgba(59,130,246,0.7)] transition-all duration-300">
+            <path d="M16 2L4 7v9c0 6.627 5.373 12 12 12s12-5.373 12-12V7L16 2z" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
+            <rect x="10" y="10" width="12" height="10" rx="2" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
+            <circle cx="13" cy="14" r="1.5" fill="#60a5fa"/>
+            <circle cx="19" cy="14" r="1.5" fill="#60a5fa"/>
+            <path d="M13 18h6" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="16" y1="10" x2="16" y2="7" stroke="#93c5fd" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="16" cy="6.5" r="1" fill="#3b82f6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-sm font-mono font-medium tracking-widest text-accent leading-none">RRF</div>
+          <div class="text-xs text-text-muted leading-none mt-0.5 font-sans">Robot Registry Foundation</div>
+        </div>
+      </a>
 
-    <!-- Wordmark -->
-    <a href="/" class="flex items-center gap-3 group">
-      <!-- Shield logo -->
-      <div class="w-8 h-8 relative flex-shrink-0">
-        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 group-hover:drop-shadow-[0_0_10px_rgba(59,130,246,0.7)] transition-all duration-300">
-          <path d="M16 2L4 7v9c0 6.627 5.373 12 12 12s12-5.373 12-12V7L16 2z" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
-          <rect x="10" y="10" width="12" height="10" rx="2" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
-          <circle cx="13" cy="14" r="1.5" fill="#60a5fa"/>
-          <circle cx="19" cy="14" r="1.5" fill="#60a5fa"/>
-          <path d="M13 18h6" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round"/>
-          <line x1="16" y1="10" x2="16" y2="7" stroke="#93c5fd" stroke-width="1.2" stroke-linecap="round"/>
-          <circle cx="16" cy="6.5" r="1" fill="#3b82f6"/>
-        </svg>
-      </div>
-      <div>
-        <div class="text-sm font-mono font-medium tracking-widest text-accent leading-none">RRF</div>
-        <div class="text-xs text-text-muted leading-none mt-0.5 font-sans">Robot Registry Foundation</div>
-      </div>
-    </a>
-
-    <!-- Desktop Nav -->
-    <nav class="hidden lg:flex items-center gap-0.5">
-      {navLinks.map(link => (
+      <!-- Desktop Nav -->
+      <nav class="hidden lg:flex items-center gap-6 h-full mt-0.5">
         <a
-          href={link.href}
+          href="/registry/"
           class:list={[
-            "px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150",
-            link.label === 'Submit a Robot'
-              ? isActive(link.href)
-                ? "bg-primary text-white"
-                : "bg-primary/20 text-accent border border-accent/30 hover:bg-primary/30"
-              : isActive(link.href)
-                ? "text-accent bg-accent/10"
-                : "text-text-muted hover:text-text hover:bg-white/5"
+            "text-sm font-medium transition-colors h-full flex items-center border-b-2",
+            isActive('/registry/') && !isActive('/registry/submit/')
+              ? "border-accent text-accent"
+              : "border-transparent text-text-muted hover:text-text hover:border-border"
           ]}
         >
-          {link.label}
+          Registry
         </a>
-      ))}
-      <span class="mx-1 text-white/10">|</span>
-      {ecosystemLinks.map(link => (
         <a
-          href={link.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="px-3 py-1.5 rounded-md text-sm font-medium text-accent/70 hover:text-accent transition-colors duration-150 flex items-center gap-1"
+          href="/verification/"
+          class:list={[
+            "text-sm font-medium transition-colors h-full flex items-center border-b-2",
+            isActive('/verification/')
+              ? "border-accent text-accent"
+              : "border-transparent text-text-muted hover:text-text hover:border-border"
+          ]}
         >
-          {link.label}
-          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Verify
         </a>
-      ))}
-    </nav>
+        
+        <!-- Developers Dropdown -->
+        <div class="relative group h-full flex items-center">
+          <button
+            class:list={[
+              "text-sm font-medium transition-colors h-full flex items-center gap-1 border-b-2",
+              isDevelopersActive
+                ? "border-accent text-accent"
+                : "border-transparent text-text-muted hover:text-text hover:border-border"
+            ]}
+          >
+            Developers
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-200"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          
+          <div class="absolute top-full left-0 mt-0 w-48 bg-bg border border-border rounded-b-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 flex flex-col py-2 z-50">
+            {developerLinks.map(link => (
+              <a
+                href={link.href}
+                class:list={[
+                  "px-4 py-2 text-sm transition-colors",
+                  isActive(link.href)
+                    ? "text-accent bg-accent/10"
+                    : "text-text-muted hover:text-text hover:bg-white/5"
+                ]}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
 
-    <!-- Mobile Menu Button -->
-    <button id="nav-toggle" class="lg:hidden p-2 text-text-muted hover:text-accent transition-colors" aria-label="Toggle menu">
-      <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-      <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
+        <a
+          href="/about/"
+          class:list={[
+            "text-sm font-medium transition-colors h-full flex items-center border-b-2",
+            isActive('/about/')
+              ? "border-accent text-accent"
+              : "border-transparent text-text-muted hover:text-text hover:border-border"
+          ]}
+        >
+          About
+        </a>
+        <a
+          href="/governance/"
+          class:list={[
+            "text-sm font-medium transition-colors h-full flex items-center border-b-2",
+            isActive('/governance/')
+              ? "border-accent text-accent"
+              : "border-transparent text-text-muted hover:text-text hover:border-border"
+          ]}
+        >
+          Governance
+        </a>
+      </nav>
+
+      <!-- Right Side cluster -->
+      <div class="hidden lg:flex items-center gap-4">
+        <!-- Ecosystem Links -->
+        <div class="flex items-center gap-3 pr-4 border-r border-border">
+          {ecosystemLinks.map(link => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs font-medium text-text-muted hover:text-accent transition-colors duration-150 flex items-center gap-1"
+            >
+              {link.label}
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+          ))}
+        </div>
+
+        <!-- Primary CTA -->
+        <a
+          href="/registry/submit/"
+          class="bg-accent hover:bg-accent/90 text-bg px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 shadow-[0_0_10px_rgba(14,165,233,0.3)] hover:shadow-[0_0_15px_rgba(14,165,233,0.5)]"
+          style="background-color: var(--color-accent); color: var(--color-bg);"
+        >
+          Register
+        </a>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button id="nav-toggle" class="lg:hidden p-2 text-text-muted hover:text-accent transition-colors" aria-label="Toggle menu">
+        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Stats Bar -->
+  <div class="w-full bg-bg/95 backdrop-blur-md border-b border-border/50 py-1.5 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-center">
+      <p id="registry-stats" class="text-[11px] md:text-xs text-text-muted font-mono tracking-wide animate-pulse">
+        Loading registry statistics...
+      </p>
+    </div>
   </div>
 </header>
 
 <!-- Mobile Menu -->
-<div id="mobile-menu" class="fixed left-0 right-0 bottom-0 top-16 bg-bg border-t border-border flex-col p-6 gap-1 overflow-y-auto z-[9999] hidden" style="overscroll-behavior: contain;">
-  {navLinks.map(link => (
-    <a
-      href={link.href}
-      class:list={[
-        "text-base font-medium transition-colors py-3 border-b border-border block",
-        isActive(link.href) ? "text-accent" : "text-text-muted hover:text-accent"
-      ]}
-    >
-      {link.label}
-    </a>
-  ))}
+<div id="mobile-menu" class="fixed left-0 right-0 bottom-0 top-[88px] bg-bg flex-col p-6 gap-1 overflow-y-auto z-[9999] hidden" style="overscroll-behavior: contain;">
+  <a
+    href="/registry/submit/"
+    class="bg-accent text-bg text-center py-3 rounded-md text-base font-semibold mb-4 block"
+    style="background-color: var(--color-accent); color: var(--color-bg);"
+  >
+    Register
+  </a>
+  
+  <a href="/registry/" class:list={["text-base font-medium transition-colors py-3 border-b border-border block", isActive('/registry/') && !isActive('/registry/submit/') ? "text-accent" : "text-text-muted hover:text-accent"]}>Registry</a>
+  <a href="/verification/" class:list={["text-base font-medium transition-colors py-3 border-b border-border block", isActive('/verification/') ? "text-accent" : "text-text-muted hover:text-accent"]}>Verify</a>
+  
+  <div class="py-3 border-b border-border block">
+    <div class="text-base font-medium text-text-muted mb-2">Developers</div>
+    <div class="flex flex-col pl-4 gap-2">
+      {developerLinks.map(link => (
+        <a href={link.href} class:list={["text-sm transition-colors block py-1", isActive(link.href) ? "text-accent" : "text-text-muted hover:text-accent"]}>{link.label}</a>
+      ))}
+    </div>
+  </div>
+
+  <a href="/about/" class:list={["text-base font-medium transition-colors py-3 border-b border-border block", isActive('/about/') ? "text-accent" : "text-text-muted hover:text-accent"]}>About</a>
+  <a href="/governance/" class:list={["text-base font-medium transition-colors py-3 border-b border-border block", isActive('/governance/') ? "text-accent" : "text-text-muted hover:text-accent"]}>Governance</a>
+  
+  <div class="mt-6 pt-6 border-t border-border flex flex-col gap-4">
+    <div class="text-xs font-medium text-text-muted uppercase tracking-wider">Ecosystem</div>
+    {ecosystemLinks.map(link => (
+      <a href={link.href} target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-text-muted hover:text-accent transition-colors flex items-center gap-2">
+        {link.label}
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    ))}
+  </div>
 </div>
 
 <script>
+  // Mobile menu toggle
   const toggle = document.getElementById('nav-toggle');
   const menu = document.getElementById('mobile-menu');
   const iconOpen = document.getElementById('icon-open');
@@ -124,8 +228,39 @@ const ecosystemLinks = [
     iconClose?.classList.toggle('hidden', !isOpen);
   });
 
+  // Header scroll shadow
   window.addEventListener('scroll', () => {
     const header = document.getElementById('site-header');
-    header?.classList.toggle('shadow-lg', window.scrollY > 10);
+    header?.classList.toggle('shadow-md', window.scrollY > 10);
   }, { passive: true });
+
+  // Fetch registry stats
+  async function fetchStats() {
+    const statsEl = document.getElementById('registry-stats');
+    if (!statsEl) return;
+    
+    try {
+      const response = await fetch('/v2/registry');
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      
+      const data = await response.json();
+      
+      // Map API response to fallback zeros if undefined
+      const robots = data.robots || data.robotCount || data.robotsCount || 0;
+      const components = data.components || data.componentCount || data.componentsCount || 0;
+      const models = data.models || data.modelCount || data.modelsCount || 0;
+      const harnesses = data.harnesses || data.harnessCount || data.harnessesCount || 0;
+      
+      statsEl.classList.remove('animate-pulse');
+      statsEl.textContent = `${robots.toLocaleString()} robots · ${components.toLocaleString()} components · ${models.toLocaleString()} models · ${harnesses.toLocaleString()} harnesses registered`;
+    } catch (error) {
+      statsEl.classList.remove('animate-pulse');
+      statsEl.textContent = 'Registry statistics temporarily unavailable';
+      console.error('Error fetching registry stats:', error);
+    }
+  }
+  
+  if (typeof window !== 'undefined') {
+    fetchStats();
+  }
 </script>
