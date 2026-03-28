@@ -1,8 +1,8 @@
 {
   "name": "robotregistryfoundation",
   "type": "module",
-  "version": "1.0.0",
-  "description": "Robot Registry Foundation — Independent Infrastructure for Robot Identity",
+  "version": "1.7.0",
+  "description": "Robot Registry Foundation \u2014 Independent Infrastructure for Robot Identity",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
