@@ -27,7 +27,7 @@ const entityEndpoints = [
         example: `{
   "rrn": "RRN-000000000001",
   "registered_at": "2026-03-27T00:00:00.000Z",
-  "record_url": "https://robot-registry-foundation.pages.dev/v2/robots/RRN-000000000001"
+  "record_url": "https://robotregistryfoundation.org/v2/robots/RRN-000000000001"
 }`,
       },
       {
@@ -87,7 +87,7 @@ const entityEndpoints = [
   "rcn": "RCN-000000000001",
   "parent_rrn": "RRN-000000000001",
   "registered_at": "2026-03-27T00:00:00.000Z",
-  "record_url": "https://robot-registry-foundation.pages.dev/v2/components/RCN-000000000001"
+  "record_url": "https://robotregistryfoundation.org/v2/components/RCN-000000000001"
 }`,
       },
       {
@@ -134,7 +134,7 @@ const entityEndpoints = [
         example: `{
   "rmn": "RMN-000000000001",
   "registered_at": "2026-03-27T00:00:00.000Z",
-  "record_url": "https://robot-registry-foundation.pages.dev/v2/models/RMN-000000000001"
+  "record_url": "https://robotregistryfoundation.org/v2/models/RMN-000000000001"
 }`,
       },
       {
@@ -181,7 +181,7 @@ const entityEndpoints = [
         example: `{
   "rhn": "RHN-000000000001",
   "registered_at": "2026-03-27T00:00:00.000Z",
-  "record_url": "https://robot-registry-foundation.pages.dev/v2/harnesses/RHN-000000000001"
+  "record_url": "https://robotregistryfoundation.org/v2/harnesses/RHN-000000000001"
 }`,
       },
       {
@@ -273,7 +273,7 @@ const methodColors: Record<string, string> = {
       <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="p-3 rounded-lg border border-border bg-bg-card">
           <div class="text-xs text-text-muted mb-1">Base URL</div>
-          <code class="text-xs text-accent font-mono break-all">robot-registry-foundation.pages.dev</code>
+          <code class="text-xs text-accent font-mono break-all">robotregistryfoundation.org</code>
         </div>
         <div class="p-3 rounded-lg border border-border bg-bg-card">
           <div class="text-xs text-text-muted mb-1">Authentication</div>
@@ -413,15 +413,15 @@ const methodColors: Record<string, string> = {
         {[
           {
             label: "List all registry entries",
-            code: `curl https://robot-registry-foundation.pages.dev/v2/registry`,
+            code: `curl https://robotregistryfoundation.org/v2/registry`,
           },
           {
             label: "Get a robot by RRN",
-            code: `curl https://robot-registry-foundation.pages.dev/v2/robots/RRN-000000000001`,
+            code: `curl https://robotregistryfoundation.org/v2/robots/RRN-000000000001`,
           },
           {
             label: "Register a robot",
-            code: `curl -X POST https://robot-registry-foundation.pages.dev/v2/robots/register \\
+            code: `curl -X POST https://robotregistryfoundation.org/v2/robots/register \\
   -H "Authorization: Bearer <token>" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -435,7 +435,7 @@ const methodColors: Record<string, string> = {
           },
           {
             label: "Register a hardware component",
-            code: `curl -X POST https://robot-registry-foundation.pages.dev/v2/components/register \\
+            code: `curl -X POST https://robotregistryfoundation.org/v2/components/register \\
   -H "Authorization: Bearer <token>" \\
   -H "Content-Type: application/json" \\
   -d '{

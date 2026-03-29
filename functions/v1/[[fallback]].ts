@@ -5,7 +5,7 @@
  * All clients must migrate to the v2 API which supports the full
  * RCAN v2.2 entity-type numbering system (RRN / RCN / RMN / RHN).
  *
- * Migration guide: https://robot-registry-foundation.pages.dev/api/
+ * Migration guide: https://robotregistryfoundation.org/api/
  */
 
 export const onRequest: PagesFunction = async ({ request }) => {
@@ -20,8 +20,8 @@ export const onRequest: PagesFunction = async ({ request }) => {
     original_path: originalPath,
     rcan_era: "v1.x",
     action: "Migrate to RRF API v2 — supports RRN, RCN, RMN, RHN entity types (RCAN v2.2 §21)",
-    docs: "https://robot-registry-foundation.pages.dev/api/",
-    v2_base: "https://robot-registry-foundation.pages.dev/v2/",
+    docs: "https://robotregistryfoundation.org/api/",
+    v2_base: "https://robotregistryfoundation.org/v2/",
     ...(migration ? { v2_equivalent: migration } : {}),
   };
 
@@ -31,7 +31,7 @@ export const onRequest: PagesFunction = async ({ request }) => {
       "Content-Type": "application/json",
       "Deprecation": "true",
       "Sunset": "2026-03-27",
-      "Link": '<https://robot-registry-foundation.pages.dev/api/>; rel="successor-version"',
+      "Link": '<https://robotregistryfoundation.org/api/>; rel="successor-version"',
     },
   });
 };

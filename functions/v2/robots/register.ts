@@ -46,7 +46,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   });
 
   return ok({ rrn, registered_at: record.registered_at,
-    record_url: `https://robot-registry-foundation.pages.dev/v2/robots/${rrn}` }, 201);
+    record_url: `https://robotregistryfoundation.org/v2/robots/${rrn}` }, 201);
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
