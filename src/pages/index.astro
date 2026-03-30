@@ -88,22 +88,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </section>
 
-  <!-- Stats row -->
-  <section class="py-10 border-y border-border my-4">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-      {[
-        { value: '5', label: 'Registered Robots' },
-        { value: '4', label: 'Verification Tiers' },
-        { value: 'Open', label: 'REST API' },
-        { value: 'CC BY 4.0', label: 'Spec License' },
-      ].map(stat => (
-        <div class="text-center">
-          <div class="font-display text-4xl font-semibold text-accent mb-1">{stat.value}</div>
-          <div class="text-sm text-text-muted font-mono">{stat.label}</div>
-        </div>
-      ))}
-    </div>
-  </section>
+
 
   <!-- Why it matters -->
   <section class="py-16">
