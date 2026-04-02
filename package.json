@@ -2,7 +2,7 @@
   "name": "robotregistryfoundation",
   "type": "module",
   "version": "1.7.0",
-  "description": "Robot Registry Foundation \u2014 Independent Infrastructure for Robot Identity",
+  "description": "Robot Registry Foundation — Independent Infrastructure for Robot Identity",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -11,10 +11,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "3.2.0",
+    "@astrojs/sitemap": "^3.7.2",
     "@astrojs/tailwind": "^6.0.2",
-    "astro": "^4.16.18",
+    "astro": "^5.18.1",
     "nanoid": "^5.1.7",
+    "picomatch": "^4.0.4",
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
