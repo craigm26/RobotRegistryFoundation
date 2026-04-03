@@ -110,3 +110,4 @@ Governance charter: [robotregistryfoundation.org/governance/](https://robotregis
 
 Site content: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 Code: MIT
+
