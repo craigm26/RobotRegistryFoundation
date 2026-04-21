@@ -2,7 +2,7 @@
 
 The open registry for RCAN-compliant robots — assigns permanent global identities to robots the way ICANN assigns domain names.
 
-[![Spec](https://img.shields.io/badge/RCAN-v1.6-blue)](https://rcan.dev/spec/)
+[![Spec](https://img.shields.io/badge/RCAN-v3.0-blue)](https://rcan.dev/spec/)
 [![License](https://img.shields.io/badge/license-CC%20BY%204.0-green)](https://creativecommons.org/licenses/by/4.0/)
 
 🌐 **[robotregistryfoundation.org](https://robotregistryfoundation.org)**
@@ -17,9 +17,10 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 ## How to Register a Robot
 
-1. Install and configure OpenCastor: `pip install opencastor==2026.3.17.1 && castor setup`
-2. The setup wizard assigns an RRN and registers it automatically
-3. Or register directly at [rcan.dev/registry](https://rcan.dev/registry)
+1. Install the CLI tool: `pip install robot-md`
+2. Initialize and register a new robot: `robot-md init my-robot --register`
+3. Or register an existing manifest: `robot-md register ./ROBOT.md`
+4. Register manually at [robotregistryfoundation.org/register](https://robotregistryfoundation.org/register)
 
 ## Robot Document Schema
 
@@ -40,11 +41,11 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/robots` | List all registered robots (paginated) |
-| `GET` | `/robots/{rrn}` | Resolve a robot record by RRN |
-| `GET` | `/robots/{rrn}/revocation-status` | Check if an RRN is revoked |
-| `GET` | `/robots/{rrn}/keys` | Fetch JWKS public keys for an RRN |
-| `POST` | `/robots/register` | Register a new robot (authenticated) |
+| `GET` | `/v2/robots` | List all registered robots (paginated) |
+| `GET` | `/v2/robots/{rrn}` | Resolve a robot record by RRN |
+| `GET` | `/v2/robots/{rrn}/revocation-status` | Check if an RRN is revoked |
+| `GET` | `/v2/robots/{rrn}/keys` | Fetch JWKS public keys for an RRN |
+| `POST` | `/v2/robots/register` | Register a new robot |
 | `GET` | `/.well-known/rcan-node.json` | Registry node manifest |
 
 Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoundation.org/api/)
@@ -53,8 +54,8 @@ Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoun
 
 | RRN | Name | Runtime | Hardware |
 |---|---|---|---|
-| RRN-000000000001 | Bob | OpenCastor v2026.3.17.1 | Raspberry Pi 5, Gemini 2.5 Flash |
-| RRN-000000000005 | Alex | OpenCastor v2026.3.17.1 | Raspberry Pi 5 + SO-ARM101 5-DOF arm |
+| RRN-000000000001 | Bob | OpenCastor v2026.4.21.1 | Raspberry Pi 5, Gemini 2.5 Flash |
+| RRN-000000000005 | Alex | OpenCastor v2026.4.21.1 | Raspberry Pi 5 + SO-ARM101 5-DOF arm |
 
 Browse all: [robotregistryfoundation.org/registry/](https://robotregistryfoundation.org/registry/)
 
@@ -91,11 +92,11 @@ npm run build    # production → dist/
 
 | Project | Version | Purpose |
 |---|---|---|
-| **RRF** (this) | v1.6.0 | Global robot identity registry |
-| [RCAN Protocol](https://rcan.dev/spec/) | v1.6.0 | Open robot communication standard |
-| [OpenCastor](https://github.com/craigm26/OpenCastor) | v2026.3.17.1 | Robot runtime, RCAN reference implementation |
-| [rcan-py](https://github.com/continuonai/rcan-py) | v0.6.0 | Python RCAN SDK |
-| [rcan-ts](https://github.com/continuonai/rcan-ts) | v0.6.0 | TypeScript RCAN SDK |
+| **RRF** (this) | v2.0.0 | Global robot identity registry |
+| [RCAN Protocol](https://rcan.dev/spec/) | v3.0.0 | Open robot communication standard |
+| [OpenCastor](https://github.com/craigm26/OpenCastor) | v2026.4.21.1 | Robot runtime, RCAN reference implementation |
+| [rcan-py](https://github.com/continuonai/rcan-py) | v3.0.0 | Python RCAN SDK |
+| [rcan-ts](https://github.com/continuonai/rcan-ts) | v3.0.0 | TypeScript RCAN SDK |
 | [Fleet UI](https://app.opencastor.com) | live | Web fleet dashboard |
 
 ## Contributing
