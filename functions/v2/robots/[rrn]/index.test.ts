@@ -1,4 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { resolve, dirname } from "node:path";
 import { onRequestGet, onRequestPatch } from "./index.js";
 
 const RRN = "RRN-000000000042";
@@ -8,6 +11,11 @@ const UNSIGNED_RECORD = {
   firmware_version: "1.0", rcan_version: "3.0",
   api_key: API_KEY, registered_at: "2026-04-01T00:00:00Z",
 };
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const patchFx = JSON.parse(
+  readFileSync(resolve(__dirname, "../../../_lib/fixtures/patch-fixture.json"), "utf8"),
+);
 
 function makeEnv(stored: any = UNSIGNED_RECORD) {
   const store: Record<string, string> = stored ? { [`robot:${RRN}`]: JSON.stringify(stored) } : {};
@@ -113,5 +121,40 @@ describe("GET /v2/robots/[rrn]", () => {
     const env = makeEnv(null);
     const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("PATCH /v2/robots/[rrn] — happy path (real sig verify)", () => {
+  it("accepts a valid Python-signed PATCH and updates the record", async () => {
+    const env = makeEnv();  // fresh UNSIGNED_RECORD at RRN-000000000042 (matches fixture)
+    const body = {
+      pq_signing_pub: patchFx.pq_signing_pub,
+      pq_kid: patchFx.pq_kid,
+      sig: patchFx.sig,
+    };
+    const res = await onRequestPatch({
+      request: makePatchRequest(body),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.pq_signing_pub).toBe(patchFx.pq_signing_pub);
+    expect(updated.pq_kid).toBe(patchFx.pq_kid);
+    expect(updated.updated_at).toBeDefined();
+  });
+
+  it("rejects a PATCH with tampered ml_dsa signature (400)", async () => {
+    const env = makeEnv();
+    const badSig = { ...patchFx.sig, ml_dsa: "AAAA" + patchFx.sig.ml_dsa.slice(4) };
+    const body = {
+      pq_signing_pub: patchFx.pq_signing_pub,
+      pq_kid: patchFx.pq_kid,
+      sig: badSig,
+    };
+    const res = await onRequestPatch({
+      request: makePatchRequest(body),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(400);
   });
 });
