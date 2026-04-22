@@ -15,6 +15,7 @@
   "dependencies": {
     "@astrojs/sitemap": "3.2.0",
     "@astrojs/tailwind": "^6.0.2",
+    "@noble/post-quantum": "^0.6.1",
     "astro": "^5.18.1",
     "nanoid": "^5.1.7",
     "picomatch": "^2.3.2",
