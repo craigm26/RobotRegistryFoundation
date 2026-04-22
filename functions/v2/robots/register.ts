@@ -11,6 +11,7 @@
 
 import { nextId, isValidId } from "../_lib/id.js";
 import type { RobotRecord } from "../_lib/types.js";
+import { canonicalJson, verifyHybrid } from "../../_lib/verify.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -24,6 +25,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return err("Required: name, manufacturer, model, firmware_version, rcan_version", 400);
   }
 
+  // v0.9.1: RCAN 3.0 §2.2 — signatures are mandatory, unsigned is rejected.
+  const { pq_signing_pub, pq_kid, ruri, owner_uid, sig } = body as Record<string, any>;
+  if (!pq_signing_pub || !pq_kid
+      || !sig?.ml_dsa || !sig?.ed25519 || !sig?.ed25519_pub) {
+    return err("Unsigned registration not permitted (RCAN 3.0 §2.2)", 400);
+  }
+
+  const signedFields: Record<string, string> = {
+    name, manufacturer, model, firmware_version, rcan_version,
+    pq_signing_pub, pq_kid,
+  };
+  if (ruri) signedFields.ruri = ruri;
+  if (owner_uid) signedFields.owner_uid = owner_uid;
+
+  const message = canonicalJson(signedFields);
+  const verified = await verifyHybrid(pq_signing_pub, sig, message);
+  if (!verified) return err("Signature verification failed", 400);
+
   const rrn = await nextId(env.RRF_KV, "RRN");
 
   const record: RobotRecord = {
@@ -33,10 +52,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     model,
     firmware_version,
     rcan_version,
-    pq_signing_pub:  body.pq_signing_pub as string | undefined,
-    pq_kid:          body.pq_kid as string | undefined,
-    ruri:            body.ruri as string | undefined,
-    owner_uid:       body.owner_uid as string | undefined,
+    pq_signing_pub,
+    pq_kid,
+    ruri,
+    owner_uid,
     loa_enforcement: body.loa_enforcement !== false,  // default true
     registered_at:   new Date().toISOString(),
   };
