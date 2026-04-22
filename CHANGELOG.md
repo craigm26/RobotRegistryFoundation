@@ -4,6 +4,40 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## [1.8.0] - 2026-04-22
+
+### Added
+- `PATCH /v2/robots/[rrn]` — upgrade an unsigned record to signed by submitting
+  `{pq_signing_pub, pq_kid, sig}` with a valid hybrid signature over canonical
+  `{rrn, pq_signing_pub, pq_kid}` bytes. Bearer-authed via the robot's API key.
+  Returns 409 if the record is already signed (key rotation is a later release).
+- `GET /v2/robots/[rrn]` — fetch a single robot record by RRN (existing handler
+  preserved; now colocated with PATCH in the dynamic route).
+- Shared `functions/_lib/verify.ts` — ML-DSA-65 + Ed25519 hybrid verification
+  using `@noble/post-quantum@0.6.1` (FIPS 204) and WebCrypto Ed25519.
+- `vitest` test suite (21 tests); cross-language fixtures (Python-signed via
+  `rcan.crypto`, TS-verified) at `functions/_lib/fixtures/hybrid-fixture.json`
+  (register-style), `patch-fixture.json` (PATCH-style),
+  `register-fixture.json` (signed POST body).
+- `scripts/gen-patch-fixture.py`, `scripts/gen-register-fixture.py` —
+  regenerators for the cross-language fixtures.
+
+### Changed (BREAKING)
+- `POST /v2/robots/register` now requires `pq_signing_pub`, `pq_kid`, and a
+  valid ML-DSA-65 + Ed25519 hybrid signature over the canonical signed-fields
+  block. Unsigned registration returns 400 per RCAN 3.0 §2.2. Prod registry
+  had 1 existing robot (RRN-000000000001, already signed) — no migration.
+
+### Dependencies
+- Added: `@noble/post-quantum@^0.6.1`, `vitest@^2`, `@types/node`.
+
+### Coordinated release
+- Pairs with `robot-md@0.9.1` (in-flight at time of RRF 1.8.0 deploy). See
+  `robot-md/docs/superpowers/specs/2026-04-22-v0.9.1-hybrid-signing-design.md`
+  for the cross-repo design.
+
+---
+
 ## [1.7.0] - 2026-03-28
 
 ### Added
