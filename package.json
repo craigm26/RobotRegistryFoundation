@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@astrojs/sitemap": "3.2.0",
+    "@astrojs/sitemap": "3.7.2",
     "@astrojs/tailwind": "^6.0.2",
     "@noble/post-quantum": "^0.6.1",
     "astro": "^5.18.1",
