@@ -1,16 +1,22 @@
 /**
  * POST /v2/models/register
- * RCAN v2.2 §21 — Register an AI model and receive an RMN.
+ * RCAN 3.0 §21 + §2.2 — Register an AI model, receive an RMN.
+ *
+ * v1.9.0: unsigned registration is rejected per RCAN 3.0 §2.2. Body MUST
+ * include pq_signing_pub, pq_kid, and sig{ml_dsa, ed25519, ed25519_pub}
+ * over the canonical signed-fields block (all provided fields except sig).
  *
  * Body: { name, version, model_family, architecture?, parameter_count_b?,
  *         quantization?, license?, provider?, provider_model_id?,
- *         repo_url?, rcan_compatible?, owner_uid? }
+ *         repo_url?, rcan_compatible?, compatible_harness_ids?, owner_uid?,
+ *         pq_signing_pub, pq_kid, sig }
  *
  * Returns: { rmn, registered_at, record_url }
  */
 
 import { nextId } from "../_lib/id.js";
 import type { ModelRecord, ModelFamily, ModelQuantization } from "../_lib/types.js";
+import { canonicalJson, verifyHybrid } from "../../_lib/verify.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -43,6 +49,32 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return err(`Invalid quantization. Must be one of: ${VALID_QUANT.join(", ")}`, 400);
   }
 
+  // v1.9.0: RCAN 3.0 §2.2 — signatures mandatory, unsigned rejected.
+  const { pq_signing_pub, pq_kid, sig } = body as Record<string, any>;
+  if (!pq_signing_pub || !pq_kid
+      || !sig?.ml_dsa || !sig?.ed25519 || !sig?.ed25519_pub) {
+    return err("Unsigned registration not permitted (RCAN 3.0 §2.2)", 400);
+  }
+
+  const signedFields: Record<string, unknown> = {
+    name, version, model_family,
+    pq_signing_pub, pq_kid,
+  };
+  if (body.architecture)          signedFields.architecture          = body.architecture;
+  if (body.parameter_count_b !== undefined) signedFields.parameter_count_b = body.parameter_count_b;
+  if (body.quantization)          signedFields.quantization          = body.quantization;
+  if (body.license)               signedFields.license               = body.license;
+  if (body.provider)              signedFields.provider              = body.provider;
+  if (body.provider_model_id)     signedFields.provider_model_id     = body.provider_model_id;
+  if (body.repo_url)              signedFields.repo_url              = body.repo_url;
+  if (body.rcan_compatible !== undefined) signedFields.rcan_compatible = body.rcan_compatible;
+  if (body.compatible_harness_ids) signedFields.compatible_harness_ids = body.compatible_harness_ids;
+  if (body.owner_uid)             signedFields.owner_uid             = body.owner_uid;
+
+  const message = canonicalJson(signedFields);
+  const verified = await verifyHybrid(pq_signing_pub, sig, message);
+  if (!verified) return err("Signature verification failed", 400);
+
   const rmn = await nextId(env.RRF_KV, "RMN");
 
   const record: ModelRecord = {
@@ -61,6 +93,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     rcan_compatible:    body.rcan_compatible !== false,
     compatible_harness_ids: body.compatible_harness_ids as string[] | undefined,
     owner_uid:          body.owner_uid as string | undefined,
+    pq_signing_pub,
+    pq_kid,
     registered_at:      new Date().toISOString(),
   };
 

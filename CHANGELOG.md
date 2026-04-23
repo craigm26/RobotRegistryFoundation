@@ -4,6 +4,38 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## [1.9.0] - 2026-04-23
+
+### Changed (BREAKING)
+- `POST /v2/components/register`, `POST /v2/models/register`,
+  `POST /v2/harnesses/register` — all three now require the same
+  hybrid signing pattern as `/v2/robots/register` (shipped in 1.8.0).
+  Body MUST include `pq_signing_pub`, `pq_kid`, and `sig{ml_dsa,
+  ed25519, ed25519_pub}` over the canonical signed-fields block.
+  Unsigned POSTs return `400 Unsigned registration not permitted
+  (RCAN 3.0 §2.2)`. Closes the v0.9.x ecosystem gap where robot-md
+  v0.9.6 accepts RCN/RMN/RHN references pointing at entities that
+  could have been registered without a signature.
+
+### Added
+- `ComponentRecord`, `ModelRecord`, `HarnessRecord` now persist
+  `pq_signing_pub` + `pq_kid` so downstream queries can verify the
+  register-time identity of each entity.
+- `functions/v2/{components,models,harnesses}/register.test.ts` —
+  vitest suites covering unsigned rejection, tampered-body rejection,
+  missing-sig-subfield rejection, and happy-path minting. Uses
+  Python-signed cross-language fixtures at
+  `functions/_lib/fixtures/{component,model,harness}-fixture.json`.
+- `scripts/gen-{component,model,harness}-fixture.py` — regenerators.
+
+### Migration
+- Existing records already minted under 1.6.0–1.8.0 remain valid.
+  No record migration needed; only the `register` endpoints tighten.
+- Any tooling that POSTs to `/v2/{components,models,harnesses}/register`
+  must now sign via `rcan.crypto.sign_hybrid` (same shape as robots).
+
+---
+
 ## [1.8.0] - 2026-04-22
 
 ### Added

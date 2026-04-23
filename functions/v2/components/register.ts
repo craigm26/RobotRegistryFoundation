@@ -1,15 +1,21 @@
 /**
  * POST /v2/components/register
- * RCAN v2.2 §21 — Register a hardware component and receive an RCN.
+ * RCAN 3.0 §21 + §2.2 — Register a hardware component, receive an RCN.
  *
- * Body: { parent_rrn, type, model, manufacturer, firmware_version?,
- *         serial_number?, capabilities?, specs? }
+ * v1.9.0: unsigned registration is rejected per RCAN 3.0 §2.2. Body MUST
+ * include pq_signing_pub, pq_kid, and sig{ml_dsa, ed25519, ed25519_pub}
+ * over the canonical signed-fields block (all provided fields except sig).
+ *
+ * Body: { parent_rrn, type, model, manufacturer,
+ *         firmware_version?, serial_number?, capabilities?, specs?,
+ *         pq_signing_pub, pq_kid, sig }
  *
  * Returns: { rcn, registered_at, record_url }
  */
 
 import { nextId, isValidId } from "../_lib/id.js";
 import type { ComponentRecord, ComponentType } from "../_lib/types.js";
+import { canonicalJson, verifyHybrid } from "../../_lib/verify.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -37,11 +43,32 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return err(`Invalid type. Must be one of: ${VALID_TYPES.join(", ")}`, 400);
   }
 
-  // Verify parent robot exists
+  // v1.9.0: RCAN 3.0 §2.2 — signatures mandatory, unsigned rejected.
+  const { pq_signing_pub, pq_kid, sig } = body as Record<string, any>;
+  if (!pq_signing_pub || !pq_kid
+      || !sig?.ml_dsa || !sig?.ed25519 || !sig?.ed25519_pub) {
+    return err("Unsigned registration not permitted (RCAN 3.0 §2.2)", 400);
+  }
+
+  // Verify parent robot exists BEFORE checking signature — fail-fast on
+  // the cheaper check is fine; signature verify is the expensive step.
   const parentRobot = await env.RRF_KV.get(`robot:${parent_rrn}`, "text");
   if (!parentRobot) {
     return err(`Parent robot not found: ${parent_rrn}`, 404);
   }
+
+  const signedFields: Record<string, unknown> = {
+    parent_rrn, type, model, manufacturer,
+    pq_signing_pub, pq_kid,
+  };
+  if (body.firmware_version) signedFields.firmware_version = body.firmware_version;
+  if (body.serial_number)    signedFields.serial_number    = body.serial_number;
+  if (body.capabilities)     signedFields.capabilities     = body.capabilities;
+  if (body.specs)            signedFields.specs            = body.specs;
+
+  const message = canonicalJson(signedFields);
+  const verified = await verifyHybrid(pq_signing_pub, sig, message);
+  if (!verified) return err("Signature verification failed", 400);
 
   const rcn = await nextId(env.RRF_KV, "RCN");
 
@@ -55,6 +82,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     serial_number:     body.serial_number as string | undefined,
     capabilities:      body.capabilities as string[] | undefined,
     specs:             body.specs as Record<string, unknown> | undefined,
+    pq_signing_pub,
+    pq_kid,
     registered_at:     new Date().toISOString(),
   };
 

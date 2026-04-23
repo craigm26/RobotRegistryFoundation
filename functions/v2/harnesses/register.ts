@@ -1,16 +1,21 @@
 /**
  * POST /v2/harnesses/register
- * RCAN v2.2 §21 — Register an AI harness and receive an RHN.
+ * RCAN 3.0 §21 + §2.2 — Register an AI harness, receive an RHN.
+ *
+ * v1.9.0: unsigned registration is rejected per RCAN 3.0 §2.2. Body MUST
+ * include pq_signing_pub, pq_kid, and sig{ml_dsa, ed25519, ed25519_pub}
+ * over the canonical signed-fields block (all provided fields except sig).
  *
  * Body: { name, version, harness_type, rcan_version, description?,
  *         model_ids?, compatible_robots?, open_source?, repo_url?,
- *         license?, owner_uid? }
+ *         license?, owner_uid?, pq_signing_pub, pq_kid, sig }
  *
  * Returns: { rhn, registered_at, record_url }
  */
 
 import { nextId, isValidId } from "../_lib/id.js";
 import type { HarnessRecord, HarnessType } from "../_lib/types.js";
+import { canonicalJson, verifyHybrid } from "../../_lib/verify.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -53,6 +58,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
   }
 
+  // v1.9.0: RCAN 3.0 §2.2 — signatures mandatory, unsigned rejected.
+  const { pq_signing_pub, pq_kid, sig } = body as Record<string, any>;
+  if (!pq_signing_pub || !pq_kid
+      || !sig?.ml_dsa || !sig?.ed25519 || !sig?.ed25519_pub) {
+    return err("Unsigned registration not permitted (RCAN 3.0 §2.2)", 400);
+  }
+
+  const signedFields: Record<string, unknown> = {
+    name, version, harness_type, rcan_version,
+    pq_signing_pub, pq_kid,
+  };
+  if (body.description)       signedFields.description       = body.description;
+  if (model_ids)              signedFields.model_ids         = model_ids;
+  if (compatible_robots)      signedFields.compatible_robots = compatible_robots;
+  if (body.open_source !== undefined) signedFields.open_source = body.open_source;
+  if (body.repo_url)          signedFields.repo_url          = body.repo_url;
+  if (body.license)           signedFields.license           = body.license;
+  if (body.owner_uid)         signedFields.owner_uid         = body.owner_uid;
+
+  const message = canonicalJson(signedFields);
+  const verified = await verifyHybrid(pq_signing_pub, sig, message);
+  if (!verified) return err("Signature verification failed", 400);
+
   const rhn = await nextId(env.RRF_KV, "RHN");
 
   const record: HarnessRecord = {
@@ -68,6 +96,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     repo_url:          body.repo_url as string | undefined,
     license:           body.license as string | undefined,
     owner_uid:         body.owner_uid as string | undefined,
+    pq_signing_pub,
+    pq_kid,
     registered_at:     new Date().toISOString(),
   };
 

@@ -41,6 +41,8 @@ export interface ComponentRecord {
   serial_number?: string;
   capabilities?: string[];         // e.g. ["rgb", "depth", "npu:hailo8l"]
   specs?: Record<string, unknown>; // free-form hardware specs
+  pq_signing_pub?: string;         // ML-DSA-65 public key (base64). Mandatory on register since v1.9.0.
+  pq_kid?: string;                 // sha256(pq_signing_pub)[:8] hex. Mandatory on register since v1.9.0.
   registered_at: string;
 }
 
@@ -66,6 +68,8 @@ export interface ModelRecord {
   repo_url?: string;
   rcan_compatible?: boolean;
   compatible_harness_ids?: string[]; // RHN[]
+  pq_signing_pub?: string;         // ML-DSA-65 public key (base64). Mandatory on register since v1.9.0.
+  pq_kid?: string;                 // sha256(pq_signing_pub)[:8] hex. Mandatory on register since v1.9.0.
   registered_at: string;
   owner_uid?: string;
 }
@@ -87,6 +91,8 @@ export interface HarnessRecord {
   open_source?: boolean;
   repo_url?: string;
   license?: string;
+  pq_signing_pub?: string;         // ML-DSA-65 public key (base64). Mandatory on register since v1.9.0.
+  pq_kid?: string;                 // sha256(pq_signing_pub)[:8] hex. Mandatory on register since v1.9.0.
   registered_at: string;
   owner_uid?: string;
 }
