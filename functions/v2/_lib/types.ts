@@ -23,7 +23,14 @@ export interface RobotRecord {
   registered_at: string;           // ISO timestamp
   updated_at?: string;
   loa_enforcement?: boolean;
-  components?: string[];           // RCN[] of registered components
+  components?: string[];           // RCN[] minted server-side pointing at this RRN
+  // v1.10.0 — operator-declared RCAN §21 sibling IDs (from manifest metadata).
+  // Independent from `components` (server-side mint tracking): these are what
+  // the operator SAYS this robot is made of, captured at register time and
+  // signed alongside the rest of the MintRequest body.
+  rcn_ids?: string[];
+  rmn?: string;
+  rhn_ids?: string[];
 }
 
 // ── Hardware Component ────────────────────────────────────────────────────────

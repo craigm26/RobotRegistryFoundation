@@ -32,12 +32,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return err("Unsigned registration not permitted (RCAN 3.0 §2.2)", 400);
   }
 
-  const signedFields: Record<string, string> = {
+  // v1.10.0: operator-declared §21 sibling IDs (RCN/RMN/RHN).
+  const rcn_ids = body.rcn_ids as string[] | undefined;
+  const rmn     = body.rmn     as string | undefined;
+  const rhn_ids = body.rhn_ids as string[] | undefined;
+
+  const signedFields: Record<string, unknown> = {
     name, manufacturer, model, firmware_version, rcan_version,
     pq_signing_pub, pq_kid,
   };
-  if (ruri) signedFields.ruri = ruri;
+  if (ruri)     signedFields.ruri     = ruri;
   if (owner_uid) signedFields.owner_uid = owner_uid;
+  if (rcn_ids)  signedFields.rcn_ids  = rcn_ids;
+  if (rmn)      signedFields.rmn      = rmn;
+  if (rhn_ids)  signedFields.rhn_ids  = rhn_ids;
 
   const message = canonicalJson(signedFields);
   const verified = await verifyHybrid(pq_signing_pub, sig, message);
@@ -56,6 +64,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     pq_kid,
     ruri,
     owner_uid,
+    rcn_ids,
+    rmn,
+    rhn_ids,
     loa_enforcement: body.loa_enforcement !== false,  // default true
     registered_at:   new Date().toISOString(),
   };

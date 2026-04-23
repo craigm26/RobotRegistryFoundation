@@ -4,6 +4,26 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## [1.10.0] - 2026-04-23
+
+### Added
+- `POST /v2/robots/register` now accepts optional operator-declared
+  `rcn_ids[]`, `rmn`, `rhn_ids[]` fields in the body. When present,
+  they are included in the signed-fields block, verified, and
+  persisted on the `RobotRecord`. These capture what the operator
+  SAYS the robot is made of (at register time) — independent of the
+  server-side `components[]` field, which tracks RCNs minted via
+  `/v2/components/register` pointing back at this RRN.
+- `RobotRecord.rcn_ids` / `rmn` / `rhn_ids` (all optional) in
+  `functions/v2/_lib/types.ts`.
+
+### Migration
+- Fully backward compatible. Existing v1.9.0 clients that don't send
+  these fields continue to work. Pairs with `robot-md@0.9.7`, which
+  populates them from `ROBOT.md` `metadata.{rcn_ids,rmn,rhn_ids}`.
+
+---
+
 ## [1.9.0] - 2026-04-23
 
 ### Changed (BREAKING)
