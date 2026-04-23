@@ -4,6 +4,50 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## [1.11.0] — 2026-04-23
+
+**rcan-ts 3.1.0 consolidation.** Replaces local hybrid verifier with
+imports from the npm-published `rcan-ts` SDK. No wire-format change.
+All 5 endpoint-level Python-signed cross-language fixture tests pass
+through the new code path.
+
+### Changed
+
+- All 5 register endpoints (`/v2/robots/register`, `/v2/robots/[rrn]`
+  PATCH, `/v2/harnesses/register`, `/v2/components/register`,
+  `/v2/models/register`) now call `verifyBody` from `rcan-ts` instead
+  of the local `_lib/verify.ts` `verifyHybrid`.
+- Base64 decode for the ML-DSA pubkey moved inline using `atob` with
+  a try/catch fallback to `verified = false` — preserves the previous
+  silent-on-malformed-input behavior while `verifyBody` requires a
+  typed `Uint8Array`.
+
+### Removed
+
+- `functions/_lib/verify.ts` — superseded by `rcan-ts` imports.
+- `functions/_lib/verify.test.ts` — the canonicalJson / verifyHybrid
+  unit tests. Redundant: the 5 endpoint-level tests now exercise
+  `verifyBody` against Python-signed fixtures end-to-end, and
+  `rcan-ts`'s own test suite holds the cross-language byte-parity gate
+  against `rcan-spec/fixtures/canonical-json-v1.json`.
+- `functions/_lib/fixtures/hybrid-fixture.json` — obsolete signing
+  convention (signature preimage did not include `pq_signing_pub`,
+  predating current `rcan.sign_body` / `rcan-ts.verifyBody` behavior).
+- `@noble/post-quantum` from direct `dependencies` — pulled in
+  transitively via `rcan-ts`.
+
+### Unchanged
+
+- Signed preimage: whitelisted `signedFields` subset (includes
+  `pq_signing_pub` and `pq_kid`). RRF reconstructs the signed blob as
+  `{...signedFields, sig}` when calling `verifyBody`.
+- All endpoint validation (unsigned rejection, required fields), KV
+  record shape, and RCN/RMN/RHN sibling ID persistence.
+- The 5 production endpoint fixtures in `functions/_lib/fixtures/`
+  (register, component, model, harness, patch) are untouched.
+
+---
+
 ## [1.10.0] - 2026-04-23
 
 ### Added

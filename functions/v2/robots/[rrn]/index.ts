@@ -4,7 +4,7 @@
  */
 
 import { isValidId } from "../../_lib/id.js";
-import { canonicalJson, verifyHybrid } from "../../../_lib/verify.js";
+import { verifyBody } from "rcan-ts";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -68,10 +68,14 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
     return err("Missing pq_signing_pub / pq_kid / sig", 400);
   }
 
-  const message = canonicalJson({
-    rrn, pq_signing_pub: body.pq_signing_pub, pq_kid: body.pq_kid,
-  });
-  const verified = await verifyHybrid(body.pq_signing_pub, body.sig, message);
+  let verified = false;
+  try {
+    const pqPub = Uint8Array.from(atob(body.pq_signing_pub), c => c.charCodeAt(0));
+    verified = await verifyBody(
+      { rrn, pq_signing_pub: body.pq_signing_pub, pq_kid: body.pq_kid, sig: body.sig },
+      pqPub,
+    );
+  } catch { /* verified stays false */ }
   if (!verified) return err("Signature verification failed", 400);
 
   record.pq_signing_pub = body.pq_signing_pub;

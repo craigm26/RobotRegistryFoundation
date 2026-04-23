@@ -15,7 +15,7 @@
 
 import { nextId, isValidId } from "../_lib/id.js";
 import type { HarnessRecord, HarnessType } from "../_lib/types.js";
-import { canonicalJson, verifyHybrid } from "../../_lib/verify.js";
+import { verifyBody } from "rcan-ts";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -77,8 +77,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (body.license)           signedFields.license           = body.license;
   if (body.owner_uid)         signedFields.owner_uid         = body.owner_uid;
 
-  const message = canonicalJson(signedFields);
-  const verified = await verifyHybrid(pq_signing_pub, sig, message);
+  let verified = false;
+  try {
+    const pqPub = Uint8Array.from(atob(pq_signing_pub), c => c.charCodeAt(0));
+    verified = await verifyBody({ ...signedFields, sig }, pqPub);
+  } catch { /* verified stays false */ }
   if (!verified) return err("Signature verification failed", 400);
 
   const rhn = await nextId(env.RRF_KV, "RHN");
