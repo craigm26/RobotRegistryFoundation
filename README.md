@@ -50,11 +50,9 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoundation.org/api/)
 
-## Compliance Intake (RCAN §22-25)
+## Compliance Intake (RCAN §22-26)
 
-Robots registered under [`/v2/robots/register`](#registration) can submit EU AI Act compliance artifacts produced by the [`rcan-ts`](https://www.npmjs.com/package/rcan-ts) 3.2.0+ builders.
-
-> §26 EU Register (Art. 49) is not yet available — it requires an upstream addition of `rmn` to the rcan-ts `EuRegisterEntry` envelope and will ship in a future release.
+Robots registered under [`/v2/robots/register`](#registration) can submit EU AI Act compliance artifacts produced by the [`rcan-ts`](https://www.npmjs.com/package/rcan-ts) 3.3.0+ builders.
 
 ### Endpoints
 
@@ -64,8 +62,9 @@ Robots registered under [`/v2/robots/register`](#registration) can submit EU AI 
 | `POST /v2/robots/:rrn/safety-benchmark` | §23 Safety Benchmark | public |
 | `POST /v2/robots/:rrn/ifu` | §24 Instructions For Use (Art. 13(3)) | public |
 | `POST /v2/robots/:rrn/incident-report` | §25 Post-Market Incident Report (Art. 72) | Bearer-gated |
+| `POST /v2/models/:rmn/eu-register` | §26 EU Register (Art. 49) | public |
 
-All four have a matching `GET` at the same path.
+All five have a matching `GET` at the same path. §26 is scoped per model (RMN) rather than per robot; submitting robots identify themselves via the `X-Submitter-RRN` header.
 
 ### Happy path (POST)
 
