@@ -148,4 +148,32 @@ describe("verifyAttestation", () => {
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toMatch(/manifest|404/i);
   });
+
+  it("fail-never: bad pqPubB64 returns sig-verification-failed without throwing", async () => {
+    const kp = await makeTestKeypair();
+    const att = await buildAttestation(kp);
+    const res = await verifyAttestation({
+      attestation: att as any, ruri: RURI,
+      pqPubB64: "!!!not-base64!!!",
+      expectedRrn: RRN, expectedModel: MODEL,
+      fetchFn: okManifestFetch(RRN),
+      nowMs: NOW_MS,
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/sig/i);
+  });
+
+  it("rejects RURI manifest larger than 64 KiB (size cap)", async () => {
+    const kp = await makeTestKeypair();
+    const att = await buildAttestation(kp);
+    const oversized = "x".repeat(70000);
+    const res = await verifyAttestation({
+      attestation: att as any, ruri: RURI, pqPubB64: pubB64(kp),
+      expectedRrn: RRN, expectedModel: MODEL,
+      fetchFn: vi.fn(async () => new Response(JSON.stringify({ rrn: RRN, pad: oversized }), { status: 200 })),
+      nowMs: NOW_MS,
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/too large/i);
+  });
 });
