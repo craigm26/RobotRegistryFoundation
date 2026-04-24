@@ -30,7 +30,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
     });
   }
 
-  const stored = await env.RRF_KV.get(`robot:${rrn}`, "text");
+  const [stored, revRaw] = await Promise.all([
+    env.RRF_KV.get(`robot:${rrn}`, "text"),
+    env.RRF_KV.get(`revocation:${rrn}`, "text"),
+  ]);
+
   if (!stored) {
     return new Response(JSON.stringify({ error: "Robot not found", rrn }), {
       status: 404, headers: { "Content-Type": "application/json" },
@@ -38,7 +42,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
   }
 
   const parsed = JSON.parse(stored);
-  const revRaw = await env.RRF_KV.get(`revocation:${rrn}`, "text");
   if (revRaw !== null) {
     try {
       const rev = JSON.parse(revRaw);
