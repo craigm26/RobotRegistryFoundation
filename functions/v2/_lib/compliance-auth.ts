@@ -35,7 +35,19 @@ export async function verifyComplianceSubmission(
   } catch {
     return { ok: false, status: 400, error: "Invalid JSON body" };
   }
+  return verifyComplianceBody(body, env, entityKey);
+}
 
+/**
+ * Same as verifyComplianceSubmission but accepts a pre-parsed body. Use when the
+ * caller needs to inspect the body before picking the entity key (e.g. to derive
+ * the submitter RRN from a signed field instead of a client-supplied header).
+ */
+export async function verifyComplianceBody(
+  body: Record<string, unknown>,
+  env: { RRF_KV: KVNamespace },
+  entityKey: string,
+): Promise<VerifyResult> {
   const sig = body["sig"] as Record<string, unknown> | undefined;
   const pq_kid = body["pq_kid"];
   if (!sig || typeof pq_kid !== "string"
@@ -71,7 +83,6 @@ export async function verifyComplianceSubmission(
     return { ok: false, status: 401, error: "Signature verification failed" };
   }
 
-  // Strip envelope fields; return the compliance document itself.
   const document: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(body)) {
     if (k !== "sig" && k !== "pq_kid" && k !== "pq_signing_pub") document[k] = v;

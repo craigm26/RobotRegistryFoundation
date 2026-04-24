@@ -65,13 +65,13 @@ describe("GET /v2/models/[rmn]/eu-register (public)", () => {
 });
 
 describe("POST /v2/models/[rmn]/eu-register", () => {
-  it("stores with _submitted_by_rrn and returns 201 on valid submission", async () => {
+  it("derives submitter from signed doc.system.rrn (no header needed) and returns 201", async () => {
     const kp = await makeTestKeypair();
     const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
     const doc = buildEuRegisterEntry(validEntryInput());
     const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
     const res = await onRequest({
-      request: req("POST", signed, { "X-Submitter-RRN": RRN }),
+      request: req("POST", signed),  // no X-Submitter-RRN
       env, params: { rmn: RMN },
     } as any);
     expect(res.status).toBe(201);
@@ -83,36 +83,50 @@ describe("POST /v2/models/[rmn]/eu-register", () => {
     expect(Object.keys(env.__store).filter(k => k.startsWith(`compliance:eu-register:history:${RMN}:`)).length).toBe(1);
   });
 
-  it("400 on missing X-Submitter-RRN header", async () => {
+  it("ignores X-Submitter-RRN header; submitter comes from signed payload", async () => {
+    // Attacker sends a doc signed by RRN-A but claims RRN-B via header.
+    // The server must trust the signed doc.system.rrn, not the header.
     const kp = await makeTestKeypair();
     const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
     const doc = buildEuRegisterEntry(validEntryInput());
     const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
+    const res = await onRequest({
+      request: req("POST", signed, { "X-Submitter-RRN": "RRN-000000009999" }),
+      env, params: { rmn: RMN },
+    } as any);
+    expect(res.status).toBe(201);
+
+    const stored = JSON.parse(env.__store[`compliance:eu-register:${RMN}`]);
+    expect(stored._submitted_by_rrn).toBe(RRN);  // from signed doc, NOT from header
+  });
+
+  it("400 when signed doc is missing system.rrn", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+    const malformed = { schema: EU_REGISTER_SCHEMA, rmn: RMN, generated_at: "2026-04-24T00:00:00Z" };
+    const signed = await signComplianceBody(malformed, kp);
     const res = await onRequest({ request: req("POST", signed), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(400);
   });
 
-  it("400 on malformed X-Submitter-RRN", async () => {
+  it("400 when doc.system.rrn format is invalid", async () => {
     const kp = await makeTestKeypair();
     const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
-    const doc = buildEuRegisterEntry(validEntryInput());
-    const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
-    const res = await onRequest({
-      request: req("POST", signed, { "X-Submitter-RRN": "not-a-valid-rrn" }),
-      env, params: { rmn: RMN },
-    } as any);
+    const malformed = {
+      schema: EU_REGISTER_SCHEMA, rmn: RMN,
+      system: { rrn: "not-a-valid-rrn" }, generated_at: "2026-04-24T00:00:00Z",
+    };
+    const signed = await signComplianceBody(malformed, kp);
+    const res = await onRequest({ request: req("POST", signed), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(400);
   });
 
-  it("401 when submitter robot not registered", async () => {
+  it("401 when submitter robot (from signed doc) not registered", async () => {
     const kp = await makeTestKeypair();
     const env = makeEnv();  // no robot record
     const doc = buildEuRegisterEntry(validEntryInput());
     const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
-    const res = await onRequest({
-      request: req("POST", signed, { "X-Submitter-RRN": RRN }),
-      env, params: { rmn: RMN },
-    } as any);
+    const res = await onRequest({ request: req("POST", signed), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(401);
   });
 
@@ -122,21 +136,17 @@ describe("POST /v2/models/[rmn]/eu-register", () => {
     const doc = buildEuRegisterEntry(validEntryInput());
     const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
     const tampered = { ...signed, annex_iii_basis: "modified after signing" };
-    const res = await onRequest({
-      request: req("POST", tampered, { "X-Submitter-RRN": RRN }),
-      env, params: { rmn: RMN },
-    } as any);
+    const res = await onRequest({ request: req("POST", tampered), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(401);
   });
 
   it("400 on wrong schema string", async () => {
     const kp = await makeTestKeypair();
     const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
-    const signed = await signComplianceBody({ schema: "rcan-ifu-v1", rmn: RMN, generated_at: "x" }, kp);
-    const res = await onRequest({
-      request: req("POST", signed, { "X-Submitter-RRN": RRN }),
-      env, params: { rmn: RMN },
-    } as any);
+    const signed = await signComplianceBody(
+      { schema: "rcan-ifu-v1", rmn: RMN, system: { rrn: RRN }, generated_at: "x" }, kp,
+    );
+    const res = await onRequest({ request: req("POST", signed), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(400);
   });
 
@@ -145,10 +155,7 @@ describe("POST /v2/models/[rmn]/eu-register", () => {
     const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
     const doc = buildEuRegisterEntry(validEntryInput("RMN-000000000999"));
     const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
-    const res = await onRequest({
-      request: req("POST", signed, { "X-Submitter-RRN": RRN }),
-      env, params: { rmn: RMN },
-    } as any);
+    const res = await onRequest({ request: req("POST", signed), env, params: { rmn: RMN } } as any);
     expect(res.status).toBe(400);
   });
 

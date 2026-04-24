@@ -4,20 +4,21 @@
  *
  * Art. 49 registration is scoped per AI system (per model), not per-robot.
  * URL carries the rmn (Robot Model Number). The submitting robot identifies
- * itself via X-Submitter-RRN header; verifyComplianceSubmission looks up that
- * robot's pq_signing_pub.
+ * itself via `system.rrn` INSIDE THE SIGNED BODY; the server uses that field
+ * to look up the robot's pq_signing_pub and verify the sig. No client-supplied
+ * header is trusted for identity.
  *
  * POST — submitting robot posts a signed EU-register entry for a model.
  * GET  — public retrieval of the current entry for this model (Art. 49 transparency).
  *
- * Binding: doc.rmn === URL rmn. Stored doc carries _submitted_by_rrn for
- * provenance (not part of signed payload).
+ * Binding: doc.rmn === URL rmn. Submitter identity is bound to the signature
+ * via doc.system.rrn (any client header is ignored).
  *
  * KV: compliance:eu-register:{rmn} + compliance:eu-register:history:{rmn}:{ts}
  */
 
 import { EU_REGISTER_SCHEMA } from "rcan-ts";
-import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { verifyComplianceBody } from "../../_lib/compliance-auth.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -47,11 +48,23 @@ async function handleGet(env: Env, rmn: string): Promise<Response> {
 }
 
 async function handlePost(request: Request, env: Env, rmn: string): Promise<Response> {
-  const submitterRrn = request.headers.get("X-Submitter-RRN") ?? "";
-  if (!submitterRrn) return json({ error: "Missing X-Submitter-RRN header" }, 400);
-  if (!RRN_RE.test(submitterRrn)) return json({ error: "Invalid X-Submitter-RRN format" }, 400);
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
-  const result = await verifyComplianceSubmission(request, env, `robot:${submitterRrn}`);
+  const system = body["system"] as Record<string, unknown> | undefined;
+  const submitterRrn = system?.["rrn"];
+  if (typeof submitterRrn !== "string") {
+    return json({ error: "Signed doc missing system.rrn" }, 400);
+  }
+  if (!RRN_RE.test(submitterRrn)) {
+    return json({ error: "Invalid system.rrn format" }, 400);
+  }
+
+  const result = await verifyComplianceBody(body, env, `robot:${submitterRrn}`);
   if (!result.ok) return json({ error: result.error }, result.status);
 
   const doc = result.document;
@@ -63,7 +76,6 @@ async function handlePost(request: Request, env: Env, rmn: string): Promise<Resp
   }
 
   const now = new Date().toISOString();
-  // Provenance metadata (NOT part of signed payload).
   const stored = JSON.stringify({ ...doc, _received_at: now, _submitted_by_rrn: submitterRrn });
   await env.RRF_KV.put(`compliance:eu-register:${rmn}`, stored, { expirationTtl: TEN_YEARS_SECS });
   await env.RRF_KV.put(`compliance:eu-register:history:${rmn}:${Date.now()}`, stored, { expirationTtl: TEN_YEARS_SECS });
