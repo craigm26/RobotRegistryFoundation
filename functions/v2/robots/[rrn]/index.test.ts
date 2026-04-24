@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
-import { onRequestGet, onRequestPatch } from "./index.js";
+import { onRequestDelete, onRequestGet, onRequestPatch } from "./index.js";
 
 const RRN = "RRN-000000000042";
 const API_KEY = "test-apikey-xyz";
@@ -24,7 +24,7 @@ function makeEnv(stored: any = UNSIGNED_RECORD) {
       get: vi.fn(async (k: string) => store[k] ?? null),
       put: vi.fn(async (k: string, v: string) => { store[k] = v; }),
       list: vi.fn(),
-      delete: vi.fn(),
+      delete: vi.fn(async (k: string) => { delete store[k]; }),
     },
     __store: store,
   };
@@ -120,6 +120,75 @@ describe("GET /v2/robots/[rrn]", () => {
   it("returns 404 for unknown RRN", async () => {
     const env = makeEnv(null);
     const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /v2/robots/[rrn]", () => {
+  function makeDeleteRequest(apiKey: string | null): Request {
+    const headers: Record<string, string> = { "Accept": "application/json" };
+    if (apiKey !== null) headers["Authorization"] = `Bearer ${apiKey}`;
+    return new Request(`https://x/v2/robots/${RRN}`, { method: "DELETE", headers });
+  }
+
+  it("rejects missing bearer token (401)", async () => {
+    const env = makeEnv();
+    const res = await onRequestDelete({
+      request: makeDeleteRequest(null),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects wrong bearer token (403) and keeps record intact", async () => {
+    const env = makeEnv();
+    const res = await onRequestDelete({
+      request: makeDeleteRequest("wrong-key"),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+    expect(env.__store[`robot:${RRN}`]).toBeDefined();
+  });
+
+  it("returns 404 when RRN does not exist", async () => {
+    const env = makeEnv(null);
+    const res = await onRequestDelete({
+      request: makeDeleteRequest(API_KEY),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 for invalid RRN format", async () => {
+    const env = makeEnv();
+    const res = await onRequestDelete({
+      request: makeDeleteRequest(API_KEY),
+      env, params: { rrn: "not-an-rrn" },
+    } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("deletes the record on valid auth (204) and removes it from KV", async () => {
+    const env = makeEnv();
+    const res = await onRequestDelete({
+      request: makeDeleteRequest(API_KEY),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(204);
+    expect(env.__store[`robot:${RRN}`]).toBeUndefined();
+    expect(env.RRF_KV.delete).toHaveBeenCalledWith(`robot:${RRN}`);
+  });
+
+  it("second delete returns 404 (not idempotent silent-success)", async () => {
+    const env = makeEnv();
+    await onRequestDelete({
+      request: makeDeleteRequest(API_KEY),
+      env, params: { rrn: RRN },
+    } as any);
+    const res = await onRequestDelete({
+      request: makeDeleteRequest(API_KEY),
+      env, params: { rrn: RRN },
+    } as any);
     expect(res.status).toBe(404);
   });
 });

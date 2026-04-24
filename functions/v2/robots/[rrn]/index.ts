@@ -1,6 +1,7 @@
 /**
- * GET /v2/robots/:rrn   — Look up a registered whole robot by its RRN.
- * PATCH /v2/robots/:rrn — Upgrade an unsigned record with a PQ signing key.
+ * GET /v2/robots/:rrn    — Look up a registered whole robot by its RRN.
+ * PATCH /v2/robots/:rrn  — Upgrade an unsigned record with a PQ signing key.
+ * DELETE /v2/robots/:rrn — Unregister a robot. Bearer api_key required.
  */
 
 import { isValidId } from "../../_lib/id.js";
@@ -83,4 +84,22 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   record.updated_at = new Date().toISOString();
   await env.RRF_KV.put(`robot:${rrn}`, JSON.stringify(record));
   return ok(record);
+};
+
+export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) => {
+  const rrn = params.rrn as string;
+
+  if (!isValidId(rrn, "RRN")) return err("Invalid RRN format", 400);
+
+  const auth = request.headers.get("Authorization");
+  const apiKey = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  if (!apiKey) return err("Missing bearer token", 401);
+
+  const raw = await env.RRF_KV.get(`robot:${rrn}`, "text");
+  if (!raw) return err("Not found", 404);
+  const record = JSON.parse(raw);
+  if (record.api_key !== apiKey) return err("Unauthorized", 403);
+
+  await env.RRF_KV.delete(`robot:${rrn}`);
+  return new Response(null, { status: 204 });
 };
