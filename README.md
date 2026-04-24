@@ -50,6 +50,55 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoundation.org/api/)
 
+## Compliance Intake (RCAN §22-25)
+
+Robots registered under [`/v2/robots/register`](#registration) can submit EU AI Act compliance artifacts produced by the [`rcan-ts`](https://www.npmjs.com/package/rcan-ts) 3.2.0+ builders.
+
+> §26 EU Register (Art. 49) is not yet available — it requires an upstream addition of `rmn` to the rcan-ts `EuRegisterEntry` envelope and will ship in a future release.
+
+### Endpoints
+
+| Endpoint | RCAN § | GET access |
+|---|---|---|
+| `POST /v2/robots/:rrn/fria` | §22 FRIA | Bearer-gated |
+| `POST /v2/robots/:rrn/safety-benchmark` | §23 Safety Benchmark | public |
+| `POST /v2/robots/:rrn/ifu` | §24 Instructions For Use (Art. 13(3)) | public |
+| `POST /v2/robots/:rrn/incident-report` | §25 Post-Market Incident Report (Art. 72) | Bearer-gated |
+
+All four have a matching `GET` at the same path.
+
+### Happy path (POST)
+
+```
+Producer (robot)
+  ├─ build doc:  doc = buildSafetyBenchmark({ iterations, thresholds, results, mode, generated_at, overall_pass })
+  ├─ sign doc:   signed = await signBody(keypair, doc, { ed25519Secret, ed25519Public })
+  └─ POST /v2/robots/{rrn}/safety-benchmark
+     body: { ...doc, pq_signing_pub, pq_kid, sig: { ml_dsa, ed25519, ed25519_pub } }
+
+RRF
+  ├─ loads robot:{rrn} from KV, extracts pq_signing_pub
+  ├─ verifyBody(signed, pq_signing_pub)           → 401 on sig failure
+  ├─ checks doc.schema; per-type binding check:
+  │     §22 FRIA            — doc.system.rrn === URL rrn
+  │     §23 SafetyBenchmark — no doc-level check (URL+sig provides binding)
+  │     §24 IFU             — no doc-level check (URL+sig provides binding)
+  │     §25 IncidentReport  — doc.rrn === URL rrn
+  ├─ stores at compliance:{type}:{rrn}
+  └─ appends snapshot at compliance:{type}:history:{rrn}:{ts}
+     → 201 { ok, rrn, submitted_at, {type}_url }
+```
+
+### Auth
+
+POST requires a signed body (ML-DSA-65 + Ed25519) against the robot's registered `pq_signing_pub`. No Bearer token needed for POST — the signature IS the auth.
+
+GET is public for transparency types (safety-benchmark, ifu); Bearer-gated for FRIA and incident-report (may contain sensitive content). D2 does not validate Bearer contents — the door is reserved; a future release will wire consumer auth.
+
+### Retention
+
+10-year TTL on both current and history keys, matching Art. 72 record-keeping obligations for high-risk AI systems.
+
 ## Registered Robots (Examples)
 
 | RRN | Name | Runtime | Hardware |
