@@ -10,6 +10,7 @@
  */
 
 import { verifyBody } from "rcan-ts";
+import { isRevoked } from "./revocation.js";
 
 export interface VerifiedSubmission {
   ok: true;
@@ -59,6 +60,11 @@ export async function verifyComplianceBody(
 
   const stored = await env.RRF_KV.get(entityKey, "text");
   if (!stored) return { ok: false, status: 401, error: "Robot not registered" };
+
+  const rrnMatch = entityKey.match(/^robot:(RRN-\d{12})$/);
+  if (rrnMatch && await isRevoked(env, rrnMatch[1])) {
+    return { ok: false, status: 403, error: "Entity key is revoked" };
+  }
 
   let record: Record<string, unknown>;
   try {
