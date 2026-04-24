@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { verifyComplianceSubmission } from "./compliance-auth.js";
+import { verifyComplianceSubmission, verifyComplianceBody } from "./compliance-auth.js";
 import { signComplianceBody, makeTestKeypair, makeRobotRecord } from "./test-helpers.js";
 
 const RRN = "RRN-000000000001";
@@ -88,5 +88,18 @@ describe("verifyComplianceSubmission", () => {
     const tampered = { ...signed, rrn: "RRN-000000000999" };
     const result = await verifyComplianceSubmission(makePost(tampered), env, `robot:${RRN}`);
     expect(result).toEqual({ ok: false, status: 401, error: "Signature verification failed" });
+  });
+
+  it("rejects submission when entity is revoked (403)", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({
+      [`robot:${RRN}`]: makeRobotRecord(RRN, kp),
+      [`revocation:${RRN}`]: JSON.stringify({ revoked_at: "2026-04-24T00:00:00Z", reason: "test" }),
+    });
+    const doc = { schema: "rcan-fria-v1", rrn: RRN, generated_at: "x" };
+    const signed = await signComplianceBody(doc, kp);
+    const result = await verifyComplianceBody(signed, env, `robot:${RRN}`);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.status).toBe(403);
   });
 });
