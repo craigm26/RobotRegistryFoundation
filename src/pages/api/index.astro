@@ -389,31 +389,22 @@ const methodColors: Record<string, string> = {
       </section>
     ))}
 
-    <!-- Compliance Intake (RCAN §22-25) -->
+    <!-- Compliance Intake (RCAN §22-26) -->
     <section class="mb-14">
       <div class="flex items-center gap-3 mb-6">
         <span class="px-3 py-1 rounded-full border text-xs font-mono font-semibold text-accent border-accent/30 bg-primary/10">
-          Compliance Intake (RCAN §22-25)
+          Compliance Intake (RCAN §22-26)
         </span>
         <div class="flex-1 h-px bg-border"></div>
       </div>
 
       <p class="text-sm text-text-muted mb-4">
-        Robots registered under <code class="font-mono text-accent">/v2/robots/register</code> can submit EU AI Act compliance artifacts produced by the <a href="https://www.npmjs.com/package/rcan-ts" class="text-accent hover:underline">rcan-ts</a> 3.2.0+ builders. POST requires a signed body (ML-DSA-65 + Ed25519) against the robot's registered <code class="font-mono text-accent">pq_signing_pub</code> — the signature IS the auth; no Bearer token needed. GET is public for transparency types (safety-benchmark, ifu); Bearer-gated for FRIA and incident-report. Both current and history keys are stored with a 10-year TTL, matching Art. 72 record-keeping obligations.
+        Robots registered under <code class="font-mono text-accent">/v2/robots/register</code> can submit EU AI Act compliance artifacts produced by the <a href="https://www.npmjs.com/package/rcan-ts" class="text-accent hover:underline">rcan-ts</a> 3.3.0+ builders. POST requires a signed body (ML-DSA-65 + Ed25519) against the robot's registered <code class="font-mono text-accent">pq_signing_pub</code> — the signature IS the auth; no Bearer token needed. GET is public for transparency types (safety-benchmark, ifu, eu-register); Bearer-gated for FRIA and incident-report. Both current and history keys are stored with a 10-year TTL, matching Art. 72 record-keeping obligations.
       </p>
 
-      <!-- §26 deferred callout -->
-      <div class="mb-6 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5">
-        <div class="flex items-start gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-400 flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div>
-            <p class="text-sm font-semibold text-amber-400 mb-1">§26 EU Register (Art. 49) — deferred</p>
-            <p class="text-xs text-text-muted">
-              The §26 EU Register intake endpoint is not yet available. It requires an upstream addition of <code class="font-mono text-accent">rmn</code> to the rcan-ts <code class="font-mono text-accent">EuRegisterEntry</code> envelope and will ship in a future release.
-            </p>
-          </div>
-        </div>
-      </div>
+      <p class="text-sm text-text-muted mb-4">
+        §26 EU Register (Art. 49) is scoped <em>per AI system</em> — the URL carries the <code class="font-mono text-accent">rmn</code> (Robot Model Number) rather than an individual robot's <code class="font-mono text-accent">rrn</code>. The submitting robot identifies itself via the <code class="font-mono text-accent">X-Submitter-RRN</code> header so RRF can look up its signing key; the stored doc carries <code class="font-mono text-accent">_submitted_by_rrn</code> for provenance.
+      </p>
 
       <!-- Endpoint table -->
       <div class="mb-6 rounded-xl border border-border bg-bg-card overflow-hidden">
@@ -441,15 +432,20 @@ const methodColors: Record<string, string> = {
               <td class="px-4 py-3 text-xs text-text-muted">§24 Instructions For Use (Art. 13(3))</td>
               <td class="px-4 py-3 text-xs text-text-muted">public</td>
             </tr>
-            <tr>
+            <tr class="border-b border-border">
               <td class="px-4 py-3 font-mono text-xs text-text break-all"><span class="text-blue-400 font-bold">POST</span> /v2/robots/:rrn/incident-report</td>
               <td class="px-4 py-3 text-xs text-text-muted">§25 Post-Market Incident Report (Art. 72)</td>
               <td class="px-4 py-3 text-xs text-text-muted">Bearer-gated</td>
             </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-text break-all"><span class="text-blue-400 font-bold">POST</span> /v2/models/:rmn/eu-register</td>
+              <td class="px-4 py-3 text-xs text-text-muted">§26 EU Register (Art. 49)</td>
+              <td class="px-4 py-3 text-xs text-text-muted">public</td>
+            </tr>
           </tbody>
         </table>
         <div class="px-4 py-3 border-t border-border bg-bg text-xs text-text-muted">
-          All four have a matching <code class="font-mono text-accent">GET</code> at the same path.
+          All five have a matching <code class="font-mono text-accent">GET</code> at the same path. §26 POST additionally requires an <code class="font-mono text-accent">X-Submitter-RRN</code> header.
         </div>
       </div>
 
@@ -502,9 +498,10 @@ const methodColors: Record<string, string> = {
           <div><code class="font-mono text-accent">§23 SafetyBenchmark</code> — no doc-level check (URL + signature provide binding)</div>
           <div><code class="font-mono text-accent">§24 IFU</code> — no doc-level check (URL + signature provide binding)</div>
           <div><code class="font-mono text-accent">§25 IncidentReport</code> — <code class="font-mono">doc.rrn</code> must equal URL <code class="font-mono">rrn</code></div>
+          <div><code class="font-mono text-accent">§26 EuRegister</code> — <code class="font-mono">doc.rmn</code> must equal URL <code class="font-mono">rmn</code>; signer identified by <code class="font-mono">X-Submitter-RRN</code> header</div>
         </div>
         <p class="mt-3 text-xs text-text-muted">
-          Producer tooling: build and sign compliance docs with the <a href="https://www.npmjs.com/package/rcan-ts" class="text-accent hover:underline">rcan-ts</a> 3.2.0+ builders (<code class="font-mono">buildFria</code>, <code class="font-mono">buildSafetyBenchmark</code>, <code class="font-mono">buildIfu</code>, <code class="font-mono">buildIncidentReport</code>) and <code class="font-mono">signBody</code>.
+          Producer tooling: build and sign compliance docs with the <a href="https://www.npmjs.com/package/rcan-ts" class="text-accent hover:underline">rcan-ts</a> 3.3.0+ builders (<code class="font-mono">buildFria</code>, <code class="font-mono">buildSafetyBenchmark</code>, <code class="font-mono">buildIfu</code>, <code class="font-mono">buildIncidentReport</code>, <code class="font-mono">buildEuRegisterEntry</code>) and <code class="font-mono">signBody</code>.
         </p>
       </div>
     </section>
