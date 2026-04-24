@@ -116,6 +116,18 @@ describe("PATCH /v2/robots/[rrn]", () => {
     } as any);
     expect(res.status).toBe(403);
   });
+
+  it("revocation short-circuits before api_key check (error message proves ordering)", async () => {
+    const env = makeEnv();
+    env.__store[`revocation:${RRN}`] = JSON.stringify({ revoked_at: "2026-04-24T00:00:00Z", reason: "test" });
+    const res = await onRequestPatch({
+      request: makePatchRequest(STUB_PATCH_BODY, "wrong-api-key"),  // wrong key AND revoked — revocation must win
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("Record is revoked");
+  });
 });
 
 describe("GET /v2/robots/[rrn]", () => {
