@@ -29,6 +29,9 @@ describe("verifyDnsTxt", () => {
     expect(url).toMatch(/^https:\/\/cloudflare-dns\.com\/dns-query\?/);
     expect(url).toContain(`name=_rcan-verify.${DOMAIN}`);
     expect(url).toContain("type=TXT");
+    // Assert Accept header was set.
+    const opts = fetchFn.mock.calls[0]?.[1] as RequestInit | undefined;
+    expect((opts?.headers as Record<string, string> | undefined)?.Accept).toBe("application/dns-json");
   });
 
   it("returns error when no TXT record exists (empty Answer, Status=0)", async () => {
@@ -83,5 +86,33 @@ describe("verifyDnsTxt", () => {
     expect(res.ok).toBe(false);
     // Critically, the verifier must NOT attempt the DoH request with a bogus domain.
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("accepts multi-string TXT (data field contains multiple quoted runs)", async () => {
+    // DoH represents multi-string TXT as "run1" "run2" in a single data field.
+    // Simulate a long payload split across two runs.
+    const firstHalf = `rrn=${RRN};model=`;
+    const secondHalf = MODEL;
+    const multiString = `"${firstHalf}" "${secondHalf}"`;
+    const fetchFn = vi.fn(async () => new Response(
+      JSON.stringify({
+        Status: 0,
+        Answer: [{ name: `_rcan-verify.${DOMAIN}`, type: 16, TTL: 60, data: multiString }],
+      }),
+      { status: 200 },
+    ));
+    const res = await verifyDnsTxt(DOMAIN, RRN, MODEL, fetchFn);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.evidence).toBe(EXPECTED_TXT);
+  });
+
+  it("falls back to global fetch when fetchFn is undefined", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ Status: 0, Answer: [] }), { status: 200 })
+    );
+    const res = await verifyDnsTxt(DOMAIN, RRN, MODEL, undefined);
+    expect(spy).toHaveBeenCalled();
+    expect(res.ok).toBe(false);  // empty Answer → not-found, but fetch was called
+    spy.mockRestore();
   });
 });

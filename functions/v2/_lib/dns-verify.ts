@@ -21,6 +21,9 @@ export interface VerifyDnsTxtError { ok: false; error: string }
 export type VerifyDnsTxtOutcome = VerifyDnsTxtResult | VerifyDnsTxtError;
 
 const DOH_ENDPOINT = "https://cloudflare-dns.com/dns-query";
+// Belt-and-suspenders. The real defense is encodeURIComponent on the DoH
+// query name below; this regex rejects obviously malformed domains early
+// (before paying for a round-trip) and gives a clear `Invalid domain` error.
 const INVALID_DOMAIN_CHARS = /[\s;\x00-\x1f\x7f]/;
 
 function isValidDomain(domain: string): boolean {
@@ -33,14 +36,24 @@ function isValidDomain(domain: string): boolean {
 interface DohAnswer { name?: string; type?: number; TTL?: number; data?: string }
 interface DohResponse { Status?: number; Answer?: DohAnswer[] }
 
-function stripTxtQuotes(raw: string): string {
-  // DoH JSON wraps TXT data in surrounding double quotes. Strip once.
-  if (raw.length >= 2 && raw[0] === '"' && raw[raw.length - 1] === '"') {
-    return raw.slice(1, -1);
-  }
-  return raw;
+/**
+ * Decode Cloudflare DoH JSON TXT `data`. A single-string TXT is wrapped in one
+ * pair of double quotes (`"payload"`). A multi-string TXT is rendered as
+ * multiple quoted runs, e.g. `"part1" "part2"` — DNS splits strings longer
+ * than 255 bytes. We concatenate all quoted runs (unquoted) into a single
+ * payload. If the data doesn't match any quoted-run shape, return it as-is
+ * (defensive; lets exact-match fail rather than mis-decode).
+ */
+function decodeTxtData(raw: string): string {
+  const runs = raw.match(/"([^"]*)"/g);
+  if (!runs || runs.length === 0) return raw;
+  return runs.map((r) => r.slice(1, -1)).join("");
 }
 
+/**
+ * Verify a manufacturer domain using DNS TXT lookup.
+ * Field order is fixed: `rrn=...;model=...`. Reversed ordering is rejected.
+ */
 export async function verifyDnsTxt(
   domain: string,
   expectedRrn: string,
@@ -70,14 +83,17 @@ export async function verifyDnsTxt(
     return { ok: false, error: "DoH response was not valid JSON" };
   }
 
-  if (doh.Status !== 0 || !Array.isArray(doh.Answer) || doh.Answer.length === 0) {
+  if (doh.Status !== 0) {
+    return { ok: false, error: `DoH returned Status=${doh.Status}` };
+  }
+  if (!Array.isArray(doh.Answer) || doh.Answer.length === 0) {
     return { ok: false, error: "No TXT record" };
   }
 
   const expected = `rrn=${expectedRrn};model=${expectedModel}`;
   for (const answer of doh.Answer) {
     if (answer.type !== 16 || typeof answer.data !== "string") continue;
-    const raw = stripTxtQuotes(answer.data);
+    const raw = decodeTxtData(answer.data);
     if (raw === expected) return { ok: true, evidence: raw };
   }
 
