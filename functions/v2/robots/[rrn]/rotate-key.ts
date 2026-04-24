@@ -69,7 +69,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
   // Consistency: the new envelope must be signed BY the declared new key
   // (i.e. its inner pq_signing_pub field equals new_pq_signing_pub).
   if (byNew.pq_signing_pub !== newPubB64) {
-    return err("by_new_key not signed by the declared new key", 401);
+    return err("by_new_key.pq_signing_pub must match declared new_pq_signing_pub", 400);
   }
 
   // Verify both envelopes.
