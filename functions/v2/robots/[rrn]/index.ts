@@ -8,6 +8,7 @@
  */
 
 import { isValidId } from "../../_lib/id.js";
+import { isRevoked } from "../../_lib/revocation.js";
 import { verifyBody } from "rcan-ts";
 
 export interface Env { RRF_KV: KVNamespace }
@@ -42,7 +43,19 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
     });
   }
 
-  return new Response(stored, {
+  const parsed = JSON.parse(stored);
+  const revRaw = await env.RRF_KV.get(`revocation:${rrn}`, "text");
+  if (revRaw !== null) {
+    try {
+      const rev = JSON.parse(revRaw);
+      parsed.revoked = true;
+      if (typeof rev.revoked_at === "string") parsed.revoked_at = rev.revoked_at;
+    } catch {
+      parsed.revoked = true;  // malformed blob → fail-closed, still mark revoked
+    }
+  }
+
+  return new Response(JSON.stringify(parsed), {
     headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
   });
 };
@@ -56,6 +69,9 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   const raw = await env.RRF_KV.get(`robot:${rrn}`, "text");
   if (!raw) return err("Not found", 404);
   const record = JSON.parse(raw);
+
+  if (await isRevoked(env, rrn)) return err("Record is revoked", 403);
+
   if (record.api_key !== apiKey) return err("Unauthorized", 403);
 
   let body: Record<string, unknown>;
