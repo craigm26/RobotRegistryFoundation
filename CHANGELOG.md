@@ -4,6 +4,33 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## Compliance Intake (Release D2) — 2026-04-23
+
+Four RCAN §22-25 compliance intake endpoints, all using signed-body auth
+against the robot's registered `pq_signing_pub` via `verifyBody` from
+rcan-ts 3.2.0. 10-year KV TTL per Art. 72 record-keeping obligations.
+
+### Added
+
+- `POST|GET /v2/robots/:rrn/fria` — §22 FRIA intake (Bearer-gated GET, `doc.system.rrn` binding)
+- `POST|GET /v2/robots/:rrn/safety-benchmark` — §23 Safety Benchmark intake (public GET, URL+sig binding)
+- `POST|GET /v2/robots/:rrn/ifu` — §24 IFU intake (Art. 13(3), public GET, URL+sig binding)
+- `POST|GET /v2/robots/:rrn/incident-report` — §25 Post-Market Incident Report intake (Art. 72, Bearer-gated GET, `doc.rrn` binding)
+- Shared `verifyComplianceSubmission` helper (`functions/v2/_lib/compliance-auth.ts`)
+- Test-signing helpers (`functions/v2/_lib/test-helpers.ts`)
+- End-to-end smoke test (`tests/compliance-intake.smoke.test.ts`)
+
+### Changed
+
+- `rcan-ts` bumped to `^3.2.0` to pick up compliance builders and schema constants
+- Added `@noble/curves` as dev dependency for test-signing helper
+
+### Deferred to D3
+
+- `POST|GET /v2/models/:rmn/eu-register` — §26 EU Register intake needs an `rmn` field added to the rcan-ts `EuRegisterEntry` envelope upstream. Bookmarked for rcan-ts 3.3.0.
+
+---
+
 ## [1.11.0] — 2026-04-23
 
 **rcan-ts 3.1.0 consolidation.** Replaces local hybrid verifier with
