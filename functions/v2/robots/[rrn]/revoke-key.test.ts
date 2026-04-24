@@ -77,6 +77,22 @@ describe("POST /v2/robots/[rrn]/revoke-key", () => {
     expect(res.status).toBe(400);
   });
 
+  it("400 when body.action is not 'revoke'", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+    const signed = await signComplianceBody({ rrn: RRN, action: "delete" }, kp);
+    const res = await onRequestPost({ request: req(signed), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("400 when reason is present but not a string", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+    const signed = await signComplianceBody({ rrn: RRN, action: "revoke", reason: 42 }, kp);
+    const res = await onRequestPost({ request: req(signed), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+  });
+
   it("409 when already revoked", async () => {
     const kp = await makeTestKeypair();
     const env = makeEnv({

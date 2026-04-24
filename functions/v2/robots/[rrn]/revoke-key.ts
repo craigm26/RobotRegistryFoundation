@@ -37,6 +37,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
     return err("Body must bind rrn and action:revoke", 400);
   }
 
+  if (body.reason !== undefined && typeof body.reason !== "string") {
+    return err("reason must be a string if provided", 400);
+  }
+
   if (await isRevoked(env, rrn)) return err("Already revoked", 409);
 
   const reason = typeof body.reason === "string" ? body.reason : "unspecified";
