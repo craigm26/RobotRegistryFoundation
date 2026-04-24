@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
-  buildSafetyBenchmark, buildIfu, buildIncidentReport,
-  SAFETY_BENCHMARK_SCHEMA, IFU_SCHEMA, INCIDENT_REPORT_SCHEMA,
+  buildSafetyBenchmark, buildIfu, buildIncidentReport, buildEuRegisterEntry,
+  SAFETY_BENCHMARK_SCHEMA, IFU_SCHEMA, INCIDENT_REPORT_SCHEMA, EU_REGISTER_SCHEMA,
 } from "rcan-ts";
 import { onRequest as sbHandler } from "../functions/v2/robots/[rrn]/safety-benchmark.js";
 import { onRequest as ifuHandler } from "../functions/v2/robots/[rrn]/ifu.js";
@@ -33,7 +33,7 @@ function mkReq(method: string, path: string, body?: unknown, headers: Record<str
 }
 
 describe("compliance intake end-to-end smoke", () => {
-  it("round-trips all four D2 endpoints with a single registered robot", async () => {
+  it("round-trips all five §22-26 endpoints with a single registered robot", async () => {
     const kp = await makeTestKeypair();
     const env = makeSharedEnv();
     env.__store[`robot:${RRN}`] = makeRobotRecord(RRN, kp);
@@ -114,6 +114,32 @@ describe("compliance intake end-to-end smoke", () => {
       const getRes = await incHandler({ request: mkReq("GET", `/v2/robots/${RRN}/incident-report`, undefined, { Authorization: "Bearer t" }), env, params: { rrn: RRN } } as any);
       expect(getRes.status).toBe(200);
       expect(((await getRes.json()) as any).schema).toBe(INCIDENT_REPORT_SCHEMA);
+    }
+
+    // §26 EU Register — public GET, X-Submitter-RRN header, per-model route
+    {
+      const { onRequest: euHandler } = await import("../functions/v2/models/[rmn]/eu-register.js");
+      const RMN = "RMN-000000000007";
+      const doc = buildEuRegisterEntry({
+        rmn: RMN,
+        fria_ref: "bob-fria-v1.json",
+        provider: { name: "smoke", contact: "smoke@example.com" },
+        system: { rrn: RRN, robot_name: "smoke", rcan_version: "3.1" },
+        annex_iii_basis: "Annex III §5(b)",
+        generated_at: "2026-04-24T00:00:00Z",
+      });
+      const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
+      const postRes = await euHandler({
+        request: mkReq("POST", `/v2/models/${RMN}/eu-register`, signed, { "X-Submitter-RRN": RRN }),
+        env, params: { rmn: RMN },
+      } as any);
+      expect(postRes.status).toBe(201);
+      const getRes = await euHandler({ request: mkReq("GET", `/v2/models/${RMN}/eu-register`), env, params: { rmn: RMN } } as any);
+      expect(getRes.status).toBe(200);
+      const retrieved = await getRes.json() as any;
+      expect(retrieved.schema).toBe(EU_REGISTER_SCHEMA);
+      expect(retrieved.rmn).toBe(RMN);
+      expect(retrieved._submitted_by_rrn).toBe(RRN);
     }
   });
 });
