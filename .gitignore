@@ -7,3 +7,5 @@ node_modules/
 .wrangler/
 .cf-functions-built/
 package-lock.json
+
+.worktrees/
