@@ -20,6 +20,7 @@ import { verifyBody } from "rcan-ts";
 import { isRevoked } from "../../_lib/revocation.js";
 import { verifyDnsTxt } from "../../_lib/dns-verify.js";
 import { verifyAttestation } from "../../_lib/attestation-verify.js";
+import { redactRobotRecord } from "../../_lib/redact.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -27,8 +28,13 @@ type DnsVerifierFn = typeof verifyDnsTxt;
 type AttestationVerifierFn = typeof verifyAttestation;
 interface Verifiers { dns: DnsVerifierFn; attestation: AttestationVerifierFn }
 
-const TIER_ORDER = ["unverified", "community", "manufacturer_claimed", "manufacturer_verified"] as const;
-type Tier = typeof TIER_ORDER[number];
+const TIER_RANK: Record<string, number> = {
+  unverified: 0,
+  community: 1,
+  manufacturer_claimed: 2,
+  manufacturer_verified: 3,
+};
+type Tier = keyof typeof TIER_RANK;
 
 function err(msg: string, status: number): Response {
   return new Response(JSON.stringify({ error: msg }), {
@@ -86,15 +92,18 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   } catch { /* sigOk stays false */ }
   if (!sigOk) return err("Signature verification failed", 401);
 
-  const currentTier = (record.verification_status ?? "unverified") as Tier;
-  const currentIdx = TIER_ORDER.indexOf(currentTier);
-  const targetIdx = TIER_ORDER.indexOf(targetTier);
-  if (targetIdx <= currentIdx) return err("Cannot downgrade or stay at current tier", 400);
+  const currentTier = record.verification_status ?? "unverified";
+  const currentRank = TIER_RANK[currentTier];
+  if (currentRank === undefined) {
+    return err(`Record has unrecognized verification_status: ${currentTier}`, 409);
+  }
+  const targetRank = TIER_RANK[targetTier];  // already validated to be a known tier string above
+  if (targetRank <= currentRank) return err("Cannot downgrade or stay at current tier", 400);
 
   const dns = await verifiers.dns(binding.value, rrn, record.model);
   if (!dns.ok) return err(`DNS verification failed: ${dns.error}`, 400);
 
-  let ruriEvidence: string | undefined;
+  let attestationEvidence: { attestation_digest: string; ruri_matched: string } | undefined;
   if (targetTier === "manufacturer_verified") {
     // Bind the attestation to the registered key.
     if (body.attestation.pq_kid !== record.pq_kid) {
@@ -108,7 +117,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
       expectedModel: record.model,
     });
     if (!att.ok) return err(`Attestation verification failed: ${att.error}`, 400);
-    ruriEvidence = att.evidence.ruri_matched;
+    attestationEvidence = att.evidence;
   }
 
   const now = new Date().toISOString();
@@ -117,11 +126,13 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
     type: "dns-txt",
     value: binding.value,
     verified_at: now,
-    verifier_evidence: ruriEvidence ? `${dns.evidence}; ${ruriEvidence}` : dns.evidence,
+    verifier_evidence: attestationEvidence
+      ? `dns=${dns.evidence}; ruri=${attestationEvidence.ruri_matched}; attestation=${attestationEvidence.attestation_digest}`
+      : `dns=${dns.evidence}`,
   };
   record.updated_at = now;
   await env.RRF_KV.put(`robot:${rrn}`, JSON.stringify(record));
-  return new Response(JSON.stringify(record), {
+  return new Response(JSON.stringify(redactRobotRecord(record)), {
     status: 200, headers: { "Content-Type": "application/json" },
   });
 };

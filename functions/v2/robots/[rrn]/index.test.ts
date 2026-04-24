@@ -163,6 +163,14 @@ describe("GET /v2/robots/[rrn]", () => {
     expect(json.revoked).toBeUndefined();
     expect(json.revoked_at).toBeUndefined();
   });
+
+  it("GET response body does not include api_key", async () => {
+    const env = makeEnv();
+    const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
+    const body = await res.json();
+    expect(body.api_key).toBeUndefined();
+    expect(env.__store[`robot:${RRN}`]).toContain(API_KEY);  // still in KV
+  });
 });
 
 describe("DELETE /v2/robots/[rrn]", () => {
@@ -373,6 +381,7 @@ describe("PATCH /v2/robots/[rrn] — happy path (real sig verify)", () => {
     expect(updated.pq_signing_pub).toBe(patchFx.pq_signing_pub);
     expect(updated.pq_kid).toBe(patchFx.pq_kid);
     expect(updated.updated_at).toBeDefined();
+    expect(updated.api_key).toBeUndefined();
   });
 
   it("rejects a PATCH with tampered ml_dsa signature (400)", async () => {

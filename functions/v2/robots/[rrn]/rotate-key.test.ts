@@ -177,6 +177,7 @@ describe("POST /v2/robots/[rrn]/rotate-key", () => {
     expect(updated.rotations).toHaveLength(1);
     expect(updated.rotations[0].new_pq_kid).toBe("testkid-new");
     expect(updated.updated_at).toBeTypeOf("string");
+    expect(updated.api_key).toBeUndefined();
   });
 
   it("appends (not overwrites) rotations[] across multiple rotations", async () => {
