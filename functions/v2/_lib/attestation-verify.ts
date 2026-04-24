@@ -19,6 +19,7 @@ import { verifyBody } from "rcan-ts";
 
 const ONE_YEAR_MS = 365 * 24 * 3600 * 1000;
 const FUTURE_SKEW_MS = 60 * 1000;
+const MAX_MANIFEST_BYTES = 65536;
 
 export interface VerifyAttestationInput {
   attestation: Record<string, unknown>;
@@ -43,12 +44,13 @@ async function digestHex(bytes: Uint8Array): Promise<string> {
 }
 
 function canonicalCoreBytes(a: Record<string, unknown>): Uint8Array {
-  // Stable ordering, fixed field set — do not include sig/pq_kid/pq_signing_pub.
+  // Stable ordering, fixed field set — do not include sig/pq_signing_pub.
   const core = {
     rrn: a.rrn,
     manufacturer: a.manufacturer,
     model: a.model,
     timestamp_iso: a.timestamp_iso,
+    pq_kid: a.pq_kid,
   };
   return new TextEncoder().encode(JSON.stringify(core));
 }
@@ -82,7 +84,14 @@ export async function verifyAttestation(
   try {
     const res = await fetchFn(manifestUrl, { headers: { "Accept": "application/json" } });
     if (!res.ok) return { ok: false, error: `RURI manifest returned ${res.status}` };
+    const clHeader = res.headers.get("content-length");
+    if (clHeader && Number(clHeader) > MAX_MANIFEST_BYTES) {
+      return { ok: false, error: "RURI manifest too large" };
+    }
     manifestBody = await res.text();
+    if (manifestBody.length > MAX_MANIFEST_BYTES) {
+      return { ok: false, error: "RURI manifest too large" };
+    }
   } catch (e: any) {
     return { ok: false, error: `RURI unreachable: ${e?.message ?? "unknown"}` };
   }
