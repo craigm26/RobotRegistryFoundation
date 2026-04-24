@@ -106,6 +106,16 @@ describe("PATCH /v2/robots/[rrn]", () => {
     } as any);
     expect(res.status).toBe(400);
   });
+
+  it("returns 403 when record is revoked", async () => {
+    const env = makeEnv();
+    env.__store[`revocation:${RRN}`] = JSON.stringify({ revoked_at: "2026-04-24T00:00:00Z", reason: "test" });
+    const res = await onRequestPatch({
+      request: makePatchRequest(STUB_PATCH_BODY),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("GET /v2/robots/[rrn]", () => {
@@ -121,6 +131,25 @@ describe("GET /v2/robots/[rrn]", () => {
     const env = makeEnv(null);
     const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
     expect(res.status).toBe(404);
+  });
+
+  it("surfaces revoked flag + revoked_at when a revocation entry exists", async () => {
+    const env = makeEnv();
+    env.__store[`revocation:${RRN}`] = JSON.stringify({ revoked_at: "2026-04-24T00:00:00Z", reason: "test" });
+    const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.revoked).toBe(true);
+    expect(json.revoked_at).toBe("2026-04-24T00:00:00Z");
+  });
+
+  it("omits revoked flag when no revocation entry", async () => {
+    const env = makeEnv();
+    const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.revoked).toBeUndefined();
+    expect(json.revoked_at).toBeUndefined();
   });
 });
 
