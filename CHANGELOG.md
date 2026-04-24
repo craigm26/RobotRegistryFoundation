@@ -4,6 +4,31 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## Compliance Intake §26 (Release D3) — 2026-04-24
+
+Ships the fifth and final compliance intake endpoint — §26 EU Register,
+deferred from D2 pending upstream rcan-ts 3.3.0.
+
+### Added
+
+- `POST|GET /v2/models/:rmn/eu-register` — §26 EU Register intake
+  (Art. 49, per-model, public GET). Requires `X-Submitter-RRN` header
+  on POST to identify the signing robot. Binding: `doc.rmn === URL rmn`.
+  Stored doc carries `_submitted_by_rrn` for provenance.
+
+### Changed
+
+- `rcan-ts` dependency bumped to `^3.3.0` (rcan-spec v3.1 compatible).
+  Adds top-level `rmn` field to §26 EuRegisterEntry for per-model routing.
+
+### Completes
+
+- D2 four endpoints (§22 FRIA, §23 Safety Benchmark, §24 IFU, §25 Incident Report)
+  + this D3 fifth (§26 EU Register) = all five RCAN §22-26 artifacts now
+  have full RRF intake coverage.
+
+---
+
 ## Compliance Intake (Release D2) — 2026-04-23
 
 Four RCAN §22-25 compliance intake endpoints, all using signed-body auth
