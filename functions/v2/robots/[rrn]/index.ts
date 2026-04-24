@@ -7,6 +7,7 @@
 import { isValidId } from "../../_lib/id.js";
 import { isRevoked } from "../../_lib/revocation.js";
 import { verifyBody } from "rcan-ts";
+import { redactRobotRecord } from "../../_lib/redact.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -52,7 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
     }
   }
 
-  return new Response(JSON.stringify(parsed), {
+  return new Response(JSON.stringify(redactRobotRecord(parsed)), {
     headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
   });
 };
@@ -102,7 +103,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   record.pq_kid = body.pq_kid;
   record.updated_at = new Date().toISOString();
   await env.RRF_KV.put(`robot:${rrn}`, JSON.stringify(record));
-  return ok(record);
+  return ok(redactRobotRecord(record));
 };
 
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) => {

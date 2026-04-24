@@ -1,6 +1,7 @@
 import { isValidId } from "../../_lib/id.js";
 import { verifyBody } from "rcan-ts";
 import { isRevoked } from "../../_lib/revocation.js";
+import { redactRobotRecord } from "../../_lib/redact.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -94,7 +95,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }
   record.pq_kid = newKid;
   record.updated_at = now;
   await env.RRF_KV.put(`robot:${rrn}`, JSON.stringify(record));
-  return new Response(JSON.stringify(record), {
+  return new Response(JSON.stringify(redactRobotRecord(record)), {
     status: 200, headers: { "Content-Type": "application/json" },
   });
 };

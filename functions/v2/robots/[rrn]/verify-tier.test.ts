@@ -79,6 +79,9 @@ describe("POST /v2/robots/[rrn]/verify-tier", () => {
     };
     const res = await onRequestPost({ request: req(signed), env, params: { rrn: RRN }, verifiers } as any);
     expect(res.status).toBe(200);
+    const responseBody = await res.json();
+    expect(responseBody.api_key).toBeUndefined();
+    expect(responseBody.verification_status).toBe("manufacturer_claimed");
     const updated = JSON.parse(env.__store[`robot:${RRN}`]);
     expect(updated.verification_status).toBe("manufacturer_claimed");
     expect(updated.identity_binding).toMatchObject({ type: "dns-txt", value: DOMAIN });
@@ -131,6 +134,9 @@ describe("POST /v2/robots/[rrn]/verify-tier", () => {
     expect(updated.verification_status).toBe("manufacturer_verified");
     expect(verifiers.dns).toHaveBeenCalled();
     expect(verifiers.attestation).toHaveBeenCalled();
+    expect(updated.identity_binding.verifier_evidence).toContain(`attestation=deadbeef`);
+    expect(updated.identity_binding.verifier_evidence).toContain(`dns=`);
+    expect(updated.identity_binding.verifier_evidence).toContain(`ruri=${RURI}`);
   });
 
   it("400 on downgrade attempt (current=manufacturer_verified, target=manufacturer_claimed)", async () => {
@@ -185,6 +191,20 @@ describe("POST /v2/robots/[rrn]/verify-tier", () => {
     const verifiers = { dns: vi.fn(), attestation: vi.fn() };
     const res = await onRequestPost({ request: req(signed), env, params: { rrn: RRN }, verifiers } as any);
     expect(res.status).toBe(400);
+  });
+
+  it("409 when record has an unrecognized verification_status (legacy tier)", async () => {
+    const kp = await makeTestKeypair();
+    const record = JSON.parse(await makeRecordWithModel(kp, "turtlebot3_burger"));
+    record.verification_status = "certified";  // legacy tier from older enum
+    const env = makeEnv({ [`robot:${RRN}`]: JSON.stringify(record) });
+    const signed = await signComplianceBody(
+      { rrn: RRN, action: "verify-tier", target_tier: "manufacturer_claimed", binding: { type: "dns-txt", value: DOMAIN } },
+      kp,
+    );
+    const verifiers = { dns: vi.fn(), attestation: vi.fn() };
+    const res = await onRequestPost({ request: req(signed), env, params: { rrn: RRN }, verifiers } as any);
+    expect(res.status).toBe(409);
   });
 
   it("400 when manufacturer_verified attestation.pq_kid does not match record.pq_kid", async () => {
