@@ -104,7 +104,7 @@ describe("POST /v2/robots/[rrn]/rotate-key", () => {
     expect(res.status).toBe(401);
   });
 
-  it("401 when by_new_key is signed by something other than the declared new key", async () => {
+  it("400 when by_new_key.pq_signing_pub does not match declared new_pq_signing_pub", async () => {
     const oldKp = await makeTestKeypair();
     const newKp = await makeTestKeypair();
     const otherKp = await makeTestKeypair();
@@ -121,6 +121,34 @@ describe("POST /v2/robots/[rrn]/rotate-key", () => {
       new_pq_signing_pub: btoa(String.fromCharCode(...newKp.mlDsa.publicKey)),
       new_pq_kid: "testkid-new",
     }, otherKp);
+    const res = await onRequestPost({ request: req({ by_old_key, by_new_key }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("401 when by_new_key has a forged signature that doesn't verify under declared pq_signing_pub", async () => {
+    const oldKp = await makeTestKeypair();
+    const newKp = await makeTestKeypair();
+    const otherKp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, oldKp) });
+
+    const canonical = {
+      rrn: RRN, action: "rotate" as const,
+      new_pq_signing_pub: btoa(String.fromCharCode(...newKp.mlDsa.publicKey)),
+      new_pq_kid: "testkid-new",
+    };
+
+    const by_old_key = await signComplianceBody(canonical, oldKp);
+
+    // Two separately-signed envelopes over the SAME canonical doc.
+    const envA_signedByNewKp = await signComplianceBody(canonical, newKp);
+    const envB_signedByOtherKp = await signComplianceBody(canonical, otherKp);
+
+    // Forgery: keep envelope A's structure (declares newKp's pub as pq_signing_pub)
+    // but swap in envelope B's sig (which was signed over envelope B's canonical
+    // where pq_signing_pub was otherKp's pub — different bytes). Consistency check
+    // at I1's site passes; verifyBody under newKp's public key fails.
+    const by_new_key = { ...envA_signedByNewKp, sig: envB_signedByOtherKp.sig };
+
     const res = await onRequestPost({ request: req({ by_old_key, by_new_key }), env, params: { rrn: RRN } } as any);
     expect(res.status).toBe(401);
   });
