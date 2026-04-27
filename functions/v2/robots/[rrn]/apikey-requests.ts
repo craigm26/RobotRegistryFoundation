@@ -66,9 +66,7 @@ export const onRequest: PagesFunction<Env> = async (ctx) => {
   }
   const skew = Math.abs(Date.now() - ts);
   if (skew > FRESHNESS_WINDOW_MS) {
-    return json({
-      error: `generated_at outside +/-10 min window (timestamp ${skew > FRESHNESS_WINDOW_MS ? "stale" : "valid"})`,
-    }, 400);
+    return json({ error: "generated_at outside +/-10 min freshness window" }, 400);
   }
 
   const verified = await verifyComplianceBody(body, env, `robot:${rrn}`);
