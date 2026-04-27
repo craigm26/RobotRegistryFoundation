@@ -193,6 +193,128 @@ describe("DELETE /v2/robots/[rrn]", () => {
   });
 });
 
+describe("PATCH /v2/robots/[rrn] — whitelisted field updates (no pq_signing_pub in body)", () => {
+  const SIGNED_RECORD = {
+    ...UNSIGNED_RECORD,
+    pq_signing_pub: "existing-key-base64",
+    pq_kid: "abcd1234",
+  };
+
+  it("updates rcan_version on a signed record (200)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ rcan_version: "3.2" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.rcan_version).toBe("3.2");
+    expect(updated.updated_at).toBeDefined();
+    const stored = JSON.parse(env.__store[`robot:${RRN}`]);
+    expect(stored.rcan_version).toBe("3.2");
+  });
+
+  it("updates firmware_version", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ firmware_version: "1.2.3" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(env.__store[`robot:${RRN}`]).firmware_version).toBe("1.2.3");
+  });
+
+  it("updates ruri", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ ruri: "rcan://new-host:7400/bob" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(env.__store[`robot:${RRN}`]).ruri).toBe("rcan://new-host:7400/bob");
+  });
+
+  it("updates multiple whitelisted fields in one PATCH", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ rcan_version: "3.2", firmware_version: "2.0.0" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+    const stored = JSON.parse(env.__store[`robot:${RRN}`]);
+    expect(stored.rcan_version).toBe("3.2");
+    expect(stored.firmware_version).toBe("2.0.0");
+  });
+
+  it("works on an unsigned record too (no pq_signing_pub gate for field updates)", async () => {
+    const env = makeEnv();  // UNSIGNED_RECORD
+    const res = await onRequestPatch({
+      request: makePatchRequest({ rcan_version: "3.2" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects unknown / non-whitelisted fields (400)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ name: "evil-rename" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect((body.error as string).toLowerCase()).toMatch(/whitelist|allowed|field/);
+    expect(env.__store[`robot:${RRN}`]).toBe(JSON.stringify(SIGNED_RECORD));
+  });
+
+  it("rejects non-string field values (400)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ rcan_version: 123 }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects empty body (400 — must have at least one field)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({}),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("preserves existing pq_signing_pub when updating other fields", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    await onRequestPatch({
+      request: makePatchRequest({ rcan_version: "3.2" }),
+      env, params: { rrn: RRN },
+    } as any);
+    const stored = JSON.parse(env.__store[`robot:${RRN}`]);
+    expect(stored.pq_signing_pub).toBe("existing-key-base64");
+    expect(stored.pq_kid).toBe("abcd1234");
+  });
+
+  it("still requires bearer auth (401 without)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const req = new Request(`https://x/v2/robots/${RRN}`, {
+      method: "PATCH", body: JSON.stringify({ rcan_version: "3.2" }),
+    });
+    const res = await onRequestPatch({ request: req, env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(401);
+  });
+
+  it("still rejects wrong bearer (403)", async () => {
+    const env = makeEnv(SIGNED_RECORD);
+    const res = await onRequestPatch({
+      request: makePatchRequest({ rcan_version: "3.2" }, "wrong-key"),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+  });
+});
+
 describe("PATCH /v2/robots/[rrn] — happy path (real sig verify)", () => {
   it("accepts a valid Python-signed PATCH and updates the record", async () => {
     const env = makeEnv();  // fresh UNSIGNED_RECORD at RRN-000000000042 (matches fixture)
