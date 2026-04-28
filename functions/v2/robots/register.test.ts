@@ -81,4 +81,16 @@ describe("POST /v2/robots/register — signing enforcement (RCAN 3.0 §2.2)", ()
     expect(json.rrn).toMatch(/^RRN-\d{12}$/);
     expect(json.record_url).toContain("robotregistryfoundation.org");
   });
+
+  it("new records default verification_status to 'unverified'", async () => {
+    const env = makeEnv();
+    const res = await onRequestPost({ request: makePost(fx.http_body), env } as any);
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    const rrn = json.rrn;
+
+    // Read the stored record from KV
+    const stored = JSON.parse(env.__store[`robot:${rrn}`]);
+    expect(stored.verification_status).toBe("unverified");
+  });
 });

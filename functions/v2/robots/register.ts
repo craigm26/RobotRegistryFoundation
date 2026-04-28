@@ -70,6 +70,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     rcn_ids,
     rmn,
     rhn_ids,
+    verification_status: "unverified",
     loa_enforcement: body.loa_enforcement !== false,  // default true
     registered_at:   new Date().toISOString(),
   };
