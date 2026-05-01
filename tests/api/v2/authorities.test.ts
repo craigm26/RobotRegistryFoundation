@@ -205,7 +205,7 @@ describe("/v2/authorities — RAN namespace", () => {
     expect(out.entries.some((e: any) => e.ran === ran)).toBe(true);
   });
 
-  it("DELETE /v2/authorities/<ran> requires admin token (401 without, 200 with)", async () => {
+  it("DELETE /v2/authorities/<ran> requires admin token (401 without, 200 soft-delete with)", async () => {
     const adminToken = "test-admin-token-xyz";
     const env = makeEnv(adminToken);
     // Register one
@@ -227,7 +227,7 @@ describe("/v2/authorities — RAN namespace", () => {
     } as any);
     expect(noAuthRes.status).toBe(401);
 
-    // With token → 200
+    // With token → 200, soft-delete (status = "revoked", record preserved)
     const authRes = await onRequestDelete({
       params: { ran },
       env,
@@ -237,6 +237,52 @@ describe("/v2/authorities — RAN namespace", () => {
     } as any);
     expect(authRes.status).toBe(200);
     const out = await authRes.json() as any;
-    expect(out.status).toBe("deleted");
+    expect(out.status).toBe("revoked");
+    expect(out.record).toBeDefined();
+    expect(out.record.status).toBe("revoked");
+    expect(out.record.revoked_at).toBeTruthy();
+
+    // GET on the same RAN returns 200 with status = "revoked" (proves record persists)
+    const getAfterRes = await onGetSingle({
+      params: { ran },
+      env,
+      request: makeReq("GET", `https://x/v2/authorities/${ran}`),
+    } as any);
+    expect(getAfterRes.status).toBe(200);
+    const getAfterOut = await getAfterRes.json() as any;
+    expect(getAfterOut.status).toBe("revoked");
+
+    // DELETE on an already-revoked RAN → 409
+    const doubleDeleteRes = await onRequestDelete({
+      params: { ran },
+      env,
+      request: makeReq("DELETE", `https://x/v2/authorities/${ran}`, undefined, {
+        Authorization: `Bearer ${adminToken}`,
+      }),
+    } as any);
+    expect(doubleDeleteRes.status).toBe(409);
+    const ddOut = await doubleDeleteRes.json() as any;
+    expect(ddOut.error).toMatch(/already revoked/i);
+  });
+
+  it("POST rejects registration with cryptographically invalid signature", async () => {
+    // Build a valid body, then corrupt the sig.ml_dsa bytes so verifyBody detects
+    // that the signature doesn't verify against pq_signing_pub.
+    const env = makeEnv();
+    const body = await buildSignedRegistration({
+      organization: "test", display_name: "test", purpose: "other",
+    }) as Record<string, any>;
+
+    // Tamper: corrupt a byte in sig.ml_dsa (the ML-DSA signature is what verifyBody checks).
+    const sigBytes = Buffer.from(body.sig.ml_dsa, "base64");
+    sigBytes[0] ^= 0xff;  // flip bits in the first byte
+    body.sig = { ...body.sig, ml_dsa: sigBytes.toString("base64") };
+
+    const r = await onRequestPost({
+      request: makeReq("POST", "https://x/v2/authorities/register", body),
+      env,
+    } as any);
+    expect(r.status).toBe(400);
+    expect((await r.json() as any).error).toMatch(/sig|invalid|verif/i);
   });
 });

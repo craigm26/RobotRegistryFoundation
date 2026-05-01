@@ -104,7 +104,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return json({ error: "Signature verification failed (§2.2)" }, 400);
   }
 
-  // pq_kid uniqueness within RAN namespace
+  // pq_kid uniqueness within the RAN namespace.
+  //
+  // Other RRF namespaces don't enforce kid uniqueness; RAN does because release-signing
+  // authorities are looked up by both RAN AND kid in downstream verifiers (e.g., compatibility
+  // matrix), and kid collisions across authorities would let a verifier cache the wrong key.
+  //
+  // Race-condition note: under concurrent POSTs, both can pass this scan before either
+  // writes. Cloudflare KV is eventually-consistent; atomic check-and-set is not available.
+  // Acceptable at current traffic. Future hardening (transparency log, gateway-side admission)
+  // is Plan 4 scope.
   const list = await env.RRF_KV.list({ prefix: "authority:" });
   for (const k of list.keys) {
     // Skip counter key if it matches the prefix (it won't, but be safe)
