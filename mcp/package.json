@@ -1,0 +1,28 @@
+{
+  "name": "@rrf/mcp",
+  "version": "0.1.0-spike",
+  "description": "MCP server exposing the Robot Registry Foundation registry to Claude Desktop, Claude Code, claude.ai, and the Claude Agent SDK.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "rrf-mcp": "./dist/server.js"
+  },
+  "exports": {
+    ".": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
+  }
+}
