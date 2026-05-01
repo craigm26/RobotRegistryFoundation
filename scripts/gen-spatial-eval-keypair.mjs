@@ -24,6 +24,7 @@ import { fileURLToPath } from "node:url";
 import { mkdirSync } from "node:fs";
 
 const SPEC_VERSION = process.argv[2] || "1.0.0";
+const FORCE = process.argv.includes("--force");
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PUBKEY_PATH = `${ROOT}/functions/v1/spatial-eval/_lib/rrf_pubkey.ts`;
@@ -62,11 +63,14 @@ const priv_b64 = b64(kp.privateKey);
 
 const registry = readExistingRegistry(PUBKEY_PATH);
 
-if (registry[SPEC_VERSION]) {
+if (registry[SPEC_VERSION] && !FORCE) {
   console.error(
     `error: rrf_pubkey.ts already has an entry for spec_version=${SPEC_VERSION}.`,
   );
-  console.error(`Refusing to overwrite — rotation requires a minor version bump.`);
+  console.error(
+    `Refusing to overwrite — rotation requires a minor version bump.`,
+  );
+  console.error(`Pass --force to rotate within the same version anyway (debug only).`);
   process.exit(2);
 }
 
@@ -87,4 +91,7 @@ console.error("    wrangler secret put RRF_SPATIAL_EVAL_PQ_PRIV");
 console.error("");
 console.error("And paste the value below when prompted (one line):");
 console.error("");
-console.log(priv_b64);
+// Use process.stdout.write — NO trailing newline — so a piped consumer
+// (e.g. `node gen-... | wrangler secret put NAME`) gets the bare base64
+// payload. atob() on the Cloudflare side rejects whitespace.
+process.stdout.write(priv_b64);
