@@ -39,7 +39,11 @@ export function counterSignScore(
   if (!privB64) {
     throw new Error("RRF_SPATIAL_EVAL_PQ_PRIV secret is not set");
   }
-  const priv = fromBase64(privB64);
+  // Wrangler's `secret put` over piped stdin captures any trailing
+  // newline into the stored value. atob() rejects that whitespace, so
+  // trim before decoding. Defensive against any whitespace in the
+  // base64 payload, regardless of how the secret was loaded.
+  const priv = fromBase64(privB64.trim());
   const sig = signMlDsa(priv, payloadBytes(score));
   return { ...score, rrf_signature: toBase64(sig) };
 }
