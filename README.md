@@ -50,6 +50,29 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoundation.org/api/)
 
+## Identity Namespaces
+
+RRF assigns globally unique identifiers across five namespaces. All identifiers use a 12-digit zero-padded format.
+
+| Namespace | Format | What It Identifies |
+|---|---|---|
+| **RRN** — Robot Registration Number | `RRN-000000000001` | A physical or virtual robot |
+| **RCN** — Robot Component Number | `RCN-000000000001` | A hardware component of a registered robot |
+| **RMN** — Robot Model Number | `RMN-000000000001` | An AI model registered for robot use |
+| **RHN** — Robot Harness Number | `RHN-000000000001` | An AI harness/agent framework |
+| **RAN** — Robot Authority Number | `RAN-000000000001` | A non-robot signing authority (aggregators, release-signing tools, attestation services, policy authorities) |
+
+- **RAN — Robot Authority Number.** Identity for non-robot, non-component, non-model entities that need durable hybrid keys: aggregators, release-signing tools, attestation services, policy authorities. Endpoint: `/v2/authorities/<ran>`. Registered via §2.2 ritual at `/v2/authorities/register`.
+
+### Authority (RAN) Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/v2/authorities/register` | Register a new RAN (§2.2 hybrid-signed) |
+| `GET` | `/v2/authorities/<ran>` | Fetch a single authority record |
+| `GET` | `/v2/authorities` | List all registered authorities (paginated) |
+| `DELETE` | `/v2/authorities/<ran>` | Admin-only removal (`RRF_ADMIN_TOKEN` required) |
+
 ## Compliance Intake (RCAN §22-26)
 
 Robots registered under [`/v2/robots/register`](#registration) can submit EU AI Act compliance artifacts produced by the [`rcan-ts`](https://www.npmjs.com/package/rcan-ts) 3.3.0+ builders.
