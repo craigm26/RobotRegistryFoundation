@@ -37,15 +37,8 @@ jobs:
               --generate-notes
           fi
 
-      - uses: continuonai/rcan-spec/.github/actions/emit-version-tuple@v3.2.1
-        with:
-          project: rrf
-          ran: ${{ secrets.RRF_RELEASE_RAN }}
-          field: registry_api_version
-          value: ${{ steps.tag.outputs.version }}
-          depends_on: '{"protocol_version":">=3.2.0"}'
-          pq_signing_key: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
-          pq_kid: ${{ secrets.RRF_RELEASE_KID }}
-          ed25519_signing_key: ${{ secrets.RRF_RELEASE_PRIV }}
-          ed25519_kid: ${{ secrets.RRF_RELEASE_KID }}
-          release_tag: ${{ steps.tag.outputs.tag }}
+      - name: NO-OP placeholder (cross-repo action removed for diagnosis)
+        run: |
+          echo "tag=${{ steps.tag.outputs.tag }}"
+          echo "version=${{ steps.tag.outputs.version }}"
+          echo "(cross-repo emit-version-tuple action would run here)"
