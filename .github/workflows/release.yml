@@ -40,7 +40,7 @@ jobs:
       - uses: ./.github/actions/emit-version-tuple
         with:
           project: rrf
-          ran: RAN-000000000010
+          ran: ${{ secrets.RRF_RELEASE_RAN }}
           field: registry_api_version
           value: "2.1.0"
           depends_on: '{}'
