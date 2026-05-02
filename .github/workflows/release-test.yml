@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to emit version-tuple for (defaults to ref_name)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  emit-version-tuple:
+    name: Emit signed version-tuple envelope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine tag
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Show outputs
+        run: |
+          echo "tag=${{ steps.tag.outputs.tag }}"
+          echo "version=${{ steps.tag.outputs.version }}"
