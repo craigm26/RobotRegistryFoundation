@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  emit-version-tuple:
+  emit-tuple:
     name: Emit signed version-tuple envelope
     runs-on: ubuntu-latest
     steps:
