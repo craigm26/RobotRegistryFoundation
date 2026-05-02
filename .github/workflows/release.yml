@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  emit-tuple:
+  emit-version-tuple:
     name: Emit signed version-tuple envelope
     runs-on: ubuntu-latest
     steps:
@@ -37,15 +37,15 @@ jobs:
               --generate-notes
           fi
 
-      - uses: ./.github/actions/emit-version-tuple
+      - uses: continuonai/rcan-spec/.github/actions/emit-version-tuple@v3.2.1
         with:
           project: rrf
           ran: ${{ secrets.RRF_RELEASE_RAN }}
           field: registry_api_version
-          value: "2.1.0"
-          depends_on: '{}'
+          value: ${{ steps.tag.outputs.version }}
+          depends_on: '{"protocol_version":">=3.2.0"}'
           pq_signing_key: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
-          pq_kid: deadbeef
-          ed25519_signing_key: ""
-          ed25519_kid: ""
-          release_tag: v2.1.0
+          pq_kid: ${{ secrets.RRF_RELEASE_KID }}
+          ed25519_signing_key: ${{ secrets.RRF_RELEASE_PRIV }}
+          ed25519_kid: ${{ secrets.RRF_RELEASE_KID }}
+          release_tag: ${{ steps.tag.outputs.tag }}
