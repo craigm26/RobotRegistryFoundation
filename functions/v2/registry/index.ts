@@ -18,6 +18,7 @@ const PREFIXES: Array<{ prefix: string; type: RegistryEntry["entity_type"]; kvKe
   { prefix: "RCN",     type: "component", kvKey: "component:" },
   { prefix: "RMN",     type: "model",     kvKey: "model:" },
   { prefix: "RHN",     type: "harness",   kvKey: "harness:" },
+  { prefix: "RAN",     type: "authority", kvKey: "authority:RAN-" },
 ];
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
@@ -32,13 +33,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
   if (typeFilter && prefixesToScan.length === 0) {
     return new Response(
-      JSON.stringify({ error: "Invalid type. Must be: robot, component, model, harness" }),
+      JSON.stringify({ error: "Invalid type. Must be: robot, component, model, harness, authority" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }
 
   const entries: RegistryEntry[] = [];
-  const counts: Record<string, number> = { robot: 0, component: 0, model: 0, harness: 0 };
+  const counts: Record<string, number> = { robot: 0, component: 0, model: 0, harness: 0, authority: 0 };
 
   for (const { type, kvKey } of prefixesToScan) {
     const list = await env.RRF_KV.list({ prefix: kvKey, limit: 200 });
@@ -82,7 +83,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 function summarize(record: Record<string, unknown>, type: RegistryEntry["entity_type"]): RegistryEntry {
-  const id = (record.rrn ?? record.rcn ?? record.rmn ?? record.rhn) as string;
+  const id = (record.rrn ?? record.rcn ?? record.rmn ?? record.rhn ?? record.ran) as string;
   let name = "";
   let summary: Record<string, unknown> = {};
 
@@ -112,6 +113,11 @@ function summarize(record: Record<string, unknown>, type: RegistryEntry["entity_
       }
       summary = { harness_type: record.harness_type, rcan_version: record.rcan_version,
                   open_source: record.open_source };
+      break;
+    case "authority":
+      name = record.display_name as string;
+      summary = { organization: record.organization, purpose: record.purpose,
+                  status: record.status };
       break;
   }
 

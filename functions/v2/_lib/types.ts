@@ -104,10 +104,35 @@ export interface HarnessRecord {
   owner_uid?: string;
 }
 
+// ── Robot Authority Number ────────────────────────────────────────────────────
+export type RanString = `RAN-${string}`;
+
+export type AuthorityPurpose =
+  | "compatibility-matrix-aggregate"
+  | "release-signing"
+  | "attestation"
+  | "policy"
+  | "other";
+
+export interface AuthorityRecord {
+  ran: RanString;
+  organization: string;
+  display_name: string;
+  purpose: AuthorityPurpose;
+  signing_pub: string;                   // Ed25519 raw public key, base64
+  pq_signing_pub: string;                // ML-DSA-65 raw public key, base64
+  pq_kid: string;
+  signing_alg: ["Ed25519", "ML-DSA-65"]; // tuple, locked
+  registered_at: string;                 // RFC 3339 UTC
+  status: "active" | "revoked";
+  revoked_at?: string;
+  revocation_reason?: string;
+}
+
 // ── Unified listing ───────────────────────────────────────────────────────────
 export interface RegistryEntry {
-  id: string;           // RRN, RCN, RMN, or RHN
-  entity_type: "robot" | "component" | "model" | "harness";
+  id: string;           // RRN, RCN, RMN, RHN, or RAN
+  entity_type: "robot" | "component" | "model" | "harness" | "authority";
   name: string;
   registered_at: string;
   summary: Record<string, unknown>;
