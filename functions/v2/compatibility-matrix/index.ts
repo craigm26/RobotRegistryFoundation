@@ -35,8 +35,15 @@ function json(obj: unknown, status = 200): Response {
 
 function fromB64(s: string): Uint8Array {
   // Standard base64 (NOT base64url) per envelope schema contentEncoding.
+  // Caller MUST ensure `s` matches B64_RE (validated up-front in isValidEnvelope)
+  // so atob cannot throw DOMException at this point.
   return Uint8Array.from(atob(s), c => c.charCodeAt(0));
 }
+
+// Standard base64 character set (NOT base64url). Anchored; allows 0-2 trailing '='.
+// Validating up-front in isValidEnvelope means downstream fromB64() / atob() cannot
+// throw DOMException on malformed input — keeps verifier code clean (no try/catch).
+const B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
 function isValidEnvelope(x: unknown): x is VersionTupleEnvelope {
   if (!x || typeof x !== "object") return false;
@@ -46,12 +53,12 @@ function isValidEnvelope(x: unknown): x is VersionTupleEnvelope {
   if (e.alg.length === 2 && e.alg[1] !== "Ed25519") return false;
   if (e.alg.length > 2) return false;
   if (typeof e.pq_kid !== "string" || !/^[0-9a-f]{8,}$/.test(e.pq_kid)) return false;
-  if (typeof e.payload !== "string") return false;
-  if (typeof e.signature_mldsa65 !== "string") return false;
+  if (typeof e.payload !== "string" || !B64_RE.test(e.payload)) return false;
+  if (typeof e.signature_mldsa65 !== "string" || !B64_RE.test(e.signature_mldsa65)) return false;
   if (typeof e.signed_at !== "string") return false;
   // dependentRequired: signature_ed25519 → kid
   if (e.signature_ed25519 !== undefined) {
-    if (typeof e.signature_ed25519 !== "string") return false;
+    if (typeof e.signature_ed25519 !== "string" || !B64_RE.test(e.signature_ed25519)) return false;
     if (typeof e.kid !== "string" || !/^[0-9a-f]{8,}$/.test(e.kid)) return false;
   } else if (e.kid !== undefined && (typeof e.kid !== "string" || !/^[0-9a-f]{8,}$/.test(e.kid))) {
     // If kid is present without ed25519, it must still be a valid hex string;
@@ -94,6 +101,11 @@ async function realVerifyEnvelope(
   return true;
 }
 
+// TEST_SEAM: __impl + __setVerifyEnvelopeForTests is intentional test machinery.
+// Cannot use vi.doMock("./index") because onRequestPost lexically captures
+// the verify reference at module load. Do not remove unless tests are migrated
+// to dependency injection (e.g., onRequestPost(deps = {verifyEnvelope: real})).
+//
 // Module-level mutable seam — tests swap this without trying to re-mock the
 // statically imported `onRequestPost` (which would have already captured the
 // original reference via lexical scope).
@@ -139,7 +151,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   // Direct authority lookup (no scan).
   const raw = await env.RRF_KV.get(`authority:${envelope.ran}`, "text");
   if (!raw) return json({ error: `RAN ${envelope.ran} not found` }, 401);
-  const authority = JSON.parse(raw) as AuthorityRecord;
+  let authority: AuthorityRecord;
+  try {
+    authority = JSON.parse(raw) as AuthorityRecord;
+  } catch {
+    // KV could conceivably hold malformed JSON from manual edits or partial-write
+    // during migration. Return 500 rather than letting the worker crash.
+    return json({ error: "authority record corrupted" }, 500);
+  }
 
   if (authority.status !== "active") {
     return json({ error: `authority ${envelope.ran} status is "${authority.status}"` }, 401);

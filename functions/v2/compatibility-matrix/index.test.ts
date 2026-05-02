@@ -115,6 +115,21 @@ describe("POST /v2/compatibility-matrix", () => {
     expect(r.status).toBe(400);
   });
 
+  it("rejects 400 when signature_mldsa65 is not valid base64 (would crash atob)", async () => {
+    // Regression: previously isValidEnvelope only checked typeof === "string",
+    // so a malformed base64 made fromB64()/atob() throw DOMException → 500.
+    // Now caught at validation before any verifier runs (no crypto mocks needed).
+    const env = { RRF_KV: makeKV() } as any;
+    const env_ = makeEnvelope({ signature_mldsa65: "!!! not base64 !!!" });
+    const r = await onRequestPost({
+      env,
+      request: new Request("https://x/", { method: "POST", body: JSON.stringify(env_), headers: { "Content-Type": "application/json" } }),
+    } as any);
+    expect(r.status).toBe(400);
+    const body = await r.json() as any;
+    expect(body.error.toLowerCase()).toContain("envelope shape invalid");
+  });
+
   it("rejects 400 when signature_ed25519 present but kid missing", async () => {
     // dependentRequired: {signature_ed25519: ["kid"]} — schema-level invariant.
     const env = { RRF_KV: makeKV() } as any;
@@ -125,6 +140,20 @@ describe("POST /v2/compatibility-matrix", () => {
       request: new Request("https://x/", { method: "POST", body: JSON.stringify(env_), headers: { "Content-Type": "application/json" } }),
     } as any);
     expect(r.status).toBe(400);  // schema violation
+  });
+
+  it("returns 500 when authority KV record is malformed JSON", async () => {
+    // Defensive: KV could hold malformed JSON from manual edit or partial write
+    // during migration. Endpoint must return 500 with a generic error, not
+    // crash the worker with an unhandled SyntaxError.
+    const env = { RRF_KV: makeKV({ [`authority:${AGGREGATOR_RAN}`]: "not json{" }) } as any;
+    const r = await onRequestPost({
+      env,
+      request: new Request("https://x/", { method: "POST", body: JSON.stringify(makeEnvelope()), headers: { "Content-Type": "application/json" } }),
+    } as any);
+    expect(r.status).toBe(500);
+    const body = await r.json() as any;
+    expect(body.error.toLowerCase()).toContain("authority record corrupted");
   });
 
   it("rejects 401 when ran does not resolve to a registered authority", async () => {
