@@ -129,6 +129,29 @@ export interface AuthorityRecord {
   revocation_reason?: string;
 }
 
+// ── Version-tuple envelope (hybrid-signed wrapper) ────────────────────────────
+/**
+ * Version-tuple envelope (hybrid-signed wrapper) — matches rcan-spec
+ * /schemas/version-tuple-envelope.json verbatim. Per RCAN v3.2 Decision 3
+ * (pqc-hybrid-v1): signature_mldsa65 is REQUIRED; signature_ed25519 is
+ * OPTIONAL but if present must verify and must be paired with `kid`.
+ *
+ * The aggregator (monitor.version_matrix.sign_matrix in opencastor-ops)
+ * produces this exact shape. The compatibility-matrix endpoint reuses
+ * the same envelope schema (the matrix IS a version-tuple payload, just
+ * with a richer inner structure than per-field tuples).
+ */
+export interface VersionTupleEnvelope {
+  ran: string;                       // RAN-NNNNNNNNNNNN — direct authority lookup
+  alg: ["ML-DSA-65"] | ["ML-DSA-65", "Ed25519"];   // ML-DSA-65 always at index 0
+  pq_kid: string;                    // 8-hex; sha256(pq_pub)[:8].hex(); must equal authority.pq_kid
+  kid?: string;                      // 8-hex; required iff signature_ed25519 present
+  payload: string;                   // base64 (NOT base64url) of canonical-JSON inner
+  signature_mldsa65: string;         // base64 — REQUIRED
+  signature_ed25519?: string;        // base64 — OPTIONAL; if present, MUST verify
+  signed_at: string;                 // RFC 3339 UTC
+}
+
 // ── Unified listing ───────────────────────────────────────────────────────────
 export interface RegistryEntry {
   id: string;           // RRN, RCN, RMN, RHN, or RAN
