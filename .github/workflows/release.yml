@@ -44,7 +44,7 @@ jobs:
           field: registry_api_version
           value: "2.1.0"
           depends_on: '{}'
-          pq_signing_key: deadbeef
+          pq_signing_key: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
           pq_kid: deadbeef
           ed25519_signing_key: ""
           ed25519_kid: ""
