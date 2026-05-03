@@ -37,19 +37,8 @@ jobs:
               --generate-notes
           fi
 
-      - name: Materialize PQ signing key
-        env:
-          PQ_KEY_B64: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
-        run: |
-          umask 077
-          echo "$PQ_KEY_B64" | base64 -d > "$RUNNER_TEMP/pq.priv.bin"
-
-      - name: Materialize Ed25519 signing key
-        env:
-          ED_KEY_PEM: ${{ secrets.RRF_RELEASE_PRIV }}
-        run: |
-          umask 077
-          printf '%s\n' "$ED_KEY_PEM" > "$RUNNER_TEMP/ed.priv.pem"
+      - name: NO-OP placeholder for materialization (diagnostic)
+        run: echo "skipping materialization to test if env-secret references trigger startup_failure"
 
       - uses: ./.github/actions/emit-version-tuple
         with:
@@ -60,6 +49,6 @@ jobs:
           depends_on: '{"protocol_version":">=3.2.0"}'
           pq_key_path: ${{ runner.temp }}/pq.priv.bin
           pq_kid: ${{ secrets.RRF_RELEASE_KID }}
-          ed25519_key_path: ${{ runner.temp }}/ed.priv.pem
-          ed25519_kid: ${{ secrets.RRF_RELEASE_KID }}
+          ed25519_key_path: ""
+          ed25519_kid: ""
           release_tag: ${{ steps.tag.outputs.tag }}
