@@ -129,7 +129,7 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
       </div>
     </div>
 
-    <!-- RCAN v1.5 Status (shown only when v1.5 fields are present) -->
+    <!-- RCAN protocol status (shown only when protocol fields are present) -->
     {(robot.rcan_version || robot.revocation_status || robot.supports_qos_2 !== undefined) && (
       <div class="bg-bg-card border border-border rounded-xl p-6 mb-6">
         <div class="flex items-center gap-2 mb-4">
@@ -190,7 +190,7 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
                 </span>
               )}
               {!robot.supports_qos_2 && !robot.supports_delegation && !robot.offline_capable && (
-                <span class="text-xs text-text-faint font-mono">{robot.rcan_version ? `v${robot.rcan_version}` : 'v1.6'}</span>
+                <span class="text-xs text-text-faint font-mono">{robot.rcan_version ? `v${robot.rcan_version}` : '—'}</span>
               )}
             </dd>
           </div>

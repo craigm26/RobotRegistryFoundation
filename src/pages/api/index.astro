@@ -1,7 +1,31 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-// v2 entity endpoints — RCAN v2.2 §21
+// SSR-fetch the live compatibility matrix at build time so we don't hardcode
+// a spec version on this marketing surface (per spec §8). Falls back to a
+// neutral label if the registry is unreachable or returns an unexpected shape.
+let rcanVersionLabel = 'live compatibility matrix';
+try {
+  const response = await fetch('https://robotregistryfoundation.org/v2/compatibility-matrix', {
+    headers: { 'Accept': 'application/json' },
+  });
+  if (response.ok) {
+    const envelope = await response.json();
+    if (envelope?.payload) {
+      const decoded = JSON.parse(
+        Buffer.from(envelope.payload, 'base64url').toString('utf-8')
+      );
+      const version = decoded?.projects?.['rcan-spec']?.fields?.protocol_version?.value;
+      if (version) {
+        rcanVersionLabel = `RCAN ${version}`;
+      }
+    }
+  }
+} catch {
+  // network or shape errors are non-fatal; ship the neutral label
+}
+
+// v2 entity endpoints — RCAN protocol §21
 const entityEndpoints = [
   // ── Robots (RRN) ──────────────────────────────────────────────────────────
   {
@@ -17,7 +41,7 @@ const entityEndpoints = [
           { name: "manufacturer",     type: "string",  required: true,  desc: "Manufacturer or team name" },
           { name: "model",            type: "string",  required: true,  desc: "Model/product identifier" },
           { name: "firmware_version", type: "string",  required: true,  desc: "Installed firmware version string" },
-          { name: "rcan_version",     type: "string",  required: true,  desc: "RCAN spec version (must be \"2.2\")" },
+          { name: "rcan_version",     type: "string",  required: true,  desc: "RCAN protocol version string from the registering payload — see rcan.dev/compatibility for the current accepted value" },
           { name: "pq_signing_pub",   type: "string",  required: false, desc: "ML-DSA-65 public key (base64-encoded, NIST FIPS 204)" },
           { name: "pq_kid",           type: "string",  required: false, desc: "Key ID — 8-char hex (sha256 of pub key prefix)" },
           { name: "ruri",             type: "string",  required: false, desc: "RCAN Robot URI: rcan://{domain}/{org}/{model}/{unit}" },
@@ -170,7 +194,7 @@ const entityEndpoints = [
           { name: "name",              type: "string",  required: true,  desc: "Harness name" },
           { name: "version",           type: "string",  required: true,  desc: "Semantic version string" },
           { name: "harness_type",      type: "string",  required: true,  desc: "vla | llm_planner | multimodal | hybrid | specialist | safety_monitor | orchestrator | other" },
-          { name: "rcan_version",      type: "string",  required: true,  desc: "Minimum RCAN version required (must be \"2.2\")" },
+          { name: "rcan_version",      type: "string",  required: true,  desc: "Minimum RCAN protocol version required — see rcan.dev/compatibility for the current accepted value" },
           { name: "description",       type: "string",  required: false, desc: "Human-readable description" },
           { name: "model_ids",         type: "array",   required: false, desc: "RMN[] — models used by this harness" },
           { name: "compatible_robots", type: "array",   required: false, desc: "RRN[] — target robots (empty = universal)" },
@@ -246,7 +270,7 @@ const methodColors: Record<string, string> = {
 
 <BaseLayout
   title="API Reference"
-  description="Robot Registry Foundation REST API v2 — register and query robots (RRN), components (RCN), AI models (RMN), and harnesses (RHN). RCAN v2.2 §21 entity numbering."
+  description="Robot Registry Foundation REST API v2 — register and query robots (RRN), components (RCN), AI models (RMN), and harnesses (RHN). RCAN protocol §21 entity numbering."
 >
 
   <div class="pt-8">
@@ -261,12 +285,12 @@ const methodColors: Record<string, string> = {
     <div class="mb-10 pb-8 border-b border-border">
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-bg-card text-xs font-mono text-text-muted mb-5">
         <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-        v2 · RCAN v2.2 §21
+        v2 · {rcanVersionLabel} · §21
       </div>
       <h1 class="font-display text-3xl md:text-4xl font-semibold text-text mb-3">API Reference</h1>
       <p class="text-text-muted max-w-2xl">
         Programmatic access to register and query all four RCAN entity types.
-        The v2 API is the only supported API — v1 was removed as of RCAN v2.0.
+        The v2 API is the only supported API — v1 was removed when earlier RCAN protocol versions were retired.
       </p>
 
       <!-- Quick info grid -->
@@ -307,7 +331,7 @@ const methodColors: Record<string, string> = {
 
     <!-- Entity type legend -->
     <div class="mb-10">
-      <h2 class="font-display text-lg font-semibold text-text mb-4">Entity Types — RCAN v2.2 §21.2.2</h2>
+      <h2 class="font-display text-lg font-semibold text-text mb-4">Entity Types — <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol §21.2.2</a></h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { prefix: "RRN", label: "Robot Registration Number", desc: "Whole robots — the primary unit of identity", color: "text-accent border-accent/30 bg-primary/10" },

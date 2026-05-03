@@ -2,10 +2,16 @@
 
 The open registry for RCAN-compliant robots — assigns permanent global identities to robots the way ICANN assigns domain names.
 
-[![Spec](https://img.shields.io/badge/RCAN-v3.0-blue)](https://rcan.dev/spec/)
+[![Spec](https://img.shields.io/badge/RCAN-live%20matrix-blue)](https://rcan.dev/compatibility)
 [![License](https://img.shields.io/badge/license-CC%20BY%204.0-green)](https://creativecommons.org/licenses/by/4.0/)
 
 🌐 **[robotregistryfoundation.org](https://robotregistryfoundation.org)**
+
+<!-- BEGIN: ecosystem regulatory disclaimer (canonical, derived from spec §10) -->
+> **Compliance evidence is not regulatory sufficiency.**
+>
+> Compliance packet generation and RRF submission produce *evidence*; they do not constitute regulatory sufficiency in any jurisdiction. Per-jurisdiction conformity assessments and notified-body engagement are the user's responsibility, in consultation with qualified counsel.
+<!-- END: ecosystem regulatory disclaimer -->
 
 ## What RRF Does
 
