@@ -37,23 +37,15 @@ jobs:
               --generate-notes
           fi
 
-      - name: Materialize PQ signing key (USING TEST_PQ_B64 — diagnostic)
-        env:
-          PQ_KEY_B64: ${{ secrets.TEST_PQ_B64 }}
-        run: |
-          umask 077
-          echo "$PQ_KEY_B64" | base64 -d > "$RUNNER_TEMP/pq.priv.bin"
-          ls -la "$RUNNER_TEMP/pq.priv.bin"
-
-      - uses: ./.github/actions/emit-version-tuple
+      - uses: continuonai/rcan-spec/.github/actions/emit-version-tuple@v3.2.1
         with:
           project: rrf
           ran: ${{ secrets.RRF_RELEASE_RAN }}
           field: registry_api_version
           value: ${{ steps.tag.outputs.version }}
           depends_on: '{"protocol_version":">=3.2.0"}'
-          pq_key_path: ${{ runner.temp }}/pq.priv.bin
+          pq_signing_key: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
           pq_kid: ${{ secrets.RRF_RELEASE_KID }}
-          ed25519_key_path: ""
-          ed25519_kid: ""
+          ed25519_signing_key: ${{ secrets.RRF_RELEASE_PRIV }}
+          ed25519_kid: ${{ secrets.RRF_RELEASE_KID }}
           release_tag: ${{ steps.tag.outputs.tag }}
