@@ -37,9 +37,9 @@ jobs:
               --generate-notes
           fi
 
-      - name: Materialize PQ signing key
+      - name: Materialize PQ signing key (USING TEST_PQ_B64 — diagnostic)
         env:
-          PQ_KEY_B64: ${{ secrets.RRF_RELEASE_PQ_PRIV }}
+          PQ_KEY_B64: ${{ secrets.TEST_PQ_B64 }}
         run: |
           umask 077
           echo "$PQ_KEY_B64" | base64 -d > "$RUNNER_TEMP/pq.priv.bin"
