@@ -1,2 +1,18 @@
+# Interactive surfaces retained on apex
 /registry  /registry/  301
-/governance  /governance/  301
+
+# Plan 6 migration — prose moved to docs.robotregistryfoundation.org
+/api                          https://docs.robotregistryfoundation.org/api/                  301
+/api/                         https://docs.robotregistryfoundation.org/api/                  301
+/api/registry-tiers           https://docs.robotregistryfoundation.org/api/registry-tiers/   301
+/api/registry-tiers/          https://docs.robotregistryfoundation.org/api/registry-tiers/   301
+/api/revocation               https://docs.robotregistryfoundation.org/api/revocation/       301
+/api/revocation/              https://docs.robotregistryfoundation.org/api/revocation/       301
+/federation                   https://docs.robotregistryfoundation.org/federation/           301
+/federation/                  https://docs.robotregistryfoundation.org/federation/           301
+/governance                   https://docs.robotregistryfoundation.org/governance/           301
+/governance/                  https://docs.robotregistryfoundation.org/governance/           301
+/verification                 https://docs.robotregistryfoundation.org/verification/         301
+/verification/                https://docs.robotregistryfoundation.org/verification/         301
+/rcan-integration             https://docs.robotregistryfoundation.org/rcan-integration/     301
+/rcan-integration/            https://docs.robotregistryfoundation.org/rcan-integration/     301
