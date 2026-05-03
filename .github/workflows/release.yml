@@ -37,7 +37,7 @@ jobs:
               --generate-notes
           fi
 
-      - uses: continuonai/rcan-spec/.github/actions/emit-version-tuple@v3.2.1
+      - uses: continuonai/rcan-spec/.github/actions/emit-version-tuple@v3.2.3
         with:
           project: rrf
           ran: ${{ secrets.RRF_RELEASE_RAN }}
