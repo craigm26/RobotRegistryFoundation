@@ -2,8 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 // ---------------------------------------------------------------------------
-// RCAN v2.2 — Robot Identity Revocation + Key Management API
+// RCAN protocol — Robot Identity Revocation + Key Management API
 // Spec reference: GAP-02 (§13 Robot Identity Revocation), GAP-09 (§8.6 Key Lifecycle)
+// For protocol versions see https://rcan.dev/compatibility (live matrix).
 // ---------------------------------------------------------------------------
 
 const revocationEndpoints = [
@@ -125,7 +126,7 @@ const methodColors: Record<string, string> = {
 
 <BaseLayout
   title="Revocation & Key API"
-  description="RCAN v2.2 Robot Identity Revocation and Key Management API — revocation status, revoke endpoint, public key JWKS."
+  description="RCAN protocol Robot Identity Revocation and Key Management API — revocation status, revoke endpoint, public key JWKS. See rcan.dev/compatibility for protocol versions."
 >
 
   <div class="pt-8">
@@ -143,21 +144,21 @@ const methodColors: Record<string, string> = {
       <div class="mb-10">
         <div class="flex items-center gap-3 mb-3">
           <h1 class="font-display text-4xl md:text-5xl font-semibold text-text">Revocation & Key API</h1>
-          <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-violet-500/10 text-violet-400 border border-violet-500/30 flex-shrink-0">
-            RCAN v2.2
-          </span>
+          <a href="https://rcan.dev/compatibility" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-violet-500/10 text-violet-400 border border-violet-500/30 flex-shrink-0 hover:bg-violet-500/20 transition-colors">
+            RCAN protocol
+          </a>
         </div>
         <p class="text-lg text-text-muted leading-relaxed">
           Robot identity revocation and public key management endpoints.
           Defined by <strong class="text-text">GAP-02</strong> (Robot Identity Revocation, §13)
-          and <strong class="text-text">GAP-09</strong> (Key Lifecycle, §8.6) of the RCAN v2.2 spec.
+          and <strong class="text-text">GAP-09</strong> (Key Lifecycle, §8.6) of the RCAN protocol.
         </p>
       </div>
 
       <!-- Spec summary card -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         {[
-          { label: 'Spec', value: 'RCAN v2.2 §13 + §8.6' },
+          { label: 'Spec', value: 'RCAN protocol §13 + §8.6' },
           { label: 'MessageType 19', value: 'ROBOT_REVOCATION broadcast' },
           { label: 'Cache TTL', value: '1h (active), 5m (revoked)' },
         ].map(item => (
@@ -192,9 +193,6 @@ const methodColors: Record<string, string> = {
                 {endpoint.method}
               </span>
               <code class="text-sm font-mono text-text flex-1">{endpoint.path}</code>
-              <span class="text-xs font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 flex-shrink-0">
-                v2.2
-              </span>
             </div>
 
             <div class="p-5 space-y-5">
@@ -258,7 +256,7 @@ const methodColors: Record<string, string> = {
         </h3>
         <p class="text-sm text-text-muted leading-relaxed mb-3">
           When a robot is revoked via <code class="text-accent">POST /api/v1/robots/:rrn/revoke</code>, the registry
-          broadcasts a <code class="text-accent">ROBOT_REVOCATION</code> message (MessageType 19, RCAN v2.2 §13.4)
+          broadcasts a <code class="text-accent">ROBOT_REVOCATION</code> message (MessageType 19, RCAN protocol §13.4)
           to all registered peers. Receiving robots <strong class="text-text">MUST</strong>:
         </p>
         <ul class="text-sm text-text-muted space-y-1 list-disc list-inside ml-2">

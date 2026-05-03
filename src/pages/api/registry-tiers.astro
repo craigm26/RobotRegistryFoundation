@@ -1,8 +1,9 @@
 ---
 /**
- * Registry Tier API Specification — RCAN v2.2
+ * Registry Tier API Specification — RCAN protocol §21
  *
- * Documents the registry federation endpoints introduced in RCAN v2.2 (GAP-14).
+ * Documents the registry federation endpoints (GAP-14). For protocol versions
+ * see https://rcan.dev/compatibility (live matrix).
  *
  * Registry Tiers:
  *   root          — The authoritative root registry (registry.opencastor.com).
@@ -172,14 +173,14 @@ const endpoints = [
 ---
 
 <BaseLayout
-  title="Registry Tier API — RCAN v2.2"
-  description="Federation API for RCAN v2.2 registry tiers, trust anchors, and cross-registry verification (GAP-14)"
+  title="Registry Tier API — RCAN protocol §21"
+  description="Federation API for the RCAN protocol registry tiers, trust anchors, and cross-registry verification (GAP-14). See rcan.dev/compatibility for protocol versions."
 >
   <main class="max-w-4xl mx-auto px-4 py-12">
     <div class="mb-10">
-      <h1 class="text-3xl font-bold mb-3">Registry Tier API <span class="text-sm font-normal text-gray-500 ml-2">RCAN v2.2</span></h1>
+      <h1 class="text-3xl font-bold mb-3">Registry Tier API <span class="text-sm font-normal text-gray-500 ml-2"><a href="https://rcan.dev/compatibility" target="_blank" rel="noopener noreferrer" class="hover:underline">live matrix</a></span></h1>
       <p class="text-gray-600 mb-4">
-        Federation endpoints for RCAN v2.2 registry trust hierarchy (GAP-14).
+        Federation endpoints for the RCAN protocol registry trust hierarchy (GAP-14).
         Enables cross-registry command validation via signed trust anchors.
       </p>
 
@@ -193,9 +194,9 @@ const endpoints = [
       </div>
 
       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <h2 class="font-semibold text-yellow-800 mb-2">Status: Specification (v2.2)</h2>
+        <h2 class="font-semibold text-yellow-800 mb-2">Status: Specification</h2>
         <p class="text-sm text-yellow-700">
-          These endpoints are specified for RCAN v2.2 The root registry endpoint
+          These endpoints are specified by the <a href="https://rcan.dev/spec/section-21/" target="_blank" rel="noopener noreferrer" class="hover:underline">RCAN protocol §21</a>. The root registry endpoint
           (<code>POST /api/v1/registries/{'{domain}'}/verify</code>) is only active on
           <code>registry.opencastor.com</code>. Community RRF instances expose GET-only
           trust anchor lookups.
