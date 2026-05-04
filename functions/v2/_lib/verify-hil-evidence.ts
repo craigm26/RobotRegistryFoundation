@@ -106,7 +106,7 @@ export async function verifyHilEvidence(
   const core: Record<string, unknown> = { ...payload };
   delete core["rig_signature"];
   delete core["witness_signature"];
-  const msg = new TextEncoder().encode(canonicalJson(core));
+  const msg = canonicalJson(core);
 
   const rigOk = await verifyEd25519(rig.signing_pub, msg, rigSigB64);
   if (!rigOk) {
