@@ -40,7 +40,7 @@ function signAndAttach(body: Record<string, unknown>, rigPriv: Uint8Array, witne
   const core = { ...body };
   delete (core as { rig_signature?: unknown }).rig_signature;
   delete (core as { witness_signature?: unknown }).witness_signature;
-  const msg = new TextEncoder().encode(canonicalJson(core));
+  const msg = canonicalJson(core);
   const rigSig = ed25519.sign(msg, rigPriv);
   const witnessSig = ed25519.sign(msg, witnessPriv);
   return {

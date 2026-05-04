@@ -34,7 +34,7 @@ async function deriveCertId(payload: Record<string, unknown>): Promise<string> {
   const core: Record<string, unknown> = { ...payload };
   delete core["rig_signature"];
   delete core["witness_signature"];
-  const bytes = new TextEncoder().encode(canonicalJson(core));
+  const bytes = canonicalJson(core);
   const hash = await crypto.subtle.digest("SHA-256", bytes as unknown as BufferSource);
   const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
   return `cert_${hex.slice(0, 32)}`;

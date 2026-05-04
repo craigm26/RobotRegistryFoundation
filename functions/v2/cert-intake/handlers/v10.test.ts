@@ -62,7 +62,7 @@ function makeBody(overrides: Record<string, unknown> = {}) {
 
 function signAndAttach(body: Record<string, unknown>, rigPriv: Uint8Array, witnessPriv: Uint8Array) {
   const core = { ...body };
-  const msg = new TextEncoder().encode(canonicalJson(core));
+  const msg = canonicalJson(core);
   return {
     ...body,
     rig_signature:     { kid: "bob-rig-2026",        alg: "Ed25519", sig: b64(ed25519.sign(msg, rigPriv)) },
