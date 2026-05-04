@@ -3,10 +3,13 @@
  * One-time bootstrap: mint the RRF root signing keypair (Ed25519),
  * write priv to rrf:root:privkey, write pub to rrf:root:pubkey.
  *
- * Idempotent: skips if rrf:root:privkey already exists.
+ * NOT IDEMPOTENT: every run mints a fresh keypair. Re-running after
+ * production bootstrap overwrites the root key, breaking ALL prior
+ * M2M_TRUSTED JWTs (instant invalidation) and ALL prior compliance-bundle
+ * proof verifications (rrf_log_signature continuity broken). The operator
+ * MUST precheck before piping output to wrangler:
  *
- * Usage:
- *   wrangler kv:key get --binding RRF_KV "rrf:root:privkey"  # check first
+ *   wrangler kv:key get --binding RRF_KV "rrf:root:privkey"  # MUST be empty
  *   tsx scripts/init-rrf-log-signing-key.ts | wrangler kv:bulk put --binding RRF_KV
  */
 
