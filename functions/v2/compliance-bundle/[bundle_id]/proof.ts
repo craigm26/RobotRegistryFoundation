@@ -29,19 +29,24 @@ export const onRequestGet: PagesFunction<Env, "bundle_id"> = async ({ env, param
   }
 
   // Locate the log-index key for this bundle_id by scanning the index keys.
-  // For O(1) retrieval we'd add a bundle_id -> index mapping; for v1 the scan
-  // is acceptable at current traffic.
-  const list = await env.RRF_KV.list({ prefix: "compliance-bundle-log:" });
-  for (const k of list.keys) {
-    const raw = await env.RRF_KV.get(k.name, "text");
-    if (!raw) continue;
-    let entry: { bundle_id?: string };
-    try { entry = JSON.parse(raw) as { bundle_id?: string }; }
-    catch { continue; }
-    if (entry.bundle_id === bundleId) {
-      return json(entry, 200);
+  // Paginate to handle >1000 entries (Cloudflare KV list page cap).
+  // For O(1) retrieval we'd add a bundle_id -> index mapping; for v1 the
+  // paginated scan is acceptable at current traffic.
+  let cursor: string | undefined;
+  do {
+    const list = await env.RRF_KV.list({ prefix: "compliance-bundle-log:", cursor });
+    for (const k of list.keys) {
+      const raw = await env.RRF_KV.get(k.name, "text");
+      if (!raw) continue;
+      let entry: { bundle_id?: string };
+      try { entry = JSON.parse(raw) as { bundle_id?: string }; }
+      catch { continue; }
+      if (entry.bundle_id === bundleId) {
+        return json(entry, 200);
+      }
     }
-  }
+    cursor = list.list_complete ? undefined : list.cursor ?? undefined;
+  } while (cursor);
 
   return json({ error: `bundle ${bundleId} not found in transparency log` }, 404);
 };
