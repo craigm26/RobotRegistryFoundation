@@ -1,3 +1,4 @@
+#!/usr/bin/env tsx
 /**
  * Generate a cert-witness:<kid>:<registered_at> KV record for `wrangler kv bulk put`.
  *
@@ -11,7 +12,7 @@
  *     --signing-pub-b64 <ed25519-raw-pubkey-base64> \
  *     [--valid-until 2027-05-04T00:00:00Z] \
  *     > witness.json
- *   wrangler kv bulk put --namespace-id <NS_ID> witness.json
+ *   wrangler kv:bulk put --binding RRF_KV witness.json
  */
 
 import { parseArgs } from "node:util";

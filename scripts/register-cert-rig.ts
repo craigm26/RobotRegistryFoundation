@@ -1,3 +1,4 @@
+#!/usr/bin/env tsx
 /**
  * Generate a cert-rig:<kid>:<registered_at> KV record for `wrangler kv bulk put`.
  *
@@ -12,7 +13,7 @@
  *     [--rig-id bob] \
  *     [--valid-until 2027-05-04T00:00:00Z] \
  *     > rig.json
- *   wrangler kv bulk put --namespace-id <NS_ID> rig.json
+ *   wrangler kv:bulk put --binding RRF_KV rig.json
  */
 
 import { parseArgs } from "node:util";
