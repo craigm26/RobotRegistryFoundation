@@ -202,3 +202,41 @@ export type ComplianceBundleEntry = {
 export type ComplianceBundleProof = Omit<ComplianceBundleEntry, never>;
 // proof IS the entry — same fields, served at /v2/compliance-bundle/{id}/proof
 // without the artifact bodies.
+
+// === Cert intake — Plan 6 Phase 4 (Track-3 HIL property evidence) ===
+
+export type RigKidMapping = {
+  rig_id: string;             // e.g. "bob"
+  rrn: `RRN-${string}`;        // the robot this rig hosts
+  signing_pub: string;         // Ed25519 base64
+  valid_from: string;          // ISO-8601 UTC
+  valid_until?: string;        // ISO-8601 UTC; absent = currently active
+  registered_at: string;       // ISO-8601 UTC
+  registered_by?: `RAN-${string}`;
+};
+
+export type WitnessKidMapping = {
+  witness_id: string;          // e.g. "craigm"
+  rig_id: string;              // pairing — the rig this witness co-signs for
+  signing_pub: string;         // Ed25519 base64
+  valid_from: string;
+  valid_until?: string;
+  registered_at: string;
+  registered_by?: `RAN-${string}`;
+};
+
+export type CertIntakeEntry = {
+  cert_id: string;             // "cert_<sha256-32hex>"
+  rrn: `RRN-${string}`;
+  property_id: string;          // "SF-001" | "SF-002" | "GW-001" | future
+  schema_version: string;
+  rig_id: string;
+  ran_at: number;
+  all_pass: boolean;
+  iterations: number;
+  transparency_log_index: number;
+  logged_at: string;            // ISO-8601 server-side
+  rig_signature:     { kid: string; alg: "Ed25519"; sig: string };
+  witness_signature: { kid: string; alg: "Ed25519"; sig: string };
+  rrf_log_signature: { kid: string; alg: "Ed25519"; sig: string };
+};
