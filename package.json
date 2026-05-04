@@ -15,7 +15,7 @@
   "dependencies": {
     "@astrojs/sitemap": "3.2.0",
     "@astrojs/tailwind": "^6.0.2",
-    "astro": "^5.18.1",
+    "astro": "^6.2.1",
     "nanoid": "^5.1.7",
     "picomatch": "^2.3.2",
     "rcan-ts": "^3.3.0",
