@@ -2,11 +2,16 @@ import { describe, it, expect, vi } from "vitest";
 import {
   buildSafetyBenchmark, buildIfu, buildIncidentReport, buildEuRegisterEntry,
   SAFETY_BENCHMARK_SCHEMA, IFU_SCHEMA, INCIDENT_REPORT_SCHEMA, EU_REGISTER_SCHEMA,
+  canonicalJson, signMlDsa,
 } from "rcan-ts";
+import { ed25519 } from "@noble/curves/ed25519.js";
 import { onRequest as sbHandler } from "../functions/v2/robots/[rrn]/safety-benchmark.js";
 import { onRequest as ifuHandler } from "../functions/v2/robots/[rrn]/ifu.js";
 import { onRequest as friaHandler } from "../functions/v2/robots/[rrn]/fria.js";
 import { onRequest as incHandler } from "../functions/v2/robots/[rrn]/incident-report.js";
+import { onRequestPost as bundlePostHandler } from "../functions/v2/compliance-bundle/index.js";
+import { onRequestGet as bundleProofHandler } from "../functions/v2/compliance-bundle/[bundle_id]/proof.js";
+import { onRequestGet as bundleFullHandler } from "../functions/v2/compliance-bundle/[bundle_id]/index.js";
 import { signComplianceBody, makeTestKeypair, makeRobotRecord } from "../functions/v2/_lib/test-helpers.js";
 
 const RRN = "RRN-000000000001";
@@ -141,5 +146,197 @@ describe("compliance intake end-to-end smoke", () => {
       expect(retrieved.rmn).toBe(RMN);
       expect(retrieved._submitted_by_rrn).toBe(RRN);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// /v2/compliance-bundle round-trip (Plan 4 Task 14)
+//
+// Independent describe block (separate from §22-26 smoke). Exercises the full
+// hybrid-signed bundle intake: POST 201, POST again 409, GET /proof unauth
+// 200, GET full no-auth 401, GET full with M2M_TRUSTED JWT 200.
+//
+// Hybrid sign manually (canonicalJson + ed25519.sign + signMlDsa) to mirror
+// what opencastor-ops Phase A `_Signer` produces. Using rcan-ts.signBody would
+// inject pq_signing_pub + pq_kid into the canonical bytes that the Phase A
+// aggregator (and Task 8 verifier) do NOT include — third deviation in this
+// branch, after Tasks 6 and 8.
+// ---------------------------------------------------------------------------
+
+function makeBundleEnv() {
+  const store: Record<string, string> = {};
+  return {
+    RRF_KV: {
+      get: vi.fn(async (k: string) => store[k] ?? null),
+      put: vi.fn(async (k: string, v: string) => { store[k] = v; }),
+      list: vi.fn(async ({ prefix }: { prefix: string; cursor?: string }) => {
+        // Single-page mock — sufficient for tests that create 1-2 bundles.
+        const keys = Object.keys(store)
+          .filter(k => k.startsWith(prefix))
+          .map(name => ({ name }));
+        return { keys, list_complete: true, cursor: undefined };
+      }),
+      delete: vi.fn(),
+    } as unknown as KVNamespace,
+    __store: store,
+  };
+}
+
+describe("compliance-bundle intake end-to-end smoke", () => {
+  it("rounds-trips a hybrid-signed bundle through POST + GET-full + GET-proof", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeBundleEnv();
+    const b64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
+
+    // 1. Pre-populate KV: authority record (carries the verifier's trust anchors).
+    const RAN = "RAN-000000000001";
+    const BUNDLE_RRN = "RRN-000000000002";
+    const KID = "ops-aggregator-test";
+    env.__store[`authority:${RAN}`] = JSON.stringify({
+      ran: RAN,
+      organization: "OpenCastor Ops",
+      signing_pub: b64(kp.ed25519Public),
+      pq_signing_pub: b64(kp.mlDsa.publicKey),
+    });
+    env.__store[`kid:${KID}:2026-01-01T00:00:00Z`] = JSON.stringify({
+      ran: RAN,
+      valid_from: "2026-01-01T00:00:00Z",
+      registered_at: "2026-01-01T00:00:00Z",
+      registered_by: RAN,
+    });
+    env.__store[`aggregator-scope:${RAN}/${BUNDLE_RRN}`] = JSON.stringify({
+      ran: RAN, rrn: BUNDLE_RRN,
+      authorized_at: "2026-01-01T00:00:00Z",
+      authorized_by: RAN,
+    });
+
+    // 2. RRF root keypair (mint inline; for proof signing + JWT verify).
+    const rrfKp = await crypto.subtle.generateKey(
+      { name: "Ed25519" }, true, ["sign", "verify"],
+    ) as CryptoKeyPair;
+    const rrfPrivDer = await crypto.subtle.exportKey("pkcs8", rrfKp.privateKey);
+    const rrfPubDer = await crypto.subtle.exportKey("spki", rrfKp.publicKey);
+    const bufB64 = (buf: ArrayBuffer) =>
+      btoa(String.fromCharCode(...new Uint8Array(buf)));
+    env.__store["rrf:root:privkey"] = bufB64(rrfPrivDer);
+    env.__store["rrf:root:pubkey"] =
+      `-----BEGIN PUBLIC KEY-----\n${bufB64(rrfPubDer)}\n-----END PUBLIC KEY-----\n`;
+
+    // 3. Build the bundle (without bundle_signature). Sign canonical bytes.
+    const bundleId = "bundle_smoke_test_001";
+    const bundle: Record<string, unknown> = {
+      schema_version: "1.0",
+      bundle_id: bundleId,
+      rrn: BUNDLE_RRN,
+      signed_at: "2026-05-04T12:00:00Z",
+      robot_md_sha256: "deadbeef",
+      matrix_version: "1.0",
+      artifacts: [
+        { artifact_type: "cert-gateway-authority", payload: {} },
+        { artifact_type: "eu-act-fria", payload: {} },
+        { artifact_type: "version-matrix-snapshot", payload: {} },
+      ],
+    };
+    const canon = canonicalJson(bundle);
+    const ed25519Sig = ed25519.sign(canon, kp.ed25519Secret);
+    const mlDsaSig = signMlDsa(kp.mlDsa.privateKey, canon);
+    bundle["bundle_signature"] = {
+      kid: KID,
+      alg: ["Ed25519", "ML-DSA-65"],
+      sig: {
+        ed25519: b64(ed25519Sig),
+        ml_dsa: b64(mlDsaSig),
+        ed25519_pub: b64(kp.ed25519Public),
+      },
+    };
+
+    // 4. POST -> 201.
+    const postRes = await bundlePostHandler({
+      env, request: new Request("https://x/v2/compliance-bundle", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bundle),
+      }),
+    } as any);
+    if (postRes.status !== 201) {
+      const errBody = await postRes.text();
+      throw new Error(`Expected 201, got ${postRes.status}: ${errBody}`);
+    }
+    const postBody = await postRes.json() as any;
+    expect(postBody.bundle_id).toBe(bundleId);
+    expect(postBody.rrn).toBe(BUNDLE_RRN);
+    expect(typeof postBody.transparency_log_index).toBe("number");
+
+    // 5. POST again -> 409.
+    const dupRes = await bundlePostHandler({
+      env, request: new Request("https://x/v2/compliance-bundle", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bundle),
+      }),
+    } as any);
+    expect(dupRes.status).toBe(409);
+
+    // 6. GET /proof unauthenticated -> 200, returns rrf_log_signature.
+    const proofRes = await bundleProofHandler({
+      env, request: new Request(`https://x/v2/compliance-bundle/${bundleId}/proof`),
+      params: { bundle_id: bundleId },
+    } as any);
+    expect(proofRes.status).toBe(200);
+    const proof = await proofRes.json() as any;
+    expect(proof.bundle_id).toBe(bundleId);
+    expect(proof.rrf_log_signature).toBeDefined();
+    expect(proof.rrf_log_signature.kid).toBe("rrf-root");
+
+    // 7. GET full WITHOUT JWT -> 401.
+    const noAuthRes = await bundleFullHandler({
+      env, request: new Request(`https://x/v2/compliance-bundle/${bundleId}`),
+      params: { bundle_id: bundleId },
+    } as any);
+    expect(noAuthRes.status).toBe(401);
+
+    // 8. Mint M2M_TRUSTED JWT (matches the production mint at
+    //    functions/v2/orchestrators/[id]/token.ts:80-110).
+    //    Signing input = b64u(header).b64u(payload-MINUS-rrf_sig); the emitted
+    //    JWT's parts[1] embeds rrf_sig back. jwt-verify reconstructs by
+    //    stripping rrf_sig before recomputing the signing input.
+    const jwtHeader = { alg: "EdDSA", typ: "JWT" };
+    const jwtPayloadCore = {
+      sub: "test-orch",
+      iss: "rrf.rcan.dev",
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      rcan_role: "m2m_trusted",
+      rcan_scopes: ["fleet.trusted"],
+      fleet_rrns: [BUNDLE_RRN],
+    };
+    const b64url = (s: string) =>
+      btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    const signingInput =
+      `${b64url(JSON.stringify(jwtHeader))}.${b64url(JSON.stringify(jwtPayloadCore))}`;
+    const enc = new TextEncoder();
+    const sigBuf = await crypto.subtle.sign(
+      "Ed25519", rrfKp.privateKey, enc.encode(signingInput),
+    );
+    const jwtSig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    const jwtPayloadWithSig = { ...jwtPayloadCore, rrf_sig: jwtSig };
+    const jwt =
+      `${b64url(JSON.stringify(jwtHeader))}.${b64url(JSON.stringify(jwtPayloadWithSig))}.${jwtSig}`;
+
+    // 9. GET full WITH JWT -> 200, returns full payload incl artifacts.
+    const authRes = await bundleFullHandler({
+      env, request: new Request(`https://x/v2/compliance-bundle/${bundleId}`, {
+        headers: { Authorization: `Bearer ${jwt}` },
+      }),
+      params: { bundle_id: bundleId },
+    } as any);
+    if (authRes.status !== 200) {
+      const errBody = await authRes.text();
+      throw new Error(
+        `Expected GET-full 200 with JWT, got ${authRes.status}: ${errBody}`,
+      );
+    }
+    const fullBundle = await authRes.json() as any;
+    expect(fullBundle.bundle_id).toBe(bundleId);
+    expect(fullBundle.artifacts).toHaveLength(3);
   });
 });
