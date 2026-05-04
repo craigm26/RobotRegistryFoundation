@@ -40,6 +40,15 @@ export async function handleV10(
   if (typeof rrn !== "string" || !/^RRN-\d{12}$/.test(rrn)) {
     return json({ error: "rrn missing or malformed" }, 400);
   }
+  if (typeof payload["robot_md_sha256"] !== "string") {
+    return json({ error: "robot_md_sha256 missing or not a string" }, 400);
+  }
+  if (typeof payload["schema_version"] !== "string") {
+    return json({ error: "schema_version missing or not a string" }, 400);
+  }
+  if (typeof payload["signed_at"] !== "string") {
+    return json({ error: "signed_at missing or not a string" }, 400);
+  }
 
   // 1. Verify hybrid bundle_signature.
   const verifyResult = await verifyBundleHybrid(env, payload);
@@ -65,8 +74,10 @@ export async function handleV10(
   const counterStr = await env.RRF_KV.get("counter:compliance-bundle-log", "text");
   const next = (counterStr ? parseInt(counterStr, 10) : 0) + 1;
 
-  // 5. Build the log entry.
-  const artifacts = (payload["artifacts"] ?? []) as Array<{ artifact_type?: string }>;
+  // 5. Build the log entry. Defensive: artifacts may be malformed even when
+  // the hybrid sig is valid (the verifier checks crypto, not artifact shape).
+  const artifactsRaw = payload["artifacts"];
+  const artifacts: Array<{ artifact_type?: unknown }> = Array.isArray(artifactsRaw) ? artifactsRaw : [];
   const artifactTypes = Array.from(new Set(
     artifacts.map(a => a.artifact_type).filter((t): t is string => typeof t === "string")
   )).sort();
@@ -88,18 +99,19 @@ export async function handleV10(
   const rrfLogSig = await signLogEntry(env, entry);
   const fullEntry: ComplianceBundleEntry = { ...entry, rrf_log_signature: rrfLogSig };
 
-  // 7. Three KV writes.
-  await env.RRF_KV.put(
-    `compliance-bundle:${bundleId}`,
-    JSON.stringify({ ...payload, transparency_log_index: next, logged_at: loggedAt, rrf_log_signature: rrfLogSig }),
-    { expirationTtl: 365 * 24 * 3600 * 10 },  // 10y retention
-  );
+  // 7. Three KV writes — counter FIRST so partial-write failures produce
+  // orphaned (wasted-index) records rather than incoherent (lying) records.
+  await env.RRF_KV.put("counter:compliance-bundle-log", String(next));
   await env.RRF_KV.put(
     `compliance-bundle-log:${String(next).padStart(12, "0")}`,
     JSON.stringify(fullEntry),
     { expirationTtl: 365 * 24 * 3600 * 10 },
   );
-  await env.RRF_KV.put("counter:compliance-bundle-log", String(next));
+  await env.RRF_KV.put(
+    `compliance-bundle:${bundleId}`,
+    JSON.stringify({ ...payload, transparency_log_index: next, logged_at: loggedAt, rrf_log_signature: rrfLogSig }),
+    { expirationTtl: 365 * 24 * 3600 * 10 },
+  );
 
   return json({ bundle_id: bundleId, rrn, transparency_log_index: next }, 201);
 }
