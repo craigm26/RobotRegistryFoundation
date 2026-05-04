@@ -160,3 +160,45 @@ export interface RegistryEntry {
   registered_at: string;
   summary: Record<string, unknown>;
 }
+
+// === Compliance bundle intake — Plan 4 Phase 3 ===
+
+export type KidMapping = {
+  ran: `RAN-${string}`;
+  valid_from: string;        // ISO-8601 UTC
+  valid_until?: string;      // ISO-8601 UTC; absent = currently active
+  registered_at: string;     // ISO-8601 UTC
+  registered_by: `RAN-${string}`;
+};
+
+export type AggregatorScope = {
+  ran: `RAN-${string}`;            // aggregator
+  rrn: `RRN-${string}`;            // robot the aggregator may attest for
+  authorized_at: string;
+  authorized_by: `RAN-${string}`;
+  valid_until?: string;
+};
+
+export type ComplianceBundleEntry = {
+  bundle_id: string;
+  rrn: `RRN-${string}`;
+  schema_version: string;
+  signed_at: string;
+  robot_md_sha256: string;
+  matrix_version?: string;
+  artifact_types: string[];
+  transparency_log_index: number;
+  logged_at: string;
+  bundle_signature: {
+    kid: string;
+    alg: ["Ed25519", "ML-DSA-65"];
+    sig: { ed25519: string; ml_dsa: string; ed25519_pub: string };
+  };
+  rrf_log_signature: { kid: string; alg: "Ed25519"; sig: string };
+  // Full payload (artifacts) lives at compliance-bundle:<bundle_id>
+  // separately for Bearer-gated full GET access.
+};
+
+export type ComplianceBundleProof = Omit<ComplianceBundleEntry, never>;
+// proof IS the entry — same fields, served at /v2/compliance-bundle/{id}/proof
+// without the artifact bodies.
