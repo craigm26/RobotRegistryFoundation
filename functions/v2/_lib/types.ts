@@ -112,6 +112,7 @@ export type AuthorityPurpose =
   | "release-signing"
   | "attestation"
   | "policy"
+  | "operator-envelope"
   | "other";
 
 export interface AuthorityRecord {
