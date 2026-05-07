@@ -24,6 +24,7 @@ const ALLOWED_PURPOSES: AuthorityPurpose[] = [
   "release-signing",
   "attestation",
   "policy",
+  "operator-envelope",
   "other",
 ];
 
