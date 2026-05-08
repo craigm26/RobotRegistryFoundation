@@ -53,8 +53,8 @@ Each robot in `src/content/robots/` must have:
   },
   "verification_status": "community | verified | manufacturer | certified",
   "ruri": "rcan://host:port/robot-id",
-  "rcan_version": "1.4",
-  "opencastor_version": "2026.3.13.11",
+  "rcan_version": "3.2",
+  "opencastor_version": "see PyPI",
   "tags": ["..."],
   "submitted_by": "github-username",
   "submitted_date": "YYYY-MM-DD",
@@ -99,7 +99,7 @@ git push origin main  # Triggers Cloudflare Pages deploy
 ## Key Cross-References
 
 - RCAN spec §21 (Registry Integration): https://rcan.dev/spec/section-21/
-- OpenCastor (reference impl): https://opencastor.com
+- OpenCastor (productized open-core RCAN runtime, Layer 4 per spec §3): https://opencastor.com
 - rcan.dev (RRN authority): https://rcan.dev
 
 ## When Updating Registered Robots
@@ -108,6 +108,6 @@ Always update both:
 1. `src/content/robots/<robot-slug>.json` — the JSON data
 2. If OpenCastor version changes: update `opencastor_version` and `rcan_version` fields
 
-Current registered robots:
-- **Bob** (`opencastor-bob.json`): RRN-000000000001, Raspberry Pi 5 + Hailo-8, OpenCastor v2026.3.13.11
-- **Alex** (`opencastor-alex.json`): RRN-000000000005, Raspberry Pi 5 + OAK-D, OpenCastor v2026.3.13.11
+Current registered robots (versions per the live `/v2/registry` API; `src/content/robots/` is intentionally empty since the registry was redesigned to dynamic — see `[rrn].astro:1-7`):
+- **Bob**: RRN-000000000001, Raspberry Pi 5 + Hailo-8 + SO-ARM101 6-DOF arm, OpenCastor (see PyPI for canonical version)
+- **Alex**: RRN-000000000005, Raspberry Pi 5 + OAK-D, OpenCastor (see PyPI for canonical version)
