@@ -29,7 +29,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           a navigation stack with a Hailo-8 NPU and an OAK-D camera. When Bob needed to identify itself to other
           systems and be registered somewhere, it became clear there was nowhere independent to register it.
           <a href="https://opencastor.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">OpenCastor</a>
-          is the open-source RCAN reference implementation that powers robots like Bob.
+          is the open-source RCAN runtime that powers robots like Bob.
         </p>
         <p>
           Building the registration system led to the <a href="https://rcan.dev" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol specification</a> —
@@ -122,20 +122,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <!-- RCAN Reference Implementation -->
+    <!-- RCAN Runtime — OpenCastor -->
     <section class="mb-12">
-      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">RCAN Reference Implementation</h2>
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">OpenCastor — RCAN Runtime</h2>
       <div class="flex flex-col md:flex-row gap-6 p-6 bg-bg-card border border-border rounded-xl">
         <div class="flex-1">
           <p class="text-text-muted leading-relaxed mb-3">
             <a href="https://opencastor.com" target="_blank" rel="noopener noreferrer"
                class="font-semibold text-accent hover:underline">OpenCastor</a>
-            is the open-source reference implementation of the RCAN protocol.
-            It is the runtime that powers registered robots like Bob and Alex, and was the proving ground for
-            the registry and RRN system now governed by this Foundation.
+            is the open-source RCAN runtime. It powers registered robots like Bob and Alex,
+            and was the proving ground for the registry and RRN system now governed by this Foundation.
           </p>
           <ul class="text-sm text-text-muted space-y-1">
-            <li>• Full <a href="https://rcan.dev/compatibility" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol</a> conformance (L1–L5) · RRN/RCN/RMN/RHN entity registration</li>
+            <li>• Full <a href="https://rcan.dev/compatibility" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN protocol</a> conformance (L1–L4) · RRN/RCN/RMN/RHN entity registration</li>
             <li>• Robot Registration Number (RRN) minting and validation</li>
             <li>• Tiered AI brain with provider fallback</li>
             <li>• Fleet management, telemetry, and federated swarms</li>
