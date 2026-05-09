@@ -93,4 +93,15 @@ describe("POST /v2/packages/register", () => {
     await onRequestPost({ request: makePost(fx.http_body), env } as any);
     expect(env.__store["package-by-type:actuator"]).toBe("RPN-000000000001");
   });
+
+  it("writes proof KV key with original signed body (sig included)", async () => {
+    const env = makeEnv();
+    const res = await onRequestPost({ request: makePost(fx.http_body), env } as any);
+    expect(res.status).toBe(201);
+    const proofRaw = env.__store["package-proof:RPN-000000000001"];
+    expect(proofRaw).toBeTruthy();
+    const proof = JSON.parse(proofRaw);
+    expect(proof.sig).toBeDefined();
+    expect(proof.name).toBe(fx.http_body.name);
+  });
 });
