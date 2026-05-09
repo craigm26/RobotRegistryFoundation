@@ -241,3 +241,36 @@ export type CertIntakeEntry = {
   witness_signature: { kid: string; alg: "Ed25519"; sig: string };
   rrf_log_signature: { kid: string; alg: "Ed25519"; sig: string };
 };
+
+// ── Software Package (RPN-anchored) ───────────────────────────────────────────
+export type PackageType = "actuator" | "skill" | "plugin" | "mcp";
+
+export interface PackageVersion {
+  version: string;        // SemVer
+  released_at: string;    // ISO8601
+  artifact_hash?: string; // sha256 of wheel/tarball for tamper-detection
+}
+
+export interface PackagePublisher {
+  pq_signing_pub: string; // base64 ML-DSA pub
+  pq_kid: string;
+  ed25519_pub: string;    // base64
+}
+
+export interface PackageRecord {
+  rpn: string;
+  package_type: PackageType;
+  name: string;
+  description: string;
+  repository_url: string;
+  hardware_tags: string[];
+  manifest_signals: string[];
+  skill_files: string[];
+  has_plugin_layout: boolean;
+  versions: PackageVersion[];
+  publisher: PackagePublisher;
+  registered_at: string;
+  status: "active" | "revoked";
+  revoked_at?: string;
+  revocation_reason?: string;
+}

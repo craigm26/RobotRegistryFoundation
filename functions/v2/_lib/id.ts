@@ -6,14 +6,15 @@
  *   RCN — Robot Component Number         (hardware component)
  *   RMN — Robot Model Number             (AI model)
  *   RHN — Robot Harness Number           (AI harness / agent)
+ *   RPN — Registered Package Number      (software package: actuator/skill/plugin/mcp)
  *
  * Format:  {PREFIX}-{12-digit zero-padded sequential integer}
- * Example: RRN-000000000001, RCN-000000000003, RMN-000000000001
+ * Example: RRN-000000000001, RCN-000000000003, RPN-000000000001
  *
- * Counter KV keys: counter:rrn, counter:rcn, counter:rmn, counter:rhn
+ * Counter KV keys: counter:rrn, counter:rcn, counter:rmn, counter:rhn, counter:rpn
  */
 
-export type EntityPrefix = "RRN" | "RCN" | "RMN" | "RHN";
+export type EntityPrefix = "RRN" | "RCN" | "RMN" | "RHN" | "RPN";
 
 export function prefixToCounterKey(prefix: EntityPrefix): string {
   return `counter:${prefix.toLowerCase()}`;
@@ -42,12 +43,12 @@ export async function nextId(kv: KVNamespace, prefix: EntityPrefix): Promise<str
 export function isValidId(id: string, prefix?: EntityPrefix): boolean {
   const re = prefix
     ? new RegExp(`^${prefix}-[0-9]{12}$`)
-    : /^(RRN|RCN|RMN|RHN)-[0-9]{12}$/;
+    : /^(RRN|RCN|RMN|RHN|RPN)-[0-9]{12}$/;
   return re.test(id);
 }
 
 /** Extract the prefix from an entity ID (or null if invalid). */
 export function extractPrefix(id: string): EntityPrefix | null {
-  const m = id.match(/^(RRN|RCN|RMN|RHN)-[0-9]{12}$/);
+  const m = id.match(/^(RRN|RCN|RMN|RHN|RPN)-[0-9]{12}$/);
   return m ? (m[1] as EntityPrefix) : null;
 }
