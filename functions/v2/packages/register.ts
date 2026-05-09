@@ -99,6 +99,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   };
 
   await env.RRF_KV.put(`package:${rpn}`, JSON.stringify(record));
+  await env.RRF_KV.put(`package-proof:${rpn}`, JSON.stringify(body));
   await env.RRF_KV.put(byNameKey, rpn);
 
   const byTypeKey = `package-by-type:${package_type}`;
