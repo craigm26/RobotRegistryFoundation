@@ -32,4 +32,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: 71d59adbd067633aca3e95f915fbf2b4
-          command: pages deploy dist --project-name robot-registry-foundation --branch main
+          command: pages deploy dist --project-name robot-registry-foundation --branch main --commit-hash=${{ github.sha }} --commit-message="${{ github.sha }} (deploy via Actions)"
