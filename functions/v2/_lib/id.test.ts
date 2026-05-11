@@ -6,7 +6,9 @@ import {
   formatId,
   isValidId,
   nextId,
+  peekNextSeq,
   prefixToCounterKey,
+  RESERVED_FLOORS,
 } from "./id.js";
 
 function makeFakeKv(seed: Record<string, string> = {}) {
@@ -67,5 +69,50 @@ describe("RPN prefix", () => {
 
   it("extractPrefix recognizes RPN", () => {
     expect(extractPrefix("RPN-000000000007")).toBe("RPN");
+  });
+});
+
+describe("RRN reserved floor", () => {
+  const FLOOR = RESERVED_FLOORS.RRN ?? 10;
+
+  it("declares a non-trivial floor for RRN", () => {
+    expect(FLOOR).toBeGreaterThanOrEqual(2);
+  });
+
+  it("nextId on a fresh counter jumps to the reserved floor", async () => {
+    const kv = makeFakeKv({});
+    expect(await nextId(kv as unknown as KVNamespace, "RRN")).toBe(formatId("RRN", FLOOR));
+  });
+
+  it("nextId on a low counter (post-reset) jumps to the reserved floor", async () => {
+    // Simulates the post-RRF-reset state where the counter has restarted at 0
+    // and would otherwise mint RRN-1, RRN-2, ... and collide with canonical
+    // robots Bob (RRN-1) / Alex (RRN-5).
+    const kv = makeFakeKv({ "counter:rrn": "0" });
+    expect(await nextId(kv as unknown as KVNamespace, "RRN")).toBe(formatId("RRN", FLOOR));
+    expect(await nextId(kv as unknown as KVNamespace, "RRN")).toBe(formatId("RRN", FLOOR + 1));
+  });
+
+  it("nextId above the floor increments normally", async () => {
+    const kv = makeFakeKv({ "counter:rrn": String(FLOOR + 5) });
+    expect(await nextId(kv as unknown as KVNamespace, "RRN")).toBe(formatId("RRN", FLOOR + 6));
+  });
+
+  it("RPN has no floor and increments from 1", async () => {
+    expect(RESERVED_FLOORS.RPN).toBeUndefined();
+    const kv = makeFakeKv({});
+    expect(await nextId(kv as unknown as KVNamespace, "RPN")).toBe(formatId("RPN", 1));
+  });
+
+  it("peekNextSeq reports the floor without incrementing", async () => {
+    const kv = makeFakeKv({});
+    expect(await peekNextSeq(kv as unknown as KVNamespace, "RRN")).toBe(FLOOR);
+    // counter:rrn must not have been written
+    expect(kv.put).not.toHaveBeenCalled();
+  });
+
+  it("peekNextSeq tracks the live counter when above the floor", async () => {
+    const kv = makeFakeKv({ "counter:rrn": String(FLOOR + 3) });
+    expect(await peekNextSeq(kv as unknown as KVNamespace, "RRN")).toBe(FLOOR + 4);
   });
 });
