@@ -193,3 +193,138 @@ describe("GET /v2/keys/<kid>", () => {
     expect(body.pq_kid).toBe("cafef00d");
   });
 });
+
+// ── U1b: provisioned-Ed25519 round-trip against the served public_key_pem ──────
+// Mirrors proxy-worker src/crypto/canonical-json.ts (canonicalBytes) and
+// src/crypto/rcan-verify.ts (verifyEnvelope) so this proves S3 can verify.
+
+function u1bCanonicalBytes(obj: Record<string, unknown>, exclude?: string): Uint8Array {
+  const normalize = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(normalize);
+    if (v !== null && typeof v === "object") {
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(v as Record<string, unknown>).sort())
+        out[k] = normalize((v as Record<string, unknown>)[k]);
+      return out;
+    }
+    return v;
+  };
+  const src = exclude
+    ? Object.fromEntries(Object.entries(obj).filter(([k]) => k !== exclude))
+    : obj;
+  return new TextEncoder().encode(JSON.stringify(normalize(src)));
+}
+
+function u1bRawFromPem(pem: string): Uint8Array {
+  const b64s = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(b64s), (c) => c.charCodeAt(0));
+  return der.slice(der.length - 32);
+}
+
+describe("U1b attestation round-trip — provisioned Ed25519 verifies against served PEM", () => {
+  it("GET 200 returns public_key_pem + status:active, and an outcome signed by the provisioned seed verifies against it", async () => {
+    const { env, store } = makeEnv();
+
+    // Seed KV with a minted attestation authority. We control the Ed25519 priv
+    // (the "provisioned" key) so we can sign an outcome with it below.
+    const ed25519Priv = crypto.getRandomValues(new Uint8Array(32));
+    const ed25519Pub = ed25519.getPublicKey(ed25519Priv);
+    const pqPub = crypto.getRandomValues(new Uint8Array(1952));
+    const kid = "bob-gw-attest-2026";
+    const ran = "RAN-000000000021";
+    store[`kid:${kid}:2026-06-06T00:00:00.000Z`] = JSON.stringify({
+      ran,
+      valid_from: "2026-06-06T00:00:00.000Z",
+      registered_at: "2026-06-06T00:00:00.000Z",
+      registered_by: "RAN-000000000018",
+    });
+    store[`authority:${ran}`] = JSON.stringify({
+      ran,
+      organization: "OpenCastor",
+      display_name: "Bob gateway attestation signer",
+      purpose: "attestation",
+      signing_pub: b64(ed25519Pub),
+      pq_signing_pub: b64(pqPub),
+      pq_kid: "deadbeef",
+      signing_alg: ["Ed25519", "ML-DSA-65"],
+      registered_at: "2026-06-06T00:00:00.000Z",
+      status: "active",
+    });
+
+    // 1. S3 resolves the key: GET /v2/keys/<kid> → 200 with public_key_pem + active.
+    const res = await onRequest(makeContext(env, { kid }));
+    expect(res.status).toBe(200);
+    const keyDoc = (await res.json()) as Record<string, unknown>;
+    expect(keyDoc.status).toBe("active");
+    expect(keyDoc.public_key_pem).toMatch(
+      /^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+-----END PUBLIC KEY-----\n$/,
+    );
+
+    // 2. Build a flat S3 outcome envelope (spec §3.4) and sign it with the
+    //    provisioned Ed25519 seed using the canonical-JSON preimage S3 uses.
+    const outcome: Record<string, unknown> = {
+      corr_id: "msg-u1b-001",
+      rrn: "RRN-000000000011",
+      status: "ok",
+      started_at: "2026-06-06T00:00:00Z",
+      ended_at: "2026-06-06T00:00:00.12Z",
+      duration_ms: 120,
+    };
+    const sig = ed25519.sign(u1bCanonicalBytes(outcome, "envelope_signature"), ed25519Priv);
+    outcome.envelope_signature = {
+      kid,
+      alg: "Ed25519",
+      sig: btoa(String.fromCharCode(...sig)),
+    };
+
+    // 3. S3-side verify: decode public_key_pem from the GET response and verify
+    //    the detached envelope_signature over the canonical preimage.
+    const sigBytes = Uint8Array.from(
+      atob((outcome.envelope_signature as { sig: string }).sig),
+      (c) => c.charCodeAt(0),
+    );
+    const verified = ed25519.verify(
+      sigBytes,
+      u1bCanonicalBytes(outcome, "envelope_signature"),
+      u1bRawFromPem(keyDoc.public_key_pem as string),
+    );
+    expect(verified).toBe(true);
+  });
+
+  it("rejects a tampered outcome (mutating a signed field breaks verification)", async () => {
+    const { env, store } = makeEnv();
+    const ed25519Priv = crypto.getRandomValues(new Uint8Array(32));
+    const ed25519Pub = ed25519.getPublicKey(ed25519Priv);
+    const pqPub = crypto.getRandomValues(new Uint8Array(1952));
+    const kid = "bob-gw-attest-2026";
+    const ran = "RAN-000000000021";
+    store[`kid:${kid}:2026-06-06T00:00:00.000Z`] = JSON.stringify({
+      ran, valid_from: "2026-06-06T00:00:00.000Z",
+      registered_at: "2026-06-06T00:00:00.000Z", registered_by: "RAN-000000000018",
+    });
+    store[`authority:${ran}`] = JSON.stringify({
+      ran, organization: "OpenCastor", display_name: "Bob gateway attestation signer",
+      purpose: "attestation", signing_pub: b64(ed25519Pub), pq_signing_pub: b64(pqPub),
+      pq_kid: "deadbeef", signing_alg: ["Ed25519", "ML-DSA-65"],
+      registered_at: "2026-06-06T00:00:00.000Z", status: "active",
+    });
+    const res = await onRequest(makeContext(env, { kid }));
+    const keyDoc = (await res.json()) as Record<string, unknown>;
+
+    const outcome: Record<string, unknown> = {
+      corr_id: "msg-u1b-002", rrn: "RRN-000000000011", status: "ok",
+      started_at: "2026-06-06T00:00:00Z", ended_at: "2026-06-06T00:00:00.12Z",
+    };
+    const sig = ed25519.sign(u1bCanonicalBytes(outcome, "envelope_signature"), ed25519Priv);
+    outcome.envelope_signature = { kid, alg: "Ed25519", sig: btoa(String.fromCharCode(...sig)) };
+
+    // Tamper a SIGNED field after signing.
+    outcome.status = "denied";
+    const sigBytes = Uint8Array.from(
+      atob((outcome.envelope_signature as { sig: string }).sig), (c) => c.charCodeAt(0));
+    const verified = ed25519.verify(
+      sigBytes, u1bCanonicalBytes(outcome, "envelope_signature"),
+      u1bRawFromPem(keyDoc.public_key_pem as string));
+    expect(verified).toBe(false);
+  });
+});
