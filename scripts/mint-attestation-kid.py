@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
@@ -38,6 +39,8 @@ def main() -> None:
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    # Private signing keys land here; keep the dir owner-only too (best-effort).
+    os.chmod(out, 0o700)
 
     # 1. Ed25519: PKCS8 PEM (gateway), raw 32-byte seed (sign_body), raw 32-byte pub (registered).
     ed = Ed25519PrivateKey.generate()
@@ -76,13 +79,18 @@ def main() -> None:
     assert body["sig"]["ed25519_pub"] == meta["signing_pub"]
 
     # 4. Write the gateway private-key PEM (provision) and ML-DSA archive (offline).
-    (out / "attestation-ed25519-private.pem").write_bytes(ed_pem)
+    #    Private signing keys must never be group/other readable — chmod 0600 after write.
+    ed_priv_path = out / "attestation-ed25519-private.pem"
+    ed_priv_path.write_bytes(ed_pem)
+    os.chmod(ed_priv_path, 0o600)
     mldsa_archive = (
         "-----BEGIN ML-DSA-65 PRIVATE KEY-----\n"
         + b64(kp._secret_key)
         + "\n-----END ML-DSA-65 PRIVATE KEY-----\n"
     )
-    (out / "attestation-mldsa65-private.pem").write_text(mldsa_archive)
+    mldsa_priv_path = out / "attestation-mldsa65-private.pem"
+    mldsa_priv_path.write_text(mldsa_archive)
+    os.chmod(mldsa_priv_path, 0o600)
 
     # 5. The manifest: everything the registration step (Task 2 / runbook) needs.
     manifest = {
