@@ -12,11 +12,11 @@ Prereqs:
 - An RRF RAN for this attestation authority (the `--ran` below). NOTE: `register-operator-kid.ts`
   takes an explicit RAN and does NOT use `counter:ran`; pick a RAN that does not collide with any
   existing `authority:RAN-*` and is outside the range `POST /v2/authorities/register` will auto-assign.
-  Confirm it is free:  `wrangler kv key get "authority:RAN-000000000021" --binding RRF_KV --remote`  → expect "key not found".
+  Confirm YOUR chosen RAN is free (the deployed bob-gw-attest-2026 used RAN-000000000777; pick a DIFFERENT free reserved RAN for a new robot):  `wrangler kv key get "authority:<RAN>" --binding RRF_KV --remote`  → expect "key not found".
 
 Choose values (used throughout):
     KID=bob-gw-attest-2026
-    RAN=RAN-000000000021
+    RAN=RAN-000000000777
     REGISTERED_BY=RAN-000000000018
     VALID_FROM=2026-06-06T00:00:00.000Z
     MINT_DIR=~/.opencastor-ops-keys/attestation-2026-06-06
@@ -68,7 +68,7 @@ A 404 → the `kid:*` mapping did not land (re-check step 3). A 502 → byte-len
 Provision out-of-band to the gateway host (never commit these):
     ROBOT_MD_ATTESTATION_KEY_FILE = $MINT_DIR/attestation-ed25519-private.pem
     ROBOT_MD_ATTESTATION_KID      = bob-gw-attest-2026
-    ROBOT_MD_ATTESTATION_RAN      = RAN-000000000021
+    ROBOT_MD_ATTESTATION_RAN      = RAN-000000000777
 The gateway-side loader that reads these env vars is U1a's scope — out of scope here.
 The **public** kid/RAN may live in `OpenCastor/bob-spec-b-pick-place` non-secret config; the
 PEM must NOT (spec §11.1: keys stay in `~/.opencastor-ops-keys`).

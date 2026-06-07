@@ -18,7 +18,7 @@ describe("U1b runbook — register-operator-kid.ts emits the attestation KV pair
     const m = JSON.parse(readFileSync(join(dir, "mint-manifest.json"), "utf-8"));
 
     const kid = "bob-gw-attest-2026";
-    const ran = "RAN-000000000021";
+    const ran = "RAN-000000000777";
     const stdout = execFileSync("npx", ["tsx", REGISTER,
       "--kid", kid,
       "--ran", ran,
