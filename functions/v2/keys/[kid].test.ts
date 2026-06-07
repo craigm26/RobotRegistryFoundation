@@ -231,7 +231,7 @@ describe("U1b attestation round-trip — provisioned Ed25519 verifies against se
     const ed25519Pub = ed25519.getPublicKey(ed25519Priv);
     const pqPub = crypto.getRandomValues(new Uint8Array(1952));
     const kid = "bob-gw-attest-2026";
-    const ran = "RAN-000000000021";
+    const ran = "RAN-000000000777";
     store[`kid:${kid}:2026-06-06T00:00:00.000Z`] = JSON.stringify({
       ran,
       valid_from: "2026-06-06T00:00:00.000Z",
@@ -297,7 +297,7 @@ describe("U1b attestation round-trip — provisioned Ed25519 verifies against se
     const ed25519Pub = ed25519.getPublicKey(ed25519Priv);
     const pqPub = crypto.getRandomValues(new Uint8Array(1952));
     const kid = "bob-gw-attest-2026";
-    const ran = "RAN-000000000021";
+    const ran = "RAN-000000000777";
     store[`kid:${kid}:2026-06-06T00:00:00.000Z`] = JSON.stringify({
       ran, valid_from: "2026-06-06T00:00:00.000Z",
       registered_at: "2026-06-06T00:00:00.000Z", registered_by: "RAN-000000000018",

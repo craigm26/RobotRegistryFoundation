@@ -35,12 +35,26 @@ def main() -> None:
     ap.add_argument("--display-name", required=True, help="human label for the authority record")
     ap.add_argument("--purpose", default="attestation", help="AuthorityPurpose (default: attestation)")
     ap.add_argument("--out-dir", required=True, help="directory to write the three artifacts into")
+    ap.add_argument("--force", action="store_true", help="overwrite an existing keypair/manifest in --out-dir (default: refuse)")
     args = ap.parse_args()
+    os.umask(0o077)  # private keys: deny group/other from creation (closes the write->chmod window)
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     # Private signing keys land here; keep the dir owner-only too (best-effort).
     os.chmod(out, 0o700)
+
+    _targets = [
+        out / "attestation-ed25519-private.pem",
+        out / "attestation-mldsa65-private.pem",
+        out / "mint-manifest.json",
+    ]
+    _existing = [p.name for p in _targets if p.exists()]
+    if _existing and not args.force:
+        raise SystemExit(
+            f"refusing to overwrite existing {_existing} in {out} — pass --force to replace "
+            f"(rotation = re-mint with a NEW RAN; see docs/runbooks/u1b-attestation-registration.md)"
+        )
 
     # 1. Ed25519: PKCS8 PEM (gateway), raw 32-byte seed (sign_body), raw 32-byte pub (registered).
     ed = Ed25519PrivateKey.generate()
