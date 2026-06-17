@@ -150,5 +150,27 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   });
   await env.RRF_KV.put("counter:ran", String(next));
 
-  return json({ ran, status: "active", registered_at: record.registered_at }, 201);
+  // Wire `/v2/keys/<kid>` resolution. The resolver (functions/v2/keys/[kid].ts)
+  // scans `kid:<kid>:*` mappings and 404s without one — so registering an
+  // authority but never writing this mapping leaves a freshly-minted operator
+  // unverifiable: a robot-md-gateway resolving the kid gets 404 and denies the
+  // envelope/manifest signature. Index by `pq_kid` (deterministic, and already
+  // enforced unique in this namespace above) rather than a caller-supplied
+  // string, so a public registration can't squat an existing kid.
+  const kidMapping = {
+    ran,
+    valid_from: record.registered_at,
+    registered_at: record.registered_at,
+    registered_by: ran,
+  };
+  await env.RRF_KV.put(
+    `kid:${record.pq_kid}:${record.registered_at}`,
+    JSON.stringify(kidMapping),
+    { expirationTtl: 365 * 24 * 3600 * 10 },
+  );
+
+  return json(
+    { ran, kid: record.pq_kid, status: "active", registered_at: record.registered_at },
+    201,
+  );
 };

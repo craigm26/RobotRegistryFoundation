@@ -9,6 +9,7 @@ import { describe, it, expect, vi } from "vitest";
 import { onRequestPost } from "../../../functions/v2/authorities/register.js";
 import { onRequestGet as onGetSingle, onRequestDelete } from "../../../functions/v2/authorities/[ran]/index.js";
 import { onRequestGet as onGetList } from "../../../functions/v2/authorities/index.js";
+import { onRequest as onKeyResolve } from "../../../functions/v2/keys/[kid].js";
 import { signBody } from "rcan-ts";
 import { makeTestKeypair } from "../../../functions/v2/_lib/test-helpers.js";
 
@@ -86,6 +87,36 @@ describe("/v2/authorities — RAN namespace", () => {
     expect(out.ran).toMatch(/^RAN-\d{12}$/);
     expect(out.status).toBe("active");
     expect(out.registered_at).toBeTruthy();
+  });
+
+  it("registration wires /v2/keys/<pq_kid> so a gateway can resolve the new operator", async () => {
+    const env = makeEnv();
+    const body = await buildSignedRegistration({
+      organization: "OpenCastor",
+      display_name: "Operator envelope signer",
+      purpose: "operator-envelope",
+    });
+    const postRes = await onRequestPost({
+      request: makeReq("POST", "https://x/v2/authorities/register", body),
+      env,
+    } as any);
+    expect(postRes.status).toBe(201);
+    const post = (await postRes.json()) as any;
+    // The response advertises the kid to sign envelopes/manifests with.
+    expect(post.kid).toBe((body as any).pq_kid);
+
+    // A robot-md-gateway (RRFResolverFromEnv) resolves that kid here before it
+    // will verify any signature. Without the kid-mapping write this 404s.
+    const keysRes = await onKeyResolve({
+      params: { kid: post.kid },
+      env,
+      request: makeReq("GET", `https://x/v2/keys/${post.kid}`),
+    } as any);
+    expect(keysRes.status).toBe(200);
+    const resolved = (await keysRes.json()) as any;
+    expect(resolved.kid).toBe(post.kid);
+    expect(resolved.alg).toBe("Ed25519");
+    expect(resolved.public_key_pem).toMatch(/BEGIN PUBLIC KEY/);
   });
 
   it("GET /v2/authorities/<ran> returns the persisted record (200)", async () => {
