@@ -95,3 +95,58 @@ export async function verifyComplianceBody(
   }
   return { ok: true, document };
 }
+
+/**
+ * Bearer-token gate for reads of a robot's own compliance artifacts.
+ *
+ * Distinct from verifyComplianceSubmission: submissions carry a detached
+ * ML-DSA signature, while a retrieval carries only the api_key minted at
+ * registration. This is the same credential and the same order of checks as
+ * robots/[rrn]/index.ts (PATCH/DELETE), factored out so the compliance reads
+ * cannot drift back into a decorative prefix check.
+ *
+ * Order matters: 401 when no bearer is presented, 404 when the robot is not
+ * registered, 403 when the key on record is revoked, 403 on mismatch. The KV
+ * read of the artifact must happen only after this returns ok, so that an
+ * invalid credential cannot distinguish a stored artifact from an absent one.
+ */
+export interface ApiKeyOk { ok: true }
+export type ApiKeyResult = ApiKeyOk | VerifyError;
+
+export async function requireRobotApiKey(
+  request: Request,
+  env: { RRF_KV: KVNamespace },
+  rrn: string,
+): Promise<ApiKeyResult> {
+  const auth = request.headers.get("Authorization");
+  const presented = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  if (!presented) return { ok: false, status: 401, error: "Missing bearer token" };
+
+  const raw = await env.RRF_KV.get(`robot:${rrn}`, "text");
+  if (!raw) return { ok: false, status: 404, error: "Not found" };
+
+  if (await isRevoked(env, rrn)) {
+    return { ok: false, status: 403, error: "Record is revoked" };
+  }
+
+  let record: Record<string, unknown>;
+  try {
+    record = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return { ok: false, status: 500, error: "Corrupt entity record" };
+  }
+
+  const stored = record["api_key"];
+  if (typeof stored !== "string" || !timingSafeEqual(stored, presented)) {
+    return { ok: false, status: 403, error: "Unauthorized" };
+  }
+  return { ok: true };
+}
+
+/** Constant-time string compare. Length is not secret; the bytes are. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}

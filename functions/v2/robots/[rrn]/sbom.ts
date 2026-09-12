@@ -2,12 +2,15 @@
  * /v2/robots/:rrn/sbom
  * RCAN v2.1 §12 — SBOM registry + RRF countersigning.
  *
- * POST — robot submits a CycloneDX SBOM; RRF countersigns it
+ * POST — robot submits a CycloneDX SBOM signed with its registered ML-DSA-65
+ *        key; RRF verifies the signature, then countersigns it
  * GET  — retrieve the latest countersigned SBOM for a robot
  *
  * KV binding: RRF_KV
  * Key pattern: sbom:{rrn}
  */
+
+import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -60,21 +63,15 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
 }
 
 async function _handlePost(request: Request, env: Env, rrn: string): Promise<Response> {
-  const authHeader = request.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Authorization required" }), {
-      status: 401, headers: { "Content-Type": "application/json" },
+  // Authenticate: the submission must be signed by the ML-DSA-65 key registered
+  // for this RRN. `result.document` is the body stripped of its envelope fields.
+  const result = await verifyComplianceSubmission(request, env, `robot:${rrn}`);
+  if (!result.ok) {
+    return new Response(JSON.stringify({ error: result.error }), {
+      status: result.status, headers: { "Content-Type": "application/json" },
     });
   }
-
-  let sbom: Record<string, unknown>;
-  try {
-    sbom = await request.json() as Record<string, unknown>;
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400, headers: { "Content-Type": "application/json" },
-    });
-  }
+  const sbom = result.document;
 
   // Validate CycloneDX format
   if (sbom.bomFormat !== "CycloneDX") {

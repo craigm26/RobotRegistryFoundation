@@ -3,7 +3,8 @@
  * RCAN 3.0 §22 — Fundamental Rights Impact Assessment intake.
  *
  * POST — robot submits a signed FRIA document.
- * GET  — Bearer-gated retrieval (FRIA may contain sensitive analysis).
+ * GET  — retrieval gated on the robot's registered api_key (FRIA may contain
+ *        sensitive analysis).
  *
  * Binding: FRIA envelopes carry robot identity in `doc.system.rrn` (per
  * rcan-ts FriaDocument interface). We require `doc.system.rrn === URL rrn`
@@ -12,7 +13,7 @@
  * KV: compliance:fria:{rrn} + compliance:fria:history:{rrn}:{ts}
  */
 
-import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { requireRobotApiKey, verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -34,8 +35,8 @@ export const onRequest: PagesFunction<Env> = async (ctx) => {
 };
 
 async function handleGet(request: Request, env: Env, rrn: string): Promise<Response> {
-  const auth = request.headers.get("Authorization") ?? "";
-  if (!auth.startsWith("Bearer ")) return json({ error: "Authorization required" }, 401);
+  const a = await requireRobotApiKey(request, env, rrn);
+  if (!a.ok) return json({ error: a.error }, a.status);
 
   const stored = await env.RRF_KV.get(`compliance:fria:${rrn}`, "text");
   if (!stored) return json({ error: "FRIA not found", rrn }, 404);
