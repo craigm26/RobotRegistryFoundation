@@ -125,6 +125,8 @@ npm run build && npx wrangler pages deploy dist --project-name=robot-registry-fo
 
 Use it when you need the site live without a push, or when a push's Action fails. `--branch=main` is mandatory: without it the upload lands as a preview deployment and the apex domain does not move. The OAuth token lives at `~/.wrangler/config/default.toml`.
 
+**This clone is behind what is live.** The local `main` here is `ecb11c8` (2026-06-10) and there is no local `refs/remotes/origin/main` at all; `origin/HEAD` is `f0068dc` (2026-06-17), which is the commit the production deployment above was built from. `git fetch origin` and rebase onto `origin/main` before merging or pushing anything from this checkout, or the push is rejected and the tree you reasoned about is not the tree that is serving.
+
 **Consequence for security work:** a push to `main` ships whatever is on `main` at that moment, including a half-landed credential change. Land the whole fix on a branch, merge deliberately, then watch the run. Do **not** edit or delete `.github/workflows/deploy.yml` — the standing house rule is never to *author* a GitHub Action, not to tear out one that is already load-bearing here.
 
 ## Key Cross-References
