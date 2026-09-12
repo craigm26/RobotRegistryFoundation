@@ -78,7 +78,7 @@ describe("GET /v2/robots/[rrn]/fria (api_key-gated)", () => {
     expect(keysRead).not.toContain(`compliance:fria:${RRN}`);
   });
 
-  it("401 for an unregistered RRN is indistinguishable from a stored artifact", async () => {
+  it("gives a junk token the same status whether or not an artifact is stored", async () => {
     const withDoc = makeEnv({ [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()) });
     const withoutDoc = makeEnv();
     const a = await onRequest({

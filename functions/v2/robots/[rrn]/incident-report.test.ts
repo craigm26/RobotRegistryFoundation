@@ -77,8 +77,9 @@ describe("GET /v2/robots/[rrn]/incident-report (api_key-gated)", () => {
     expect(keysRead).not.toContain(`compliance:incident-report:${RRN}`);
   });
 
-  it("401 for an unregistered RRN is indistinguishable from a stored artifact", async () => {
-    // No robot record: a junk token gets the same 401 whether or not a report exists.
+  it("gives a junk token the same status whether or not an artifact is stored", async () => {
+    // No robot record: the gate answers before the artifact key is read, so the
+    // status is identical whether or not a report exists.
     const withDoc = makeEnv({ [`compliance:incident-report:${RRN}`]: "{}" });
     const withoutDoc = makeEnv();
     const a = await onRequest({
