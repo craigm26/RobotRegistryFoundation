@@ -2,12 +2,15 @@
  * /v2/robots/:rrn/firmware-manifest
  * RCAN v2.1 §11 — Firmware Manifest registry endpoint.
  *
- * POST — robot submits a signed firmware manifest
+ * POST — robot submits a firmware manifest signed with its registered
+ *        ML-DSA-65 key
  * GET  — retrieve the latest manifest for a robot
  *
  * KV binding: RRF_KV
  * Key pattern: firmware:manifest:{rrn}
  */
+
+import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -58,27 +61,16 @@ async function handleGet(env: Env, rrn: string): Promise<Response> {
 }
 
 async function handlePost(request: Request, env: Env, rrn: string): Promise<Response> {
-  // WHAT IS ENFORCED: only that an `Authorization: Bearer <anything>` header is
-  // present. No credential is validated, and the registry has no CREATOR token
-  // to validate against — no issuer for one exists. This is a known open door,
-  // tracked as C2-R13, which re-gates this route on a real credential.
-  const authHeader = request.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Authorization required" }), {
-      status: 401,
+  // Authenticate: the submission must be signed by the ML-DSA-65 key registered
+  // for this RRN. `result.document` is the body stripped of its envelope fields.
+  const result = await verifyComplianceSubmission(request, env, `robot:${rrn}`);
+  if (!result.ok) {
+    return new Response(JSON.stringify({ error: result.error }), {
+      status: result.status,
       headers: { "Content-Type": "application/json" },
     });
   }
-
-  let manifest: Record<string, unknown>;
-  try {
-    manifest = await request.json() as Record<string, unknown>;
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const manifest = result.document;
 
   // Validate required fields
   if (!manifest.rrn || !manifest.firmware_version || !manifest.build_hash || !manifest.signature) {

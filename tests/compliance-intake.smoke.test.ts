@@ -16,6 +16,7 @@ import { signComplianceBody, makeTestKeypair, makeRobotRecord } from "../functio
 
 const RRN = "RRN-000000000001";
 const FRIA_SCHEMA = "rcan-fria-v1";
+const API_KEY = "rrf_live_smoketest_0000000000";
 
 function makeSharedEnv() {
   const store: Record<string, string> = {};
@@ -41,7 +42,12 @@ describe("compliance intake end-to-end smoke", () => {
   it("round-trips all five §22-26 endpoints with a single registered robot", async () => {
     const kp = await makeTestKeypair();
     const env = makeSharedEnv();
-    env.__store[`robot:${RRN}`] = makeRobotRecord(RRN, kp);
+    // The robot record carries the api_key the compliance READS are gated on
+    // (requireRobotApiKey); the POSTs are gated on the ML-DSA key in the record.
+    env.__store[`robot:${RRN}`] = JSON.stringify({
+      ...JSON.parse(makeRobotRecord(RRN, kp)),
+      api_key: API_KEY,
+    });
 
     // §23 Safety Benchmark — public GET
     {
@@ -84,7 +90,7 @@ describe("compliance intake end-to-end smoke", () => {
       expect(((await getRes.json()) as any).schema).toBe(IFU_SCHEMA);
     }
 
-    // §22 FRIA — Bearer-gated GET
+    // §22 FRIA — api_key-gated GET
     {
       const friaDoc = {
         schema: FRIA_SCHEMA,
@@ -101,11 +107,14 @@ describe("compliance intake end-to-end smoke", () => {
       const noAuth = await friaHandler({ request: mkReq("GET", `/v2/robots/${RRN}/fria`), env, params: { rrn: RRN } } as any);
       expect(noAuth.status).toBe(401);
 
-      const getRes = await friaHandler({ request: mkReq("GET", `/v2/robots/${RRN}/fria`, undefined, { Authorization: "Bearer t" }), env, params: { rrn: RRN } } as any);
+      const wrongKey = await friaHandler({ request: mkReq("GET", `/v2/robots/${RRN}/fria`, undefined, { Authorization: "Bearer junk-not-a-real-token" }), env, params: { rrn: RRN } } as any);
+      expect(wrongKey.status).toBe(403);
+
+      const getRes = await friaHandler({ request: mkReq("GET", `/v2/robots/${RRN}/fria`, undefined, { Authorization: `Bearer ${API_KEY}` }), env, params: { rrn: RRN } } as any);
       expect(getRes.status).toBe(200);
     }
 
-    // §25 Incident Report — Bearer-gated GET
+    // §25 Incident Report — api_key-gated GET
     {
       const doc = buildIncidentReport({
         rrn: RRN,
@@ -116,7 +125,10 @@ describe("compliance intake end-to-end smoke", () => {
       const postRes = await incHandler({ request: mkReq("POST", `/v2/robots/${RRN}/incident-report`, signed), env, params: { rrn: RRN } } as any);
       expect(postRes.status).toBe(201);
 
-      const getRes = await incHandler({ request: mkReq("GET", `/v2/robots/${RRN}/incident-report`, undefined, { Authorization: "Bearer t" }), env, params: { rrn: RRN } } as any);
+      const wrongKey = await incHandler({ request: mkReq("GET", `/v2/robots/${RRN}/incident-report`, undefined, { Authorization: "Bearer junk-not-a-real-token" }), env, params: { rrn: RRN } } as any);
+      expect(wrongKey.status).toBe(403);
+
+      const getRes = await incHandler({ request: mkReq("GET", `/v2/robots/${RRN}/incident-report`, undefined, { Authorization: `Bearer ${API_KEY}` }), env, params: { rrn: RRN } } as any);
       expect(getRes.status).toBe(200);
       expect(((await getRes.json()) as any).schema).toBe(INCIDENT_REPORT_SCHEMA);
     }

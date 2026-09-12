@@ -4,6 +4,12 @@ import { signComplianceBody, makeTestKeypair, makeRobotRecord } from "../../_lib
 
 const RRN = "RRN-000000000001";
 const FRIA_SCHEMA = "rcan-fria-v1";
+const API_KEY = "rrf_live_testkey_000000000000";
+
+/** Minimal robot record carrying only what requireRobotApiKey reads. */
+function robotWithKey(apiKey: string = API_KEY): string {
+  return JSON.stringify({ rrn: RRN, api_key: apiKey });
+}
 
 function makeEnv(init: Record<string, string> = {}) {
   const store: Record<string, string> = { ...init };
@@ -36,26 +42,85 @@ function friaDoc(systemRrn: string = RRN) {
   };
 }
 
-describe("GET /v2/robots/[rrn]/fria (Bearer-gated)", () => {
+describe("GET /v2/robots/[rrn]/fria (api_key-gated)", () => {
   it("returns 401 without Bearer header", async () => {
-    const env = makeEnv({ [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()) });
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()),
+    });
     const res = await onRequest({ request: req("GET"), env, params: { rrn: RRN } } as any);
     expect(res.status).toBe(401);
   });
 
-  it("returns stored doc with Bearer header", async () => {
-    const env = makeEnv({ [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()) });
+  it("returns 403 on 'Bearer junk-not-a-real-token'", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()),
+    });
     const res = await onRequest({
-      request: req("GET", undefined, { Authorization: "Bearer anytoken" }),
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+    expect(await res.text()).not.toContain("annex_iii_basis");
+  });
+
+  it("does not read the artifact key at all when the token is wrong", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()),
+    });
+    await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env, params: { rrn: RRN },
+    } as any);
+    const keysRead = (env.RRF_KV.get as any).mock.calls.map((c: unknown[]) => c[0]);
+    expect(keysRead).not.toContain(`compliance:fria:${RRN}`);
+  });
+
+  it("gives a junk token the same status whether or not an artifact is stored", async () => {
+    const withDoc = makeEnv({ [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()) });
+    const withoutDoc = makeEnv();
+    const a = await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env: withDoc, params: { rrn: RRN },
+    } as any);
+    const b = await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env: withoutDoc, params: { rrn: RRN },
+    } as any);
+    expect(a.status).toBe(b.status);
+  });
+
+  it("returns 403 when the robot's key is revoked", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`revocation:${RRN}`]: JSON.stringify({ revoked_at: "2026-09-01T00:00:00Z", reason: "test" }),
+      [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()),
+    });
+    const res = await onRequest({
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns stored doc for the robot's own api_key", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:fria:${RRN}`]: JSON.stringify(friaDoc()),
+    });
+    const res = await onRequest({
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
       env, params: { rrn: RRN },
     } as any);
     expect(res.status).toBe(200);
   });
 
-  it("returns 404 when nothing submitted (with Bearer)", async () => {
-    const env = makeEnv();
+  it("returns 404 when nothing submitted (with the right api_key)", async () => {
+    const env = makeEnv({ [`robot:${RRN}`]: robotWithKey() });
     const res = await onRequest({
-      request: req("GET", undefined, { Authorization: "Bearer anytoken" }),
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
       env, params: { rrn: RRN },
     } as any);
     expect(res.status).toBe(404);

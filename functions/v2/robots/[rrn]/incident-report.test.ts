@@ -4,6 +4,12 @@ import { buildIncidentReport, INCIDENT_REPORT_SCHEMA } from "rcan-ts";
 import { signComplianceBody, makeTestKeypair, makeRobotRecord } from "../../_lib/test-helpers.js";
 
 const RRN = "RRN-000000000001";
+const API_KEY = "rrf_live_testkey_000000000000";
+
+/** Minimal robot record carrying only what requireRobotApiKey reads. */
+function robotWithKey(apiKey: string = API_KEY): string {
+  return JSON.stringify({ rrn: RRN, api_key: apiKey });
+}
 
 function makeEnv(init: Record<string, string> = {}) {
   const store: Record<string, string> = { ...init };
@@ -35,26 +41,87 @@ function validReportInput(rrn: string = RRN) {
   };
 }
 
-describe("GET /v2/robots/[rrn]/incident-report (Bearer-gated)", () => {
+describe("GET /v2/robots/[rrn]/incident-report (api_key-gated)", () => {
   it("returns 401 without Bearer header", async () => {
-    const env = makeEnv({ [`compliance:incident-report:${RRN}`]: "{}" });
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:incident-report:${RRN}`]: "{}",
+    });
     const res = await onRequest({ request: req("GET"), env, params: { rrn: RRN } } as any);
     expect(res.status).toBe(401);
   });
 
-  it("returns stored doc with Bearer header", async () => {
-    const env = makeEnv({ [`compliance:incident-report:${RRN}`]: JSON.stringify({ schema: INCIDENT_REPORT_SCHEMA, rrn: RRN }) });
+  it("returns 403 on 'Bearer junk-not-a-real-token'", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:incident-report:${RRN}`]: JSON.stringify({ schema: INCIDENT_REPORT_SCHEMA, rrn: RRN }),
+    });
     const res = await onRequest({
-      request: req("GET", undefined, { Authorization: "Bearer anytoken" }),
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+    expect(await res.text()).not.toContain(INCIDENT_REPORT_SCHEMA);
+  });
+
+  it("does not read the artifact key at all when the token is wrong", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:incident-report:${RRN}`]: "{}",
+    });
+    await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env, params: { rrn: RRN },
+    } as any);
+    const keysRead = (env.RRF_KV.get as any).mock.calls.map((c: unknown[]) => c[0]);
+    expect(keysRead).not.toContain(`compliance:incident-report:${RRN}`);
+  });
+
+  it("gives a junk token the same status whether or not an artifact is stored", async () => {
+    // No robot record: the gate answers before the artifact key is read, so the
+    // status is identical whether or not a report exists.
+    const withDoc = makeEnv({ [`compliance:incident-report:${RRN}`]: "{}" });
+    const withoutDoc = makeEnv();
+    const a = await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env: withDoc, params: { rrn: RRN },
+    } as any);
+    const b = await onRequest({
+      request: req("GET", undefined, { Authorization: "Bearer junk-not-a-real-token" }),
+      env: withoutDoc, params: { rrn: RRN },
+    } as any);
+    expect(a.status).toBe(b.status);
+  });
+
+  it("returns 403 when the robot's key is revoked", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`revocation:${RRN}`]: JSON.stringify({ revoked_at: "2026-09-01T00:00:00Z", reason: "test" }),
+      [`compliance:incident-report:${RRN}`]: "{}",
+    });
+    const res = await onRequest({
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
+      env, params: { rrn: RRN },
+    } as any);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns stored doc for the robot's own api_key", async () => {
+    const env = makeEnv({
+      [`robot:${RRN}`]: robotWithKey(),
+      [`compliance:incident-report:${RRN}`]: JSON.stringify({ schema: INCIDENT_REPORT_SCHEMA, rrn: RRN }),
+    });
+    const res = await onRequest({
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
       env, params: { rrn: RRN },
     } as any);
     expect(res.status).toBe(200);
   });
 
-  it("returns 404 when nothing submitted (with Bearer)", async () => {
-    const env = makeEnv();
+  it("returns 404 when nothing submitted (with the right api_key)", async () => {
+    const env = makeEnv({ [`robot:${RRN}`]: robotWithKey() });
     const res = await onRequest({
-      request: req("GET", undefined, { Authorization: "Bearer anytoken" }),
+      request: req("GET", undefined, { Authorization: `Bearer ${API_KEY}` }),
       env, params: { rrn: RRN },
     } as any);
     expect(res.status).toBe(404);
