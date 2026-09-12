@@ -7,18 +7,20 @@
  * directly against the RRF root pubkey published at
  * functions/.well-known/rrf-root-pubkey.pem.
  *
- * Mirrors the signing-input reconstruction pattern from
- * functions/v2/orchestrators/[id]/token.ts (strips rrf_sig before signing
- * input is hashed; the emitted token's payload contains the embedded sig).
+ * The token is a standards-compliant JWS (RFC 7515) compact serialization:
+ * the third segment is the detached signature over the exact ASCII bytes of
+ * `${segment0}.${segment1}` as received. Nothing is re-encoded here, so a
+ * stock EdDSA verifier and this function agree byte for byte. The historical
+ * `rrf_sig` payload claim (signature-inside-the-signed-payload) is gone; see
+ * functions/v2/orchestrators/[id]/token.ts for the matching mint.
  *
  * Flow:
  *   1. Extract Authorization: Bearer <jwt>
  *   2. Fetch rrf:root:pubkey from KV (or env fallback)
- *   3. Reconstruct signing input: b64u(header).b64u(payload-minus-rrf_sig)
- *   4. Web Crypto Ed25519 SPKI verify
- *   5. Assert claims.iss === "rrf.rcan.dev" and claims.exp > now
- *   6. Assert claims.rcan_scopes includes "fleet.trusted"
- *   7. Assert claims.fleet_rrns includes requiredRrn
+ *   3. Verify segment 2 over the received `${headerB64}.${payloadB64}`
+ *   4. Assert claims.iss === "rrf.rcan.dev" and claims.exp > now
+ *   5. Assert claims.rcan_scopes includes "fleet.trusted"
+ *   6. Assert claims.fleet_rrns includes requiredRrn
  */
 
 export interface JwtOk {
@@ -40,7 +42,7 @@ export interface JwtVerifyEnv {
 }
 
 /** Decode URL-safe base64 to Uint8Array (Cloudflare Workers / atob-compatible). */
-function fromB64Url(s: string): Uint8Array {
+export function fromB64Url(s: string): Uint8Array {
   // Convert base64url → base64
   const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
   // Pad to multiple of 4
@@ -49,7 +51,7 @@ function fromB64Url(s: string): Uint8Array {
 }
 
 /** Strip PEM framing + whitespace, return DER bytes. */
-function pemToDer(pem: string): Uint8Array {
+export function pemToDer(pem: string): Uint8Array {
   const body = pem
     .replace(/-----BEGIN PUBLIC KEY-----/g, "")
     .replace(/-----END PUBLIC KEY-----/g, "")
@@ -88,7 +90,7 @@ export async function verifyM2mTrustedJwt(
   if (parts.length !== 3) {
     return { ok: false, status: 401, error: "Invalid JWT: expected 3 parts" };
   }
-  const [headerB64, payloadB64, _sigB64] = parts;
+  const [headerB64, payloadB64, sigB64] = parts;
 
   let header: Record<string, unknown>;
   let payload: Record<string, unknown>;
@@ -108,18 +110,13 @@ export async function verifyM2mTrustedJwt(
     return { ok: false, status: 500, error: "RRF root pubkey not provisioned" };
   }
 
-  // 4. Extract embedded rrf_sig and reconstruct signing input
-  // (mirrors the mint at functions/v2/orchestrators/[id]/token.ts:84-87 —
-  // signing input is b64u(header).b64u(payload-minus-rrf_sig))
-  const rrfSig = payload["rrf_sig"];
-  if (typeof rrfSig !== "string" || rrfSig.length === 0) {
-    return { ok: false, status: 401, error: "Invalid JWT: missing rrf_sig in payload" };
+  // 4. Verify the detached JWS signature over the segments exactly as received.
+  //    No re-serialization: `${headerB64}.${payloadB64}` is the signing input a
+  //    stock EdDSA JWS verifier would use, so both agree byte for byte.
+  if (!sigB64) {
+    return { ok: false, status: 401, error: "Invalid JWT: empty signature segment" };
   }
-  const { rrf_sig: _omit, ...payloadWithoutSig } = payload;
-
-  const b64u = (s: string) =>
-    btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  const signingInput = `${b64u(JSON.stringify(header))}.${b64u(JSON.stringify(payloadWithoutSig))}`;
+  const signingInput = `${headerB64}.${payloadB64}`;
 
   // 5. Web Crypto Ed25519 SPKI verify
   let signatureValid = false;
@@ -132,7 +129,7 @@ export async function verifyM2mTrustedJwt(
       false,
       ["verify"],
     );
-    const sigBytes = fromB64Url(rrfSig);
+    const sigBytes = fromB64Url(sigB64);
     const encoder = new TextEncoder();
     signatureValid = await crypto.subtle.verify(
       { name: "Ed25519" },
