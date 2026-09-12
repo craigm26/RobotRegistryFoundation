@@ -89,12 +89,43 @@ The registry page has client-side search + filter:
 
 Same token set as rcan-spec: `bg-bg`, `bg-bg-card`, `text-text`, `text-text-muted`, `text-accent`, `border-border`.
 
-## Build & Deploy
+## Build & Deploy — deploy path verified 2026-09-12
+
+**`git push origin main` does publish this site, and the Cloudflare Pages project is still direct-upload. Both are true.** `.github/workflows/deploy.yml` runs the direct upload for you via `cloudflare/wrangler-action`. Earlier drafts of this file hedged ("confirm which is actually true before trusting a push"); it is settled, and the evidence is below. Do not re-open it without new evidence.
+
+Three checks, all run 2026-09-12:
+
+1. **Actions are enabled on this repo — not billing-blocked.**
+   `gh api repos/craigm26/RobotRegistryFoundation/actions/permissions`
+   → `{"enabled":true,"allowed_actions":"all","sha_pinning_required":false}`
+   `gh run list --repo craigm26/RobotRegistryFoundation --workflow deploy.yml --event push --branch main`
+   → 148 total runs; the most recent push-to-`main` run **succeeded** on 2026-06-17 for `f0068dc`.
+
+2. **The Pages project is direct-upload, not git-connected.**
+   `npx wrangler pages project list` → `robot-registry-foundation`
+   (`robot-registry-foundation.pages.dev`, `robotregistryfoundation.com`, `robotregistryfoundation.org`),
+   **Git Provider: No**. Account: Civqo, `71d59adbd067633aca3e95f915fbf2b4`.
+
+3. **The live site is the tip of `origin/main`.**
+   `npx wrangler pages deployment list --project-name robot-registry-foundation | head -3`
+   (Build column trimmed):
+
+   ```
+   Id                                    Environment  Branch  Source   Deployment                                            Status
+   ac91dd97-fa4d-4c9f-9c62-20329c9689de  Production   main    f0068dc  https://ac91dd97.robot-registry-foundation.pages.dev  2 months ago
+   ```
+
+   `f0068dc` is `origin/main` HEAD. Nothing is queued behind it.
+
+### The one command that publishes by hand
 
 ```bash
-npm run build    # Must build clean
-git push origin main  # Triggers Cloudflare Pages deploy
+npm run build && npx wrangler pages deploy dist --project-name=robot-registry-foundation --branch=main
 ```
+
+Use it when you need the site live without a push, or when a push's Action fails. `--branch=main` is mandatory: without it the upload lands as a preview deployment and the apex domain does not move. The OAuth token lives at `~/.wrangler/config/default.toml`.
+
+**Consequence for security work:** a push to `main` ships whatever is on `main` at that moment, including a half-landed credential change. Land the whole fix on a branch, merge deliberately, then watch the run. Do **not** edit or delete `.github/workflows/deploy.yml` — the standing house rule is never to *author* a GitHub Action, not to tear out one that is already load-bearing here.
 
 ## Key Cross-References
 
