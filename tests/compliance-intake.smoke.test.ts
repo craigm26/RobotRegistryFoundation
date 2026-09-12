@@ -294,10 +294,9 @@ describe("compliance-bundle intake end-to-end smoke", () => {
     expect(noAuthRes.status).toBe(401);
 
     // 8. Mint M2M_TRUSTED JWT (matches the production mint at
-    //    functions/v2/orchestrators/[id]/token.ts:80-110).
-    //    Signing input = b64u(header).b64u(payload-MINUS-rrf_sig); the emitted
-    //    JWT's parts[1] embeds rrf_sig back. jwt-verify reconstructs by
-    //    stripping rrf_sig before recomputing the signing input.
+    //    functions/v2/orchestrators/[id]/token.ts buildSignedJWT).
+    //    Standard RFC 7515 compact JWS: the third segment signs the ASCII bytes
+    //    of `${segment0}.${segment1}` exactly as transmitted. No rrf_sig claim.
     const jwtHeader = { alg: "EdDSA", typ: "JWT" };
     const jwtPayloadCore = {
       sub: "test-orch",
@@ -318,9 +317,7 @@ describe("compliance-bundle intake end-to-end smoke", () => {
     );
     const jwtSig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-    const jwtPayloadWithSig = { ...jwtPayloadCore, rrf_sig: jwtSig };
-    const jwt =
-      `${b64url(JSON.stringify(jwtHeader))}.${b64url(JSON.stringify(jwtPayloadWithSig))}.${jwtSig}`;
+    const jwt = `${signingInput}.${jwtSig}`;
 
     // 9. GET full WITH JWT -> 200, returns full payload incl artifacts.
     const authRes = await bundleFullHandler({

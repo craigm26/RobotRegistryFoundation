@@ -4,6 +4,57 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## Orchestrator authentication + authority minting cap — 2026-09-12
+
+All four orchestrator routes previously accepted any string beginning with
+`Bearer `, and the docstrings named a CREATOR credential (`rcan_role=5`) that
+this registry has no issuer for. The routes now enforce what the registry can
+actually check, and the docstrings say only that.
+
+### Changed
+
+- `GET /v2/orchestrators/:id/token` — now requires proof of possession of the
+  Ed25519 key already on the orchestrator record: headers `X-RRF-Nonce`
+  (base64url, >= 16 bytes) and `X-RRF-Timestamp` (ISO-8601, +/- 300 s) plus
+  `Authorization: Signature <b64url>` over `id:nonce:timestamp`. An unknown id
+  answers 401, not 404, so the route is no longer an existence oracle.
+- `GET /v2/orchestrators/:id/token` — the keyless SHA-256 "development mock
+  signature" branch is DELETED. With `RRF_SIGNING_KEY` unset the route answers
+  503 and mints nothing.
+- Minted tokens are now standards-compliant RFC 7515 compact JWS: the third
+  segment signs `${segment0}.${segment1}` exactly as transmitted, and the
+  `rrf_sig` payload claim is gone. `functions/v2/_lib/jwt-verify.ts` moved to
+  the same format in the same commit, so `/v2/cert-intake/:cert_id` and
+  `/v2/compliance-bundle/:bundle_id` keep working and a stock EdDSA verifier
+  now accepts an RRF token.
+- `POST /v2/orchestrators/:id/consent` — now requires an RCAN hybrid-signed
+  body verified against the `pq_signing_pub` registered for the RRN named in
+  the signed body. Bearer strings are no longer accepted. This is a breaking
+  API-shape change; no third-party consumer exists.
+- `POST /v2/orchestrators/register` and `DELETE /v2/orchestrators/:id` — gated
+  on `Authorization: Bearer <RRF_ADMIN_TOKEN>`, matching
+  `DELETE /v2/authorities/:ran`. Interim custody story.
+- `POST /v2/authorities/register` — a published per-organization cap of 25
+  registrations per UTC day; past the cap the endpoint answers 429. The
+  endpoint stays open and self-attested by design; the cap is the control.
+  Successful mints are appended to `authority-mint-events:{YYYY-MM-DD}` in KV.
+
+### Added
+
+- `functions/v2/_lib/orchestrator-auth.ts` — `verifyOrchestratorProof`.
+- Tests: `functions/v2/orchestrators/register.test.ts`,
+  `functions/v2/orchestrators/[id]/token.test.ts`,
+  `functions/v2/orchestrators/[id]/consent.test.ts`,
+  `functions/v2/orchestrators/[id]/index.test.ts`,
+  `functions/v2/authorities/register.test.ts`.
+
+### Note
+
+Revocation remains identity-layer only: RRF publishes `/v2/revocations` and the
+robot polls and refuses locally. RRF enforces nothing and certifies nothing.
+
+---
+
 ## Compliance Intake §26 (Release D3) — 2026-04-24
 
 Ships the fifth and final compliance intake endpoint — §26 EU Register,

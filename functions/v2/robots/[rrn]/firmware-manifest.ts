@@ -58,7 +58,10 @@ async function handleGet(env: Env, rrn: string): Promise<Response> {
 }
 
 async function handlePost(request: Request, env: Env, rrn: string): Promise<Response> {
-  // Authenticate: require Authorization header (CREATOR token for this RRN)
+  // WHAT IS ENFORCED: only that an `Authorization: Bearer <anything>` header is
+  // present. No credential is validated, and the registry has no CREATOR token
+  // to validate against — no issuer for one exists. This is a known open door,
+  // tracked as C2-R13, which re-gates this route on a real credential.
   const authHeader = request.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Authorization required" }), {

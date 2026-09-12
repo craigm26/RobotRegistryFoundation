@@ -2,11 +2,23 @@
  * POST /v2/orchestrators/register
  * RCAN v2.1 §2.9 — Register an M2M_TRUSTED orchestrator with RRF.
  *
- * Body: { rrn, orchestrator_key (Ed25519 pubkey PEM), fleet_rrns[], justification }
- * Requires valid CREATOR token (JWT with rcan_role=5) for the registering RRN.
+ * WHAT IS ENFORCED (and nothing else): `Authorization: Bearer <RRF_ADMIN_TOKEN>`,
+ * matching functions/v2/authorities/[ran]/index.ts. This is the interim custody
+ * story while orchestrator onboarding has no self-service identity: only the
+ * registry operator can create an orchestrator record. There is no CREATOR
+ * token and no issuer for one — the earlier "JWT with rcan_role=5" claim
+ * described a credential this registry cannot mint. Do not reintroduce it.
  *
- * Creates orchestrator record with status: pending_consent
- * Sends CONSENT_REQUEST (20) to all fleet_rrns owners (simulated via KV queue)
+ * Body: { rrn, orchestrator_key (Ed25519 SPKI PEM), fleet_rrns[], justification,
+ *         deployed_by?, host? }
+ * `deployed_by` and `host` are DECLARED by the registrant and are recorded as
+ * such (see `declared_fields`); the registry verifies neither.
+ *
+ * `orchestrator_key` is the key the orchestrator later proves possession of at
+ * GET /v2/orchestrators/:id/token, so it is the record's real credential.
+ *
+ * Creates orchestrator record with status: pending_consent. Activation requires
+ * a signed consent from every fleet RRN (POST /v2/orchestrators/:id/consent).
  *
  * KV binding: RRF_KV
  * Key: orchestrator:{id}  →  OrchestratorRecord JSON
@@ -16,6 +28,7 @@ import { nanoid } from "nanoid";
 
 export interface Env {
   RRF_KV: KVNamespace;
+  RRF_ADMIN_TOKEN?: string;
 }
 
 interface OrchestratorRecord {
@@ -29,6 +42,12 @@ interface OrchestratorRecord {
   registered_at: string;
   activated_at?: string;
   revoked_at?: string;
+  /** Self-declared by the registrant. Never verified by RRF. */
+  deployed_by?: string;
+  /** Self-declared by the registrant. Never verified by RRF. */
+  host?: string;
+  /** Which of the above were supplied by the registrant, labelled declared. */
+  declared_fields?: string[];
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -39,8 +58,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   const authHeader = request.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return json({ error: "Authorization required (CREATOR token)" }, 401);
+  if (!env.RRF_ADMIN_TOKEN || authHeader !== `Bearer ${env.RRF_ADMIN_TOKEN}`) {
+    return json({ error: "unauthorized" }, 401);
   }
 
   let body: Record<string, unknown>;
@@ -50,11 +69,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { rrn, orchestrator_key, fleet_rrns, justification } = body as {
+  const { rrn, orchestrator_key, fleet_rrns, justification, deployed_by, host } = body as {
     rrn?: string;
     orchestrator_key?: string;
     fleet_rrns?: string[];
     justification?: string;
+    deployed_by?: string;
+    host?: string;
   };
 
   if (!rrn || !orchestrator_key || !fleet_rrns || !justification) {
@@ -81,6 +102,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   const id = `orch-${nanoid(16)}`;
+  // Declared-only provenance: recorded verbatim, labelled, never verified.
+  const declared_fields: string[] = [];
+  if (typeof deployed_by === "string" && deployed_by) declared_fields.push("deployed_by");
+  if (typeof host === "string" && host) declared_fields.push("host");
+
   const record: OrchestratorRecord = {
     id,
     rrn,
@@ -90,6 +116,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     status: "pending_consent",
     consents: Object.fromEntries(fleet_rrns.map((r) => [r, false])),
     registered_at: new Date().toISOString(),
+    ...(declared_fields.includes("deployed_by") ? { deployed_by } : {}),
+    ...(declared_fields.includes("host") ? { host } : {}),
+    ...(declared_fields.length ? { declared_fields } : {}),
   };
 
   await env.RRF_KV.put(`orchestrator:${id}`, JSON.stringify(record), {

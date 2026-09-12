@@ -1,13 +1,25 @@
 /**
  * DELETE /v2/orchestrators/:id
- * RCAN v2.1 §2.9 — Revoke an orchestrator (any consenting CREATOR can call this).
+ * RCAN v2.1 §2.9 — Revoke an orchestrator.
+ *
+ * WHAT IS ENFORCED (and nothing else): `Authorization: Bearer <RRF_ADMIN_TOKEN>`,
+ * matching functions/v2/authorities/[ran]/index.ts. This is the interim custody
+ * story: only the registry operator can revoke. There is no CREATOR token and
+ * no issuer for one — the earlier "any consenting CREATOR can call this" claim
+ * described a credential that does not exist. A fleet owner who wants an
+ * orchestrator stopped denies consent via POST /v2/orchestrators/:id/consent,
+ * which revokes it with a signature the registry can actually check.
  *
  * Immediately adds orchestrator to the RRF revocation list.
  * Revoked entries are retained for 90 days (for revocation polling).
+ *
+ * Revocation is identity-layer only: RRF publishes the list, the robot polls
+ * /v2/revocations and refuses locally. RRF enforces nothing.
  */
 
 export interface Env {
   RRF_KV: KVNamespace;
+  RRF_ADMIN_TOKEN?: string;
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -19,8 +31,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   const authHeader = request.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return json({ error: "Authorization required" }, 401);
+  if (!env.RRF_ADMIN_TOKEN || authHeader !== `Bearer ${env.RRF_ADMIN_TOKEN}`) {
+    return json({ error: "unauthorized" }, 401);
   }
 
   const stored = await env.RRF_KV.get(`orchestrator:${id}`, "text");

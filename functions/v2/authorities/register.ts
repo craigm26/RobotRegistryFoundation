@@ -10,6 +10,14 @@
  *         pq_kid, signing_alg, sig: { ml_dsa, ed25519, ed25519_pub } }
  *
  * Returns: { ran, status, registered_at }
+ *
+ * AUTHENTICATION: none, deliberately. Authority registration is open and
+ * self-attested; the §2.2 hybrid signature proves key possession, not identity,
+ * and RRF asserts nothing about who the registrant is. The control on this
+ * endpoint is a published per-organization daily minting cap (see
+ * MINT_CAP_PER_ORG_PER_DAY below), not an Authorization header. 334 authorities
+ * were minted here before the cap existed, 329 of them under one organization
+ * slug; the cap makes that shape refusable and readable rather than silent.
  */
 
 import type { AuthorityRecord, AuthorityPurpose } from "../_lib/types.js";
@@ -18,6 +26,18 @@ import { verifyBody } from "rcan-ts";
 export interface Env {
   RRF_KV: KVNamespace;
 }
+
+/**
+ * Published cap: registrations accepted per `organization` slug per UTC day.
+ * Counter key: `mint-count:{organization}:{YYYY-MM-DD}` (48 h TTL).
+ * Audit key:   `authority-mint-events:{YYYY-MM-DD}` — an append-only JSON array
+ * of { ran, organization, registered_at } so a burst is readable after the fact.
+ */
+export const MINT_CAP_PER_ORG_PER_DAY = 25;
+const MINT_COUNTER_TTL_S = 172800;      // 48 h
+const MINT_EVENTS_TTL_S = 30 * 24 * 3600;
+
+const utcDay = (d = new Date()) => d.toISOString().slice(0, 10);
 
 const ALLOWED_PURPOSES: AuthorityPurpose[] = [
   "compatibility-matrix-aggregate",
@@ -74,6 +94,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return json(
       { error: `purpose must be one of ${ALLOWED_PURPOSES.join("|")}` },
       400,
+    );
+  }
+
+  // Per-organization daily minting cap. Checked here (after the cheap field
+  // validation, before any signature work) so a caller past the cap learns it
+  // immediately; the counter itself is only incremented on a successful mint,
+  // so a malformed or unsigned request cannot burn someone else's quota.
+  const organization = String(body.organization);
+  const mintDay = utcDay();
+  const mintCounterKey = `mint-count:${organization}:${mintDay}`;
+  const mintedTodayRaw = await env.RRF_KV.get(mintCounterKey, "text");
+  const mintedToday = mintedTodayRaw ? parseInt(mintedTodayRaw, 10) || 0 : 0;
+  if (mintedToday >= MINT_CAP_PER_ORG_PER_DAY) {
+    return json(
+      {
+        error: "daily authority minting cap reached for this organization",
+        organization,
+        cap: MINT_CAP_PER_ORG_PER_DAY,
+        window: "utc-day",
+        utc_day: mintDay,
+        minted_today: mintedToday,
+      },
+      429,
     );
   }
 
@@ -168,6 +211,28 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     JSON.stringify(kidMapping),
     { expirationTtl: 365 * 24 * 3600 * 10 },
   );
+
+  // Count the mint and append the audit event. Same eventual-consistency caveat
+  // as the pq_kid scan above: concurrent POSTs can both read the same counter,
+  // so the cap is a brake on bursts, not a hard transactional limit.
+  await env.RRF_KV.put(mintCounterKey, String(mintedToday + 1), {
+    expirationTtl: MINT_COUNTER_TTL_S,
+  });
+  const eventsKey = `authority-mint-events:${mintDay}`;
+  let events: unknown[] = [];
+  try {
+    const rawEvents = await env.RRF_KV.get(eventsKey, "text");
+    if (rawEvents) {
+      const parsed = JSON.parse(rawEvents) as unknown;
+      if (Array.isArray(parsed)) events = parsed;
+    }
+  } catch {
+    events = [];
+  }
+  events.push({ ran, organization, registered_at: record.registered_at });
+  await env.RRF_KV.put(eventsKey, JSON.stringify(events), {
+    expirationTtl: MINT_EVENTS_TTL_S,
+  });
 
   return json(
     { ran, kid: record.pq_kid, status: "active", registered_at: record.registered_at },

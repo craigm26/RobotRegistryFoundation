@@ -2,12 +2,20 @@
  * POST /v2/orchestrators/:id/consent
  * RCAN v2.1 §2.9 — Grant or deny orchestrator fleet access consent.
  *
- * Body: { rrn, grant: true|false }
- * Requires valid CREATOR token for the consenting RRN.
+ * WHAT IS ENFORCED (and nothing else): the request body must be an RCAN
+ * hybrid-signed document (`sig.ml_dsa` + `sig.ed25519` + `sig.ed25519_pub`,
+ * `pq_kid`) whose signature verifies against the `pq_signing_pub` already
+ * registered for the RRN named IN the signed body. The consenting robot signs
+ * its own consent; the registry checks nothing else. There is no CREATOR token
+ * and no issuer for one, so no bearer string is accepted here.
+ *
+ * Body (signed): { rrn, grant: true|false, sig, pq_kid }
  *
  * When all fleet_rrns have consented → status: active, first token issued.
- * When any CREATOR denies → status: revoked immediately.
+ * When any fleet owner denies → status: revoked immediately.
  */
+
+import { verifyComplianceBody } from "../../_lib/compliance-auth.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -22,21 +30,33 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return json({ error: "Method not allowed" }, 405);
   }
 
-  const authHeader = request.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return json({ error: "Authorization required (CREATOR token)" }, 401);
-  }
-
-  let body: { rrn?: string; grant?: boolean };
+  let body: Record<string, unknown>;
   try {
-    body = await request.json() as { rrn?: string; grant?: boolean };
+    body = await request.json() as Record<string, unknown>;
   } catch {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { rrn, grant } = body;
+  // No credential at all (including any bearer string) is a 401, not a 400:
+  // this endpoint takes a signed body and nothing else.
+  const sigField = body["sig"] as Record<string, unknown> | undefined;
+  if (!sigField || typeof body["pq_kid"] !== "string") {
+    return json({
+      error: "Signed consent body required (sig + pq_kid); bearer tokens are not accepted",
+    }, 401);
+  }
+
+  const rrn = body["rrn"] as string | undefined;
+  const grant = body["grant"];
   if (!rrn || typeof grant !== "boolean") {
     return json({ error: "Missing required fields: rrn (string), grant (boolean)" }, 400);
+  }
+
+  // Verify against the key registered for the RRN named in the SIGNED body —
+  // never a key supplied in the submission, never a client-supplied header.
+  const auth = await verifyComplianceBody(body, env, `robot:${rrn}`);
+  if (!auth.ok) {
+    return json({ error: auth.error }, auth.status);
   }
 
   // Load orchestrator record
