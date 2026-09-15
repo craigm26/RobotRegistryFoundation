@@ -19,6 +19,15 @@
  * Returns: { token (JWT), exp, fleet_rrns }
  * JWT claims: sub, rcan_role='m2m_trusted', rcan_scopes=['fleet.trusted'],
  *             fleet_rrns, iat, exp (iat+86400), iss='rrf.rcan.dev'.
+ *
+ * On that iss value: it is an opaque issuer identifier, compared for equality
+ * and never dereferenced, so it hands nobody a URL. The hostname it spells has
+ * no DNS record, and the registry's receipt URLs were moved off that name on
+ * 2026-09-14 (see _lib/api-base.ts). iss was deliberately left alone, because
+ * verifiers outside this repository assert this exact literal and would reject
+ * every token the moment the mint changed. Changing it is a coordinated
+ * release across repositories with a transition window, not a rename here.
+ * tests/dead-hostname-allowlist.json records the same reasoning.
  * The token is a standard RFC 7515 compact JWS: the third segment is the
  * EdDSA signature over the ASCII bytes of `${segment0}.${segment1}`, so the
  * RRF verifier (_lib/jwt-verify.ts) and any stock EdDSA verifier agree.

@@ -11,6 +11,7 @@
  */
 
 import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -114,7 +115,7 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
       ok:           true,
       rrn,
       submitted_at: new Date().toISOString(),
-      manifest_url: `https://api.rrf.rcan.dev/v2/robots/${rrn}/firmware-manifest`,
+      manifest_url: `${API_BASE}/v2/robots/${rrn}/firmware-manifest`,
     }),
     { status: 201, headers: { "Content-Type": "application/json" } },
   );

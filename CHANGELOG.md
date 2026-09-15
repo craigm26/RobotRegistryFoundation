@@ -4,6 +4,43 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## Submission receipts point at a host that answers — 2026-09-14
+
+Seven compliance submission routes returned `*_url` values in their 201 bodies
+against an `api.` subdomain of the registry's `rcan.dev` name. Neither that
+subdomain nor its parent has a DNS record, while `robotregistryfoundation.org`
+and `rcan.dev` both resolve, so a third party following a link out of an RRF
+response reached nothing.
+
+### Added
+
+- `functions/v2/_lib/api-base.ts` — one `API_BASE` constant,
+  `https://robotregistryfoundation.org`, for every URL the registry hands out.
+- `tests/no-dead-hostnames.test.ts` — scans `functions/` and `src/` for any host
+  under the registry's `rcan.dev` name and fails unless it resolves at test time
+  or `tests/dead-hostname-allowlist.json` records that file with a reason. The
+  DNS half is skipped when the network is unavailable; the allowlist half always
+  runs.
+- `tests/dead-hostname-allowlist.json` — the single allowlist entry, and why.
+
+### Changed
+
+- `incident-report.ts`, `fria.ts`, `sbom.ts`, `firmware-manifest.ts`,
+  `safety-benchmark.ts`, `ifu.ts` and `models/[rmn]/eu-register.ts` build their
+  receipt URLs from `API_BASE`.
+
+### Unchanged, deliberately
+
+- The JWT `iss` claim in `orchestrators/[id]/token.ts` and the assertion in
+  `_lib/jwt-verify.ts`. `iss` is an opaque issuer identifier, compared for
+  equality and never dereferenced, so it hands nobody a URL. Verifiers outside
+  this repository assert the same literal, so changing the mint alone would
+  reject every token at every deployed runtime, and changing both here would
+  still break already-issued tokens for the rest of their 24 hour life. Both
+  docstrings now say so.
+
+---
+
 ## Orchestrator authentication + authority minting cap — 2026-09-12
 
 All four orchestrator routes previously accepted any string beginning with

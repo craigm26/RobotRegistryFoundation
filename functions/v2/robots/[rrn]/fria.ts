@@ -14,6 +14,7 @@
  */
 
 import { requireRobotApiKey, verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -71,7 +72,7 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
     ok: true,
     rrn,
     submitted_at: now,
-    fria_url: `https://api.rrf.rcan.dev/v2/robots/${rrn}/fria`,
+    fria_url: `${API_BASE}/v2/robots/${rrn}/fria`,
   }, 201);
 }
 

@@ -19,6 +19,7 @@
 
 import { EU_REGISTER_SCHEMA } from "rcan-ts";
 import { verifyComplianceBody } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -85,7 +86,7 @@ async function handlePost(request: Request, env: Env, rmn: string): Promise<Resp
     rmn,
     submitted_by_rrn: submitterRrn,
     submitted_at: now,
-    eu_register_url: `https://api.rrf.rcan.dev/v2/models/${rmn}/eu-register`,
+    eu_register_url: `${API_BASE}/v2/models/${rmn}/eu-register`,
   }, 201);
 }
 

@@ -15,6 +15,7 @@
 
 import { INCIDENT_REPORT_SCHEMA } from "rcan-ts";
 import { requireRobotApiKey, verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -66,7 +67,7 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
     ok: true,
     rrn,
     submitted_at: now,
-    incident_report_url: `https://api.rrf.rcan.dev/v2/robots/${rrn}/incident-report`,
+    incident_report_url: `${API_BASE}/v2/robots/${rrn}/incident-report`,
   }, 201);
 }
 

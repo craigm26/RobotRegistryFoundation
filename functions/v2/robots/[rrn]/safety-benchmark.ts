@@ -16,6 +16,7 @@
 
 import { SAFETY_BENCHMARK_SCHEMA } from "rcan-ts";
 import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -61,7 +62,7 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
     ok: true,
     rrn,
     submitted_at: now,
-    safety_benchmark_url: `https://api.rrf.rcan.dev/v2/robots/${rrn}/safety-benchmark`,
+    safety_benchmark_url: `${API_BASE}/v2/robots/${rrn}/safety-benchmark`,
   }, 201);
 }
 

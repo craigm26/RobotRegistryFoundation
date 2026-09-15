@@ -19,6 +19,10 @@
  *   2. Fetch rrf:root:pubkey from KV (or env fallback)
  *   3. Verify segment 2 over the received `${headerB64}.${payloadB64}`
  *   4. Assert claims.iss === "rrf.rcan.dev" and claims.exp > now
+ *      (an opaque issuer identifier, compared for equality and never fetched;
+ *      it is intentionally unchanged, see the note in
+ *      functions/v2/orchestrators/[id]/token.ts and
+ *      tests/dead-hostname-allowlist.json)
  *   5. Assert claims.rcan_scopes includes "fleet.trusted"
  *   6. Assert claims.fleet_rrns includes requiredRrn
  */

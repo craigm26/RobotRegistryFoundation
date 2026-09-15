@@ -11,6 +11,7 @@
  */
 
 import { verifyComplianceSubmission } from "../../_lib/compliance-auth.js";
+import { API_BASE } from "../../_lib/api-base.js";
 
 export interface Env {
   RRF_KV: KVNamespace;
@@ -116,7 +117,7 @@ async function _handlePost(request: Request, env: Env, rrn: string): Promise<Res
       ok:              true,
       rrn,
       rrf_countersig:  countersig,
-      sbom_url:        `https://api.rrf.rcan.dev/v2/robots/${rrn}/sbom`,
+      sbom_url:        `${API_BASE}/v2/robots/${rrn}/sbom`,
       countersigned_at: new Date().toISOString(),
     }),
     { status: 201, headers: { "Content-Type": "application/json" } },

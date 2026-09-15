@@ -1,0 +1,15 @@
+{
+  "$comment": "Occurrences of a non-resolving registry hostname that tests/no-dead-hostnames.test.ts permits. Every entry must name the files it covers and say why. An entry is not a licence to add new ones: a hostname that appears in a URL the registry hands out belongs in functions/v2/_lib/api-base.ts instead.",
+  "last_reviewed": "2026-09-14",
+  "hostnames": [
+    {
+      "hostname": "rrf.rcan.dev",
+      "attached": false,
+      "allowed_in": [
+        "functions/v2/orchestrators/[id]/token.ts",
+        "functions/v2/_lib/jwt-verify.ts"
+      ],
+      "reason": "The JWT iss claim, and only that. iss is an opaque issuer identifier compared for equality; nothing dereferences it, so it hands no one a URL that fails to resolve. It is not changed here because verifiers outside this repository assert the same literal (opencastor-runtime castor/auth/m2m_trusted.py raises M2M_INVALID_ISSUER on anything else), so changing the mint alone would reject every token at every deployed robot runtime, and changing mint and verifier together in this repo would still break every already-issued token for the rest of its 24 hour life. Changing it is a coordinated change across repositories with a transition window, not part of dropping a dead hostname from a receipt."
+    }
+  ]
+}
