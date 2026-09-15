@@ -24,9 +24,14 @@
  * and never dereferenced, so it hands nobody a URL. The hostname it spells has
  * no DNS record, and the registry's receipt URLs were moved off that name on
  * 2026-09-14 (see _lib/api-base.ts). iss was deliberately left alone, because
- * verifiers outside this repository assert this exact literal and would reject
- * every token the moment the mint changed. Changing it is a coordinated
- * release across repositories with a transition window, not a rename here.
+ * a verifier outside this repository asserts this exact literal:
+ * opencastor-runtime castor/auth/m2m_trusted.py raises M2M_INVALID_ISSUER on
+ * anything else. Changing the mint alone rejects every token at every deployed
+ * robot runtime; changing mint and verifier together still breaks every
+ * already-issued token for the rest of its 24 hour life. The condition for
+ * changing it is therefore all three at once: this mint, _lib/jwt-verify.ts,
+ * and every external verifier, released together with a window at least as
+ * long as the token lifetime during which both literals are accepted.
  * tests/dead-hostname-allowlist.json records the same reasoning.
  * The token is a standard RFC 7515 compact JWS: the third segment is the
  * EdDSA signature over the ASCII bytes of `${segment0}.${segment1}`, so the

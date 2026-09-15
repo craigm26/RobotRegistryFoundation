@@ -4,7 +4,7 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
-## Submission receipts point at a host that answers — 2026-09-14
+## Submission receipts point at a host that answers, 2026-09-14
 
 Seven compliance submission routes returned `*_url` values in their 201 bodies
 against an `api.` subdomain of the registry's `rcan.dev` name. Neither that
@@ -14,14 +14,14 @@ response reached nothing.
 
 ### Added
 
-- `functions/v2/_lib/api-base.ts` — one `API_BASE` constant,
+- `functions/v2/_lib/api-base.ts`: one `API_BASE` constant,
   `https://robotregistryfoundation.org`, for every URL the registry hands out.
-- `tests/no-dead-hostnames.test.ts` — scans `functions/` and `src/` for any host
+- `tests/no-dead-hostnames.test.ts`: scans `functions/` and `src/` for any host
   under the registry's `rcan.dev` name and fails unless it resolves at test time
   or `tests/dead-hostname-allowlist.json` records that file with a reason. The
   DNS half is skipped when the network is unavailable; the allowlist half always
   runs.
-- `tests/dead-hostname-allowlist.json` — the single allowlist entry, and why.
+- `tests/dead-hostname-allowlist.json`: the single allowlist entry, and why.
 
 ### Changed
 

@@ -69,6 +69,11 @@ interface Occurrence {
   inUrl: boolean;
 }
 
+/** Literal-escape a hostname: its dots must not match any character. */
+function escapeRe(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function collect(): Occurrence[] {
   const found: Occurrence[] = [];
   for (const dir of SCAN_DIRS) {
@@ -85,7 +90,7 @@ function collect(): Occurrence[] {
             hostname: m[1].toLowerCase(),
             line: i + 1,
             text: text.trim(),
-            inUrl: new RegExp(`https?://[^\\s"'\`]*${m[1]}`, "i").test(text),
+            inUrl: new RegExp(`https?://[^\\s"'\`]*${escapeRe(m[1])}`, "i").test(text),
           });
         }
       });
