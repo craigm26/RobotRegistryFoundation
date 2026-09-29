@@ -65,7 +65,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           </p>
           <div class="flex gap-3 mt-3">
             <a href="https://github.com/craigm26" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:underline">GitHub →</a>
-            <a href="https://github.com/continuonai/rcan-spec" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:underline">rcan-spec →</a>
+            <a href="https://github.com/RobotRegistryFoundation/rcan-spec" target="_blank" rel="noopener noreferrer" class="text-xs text-accent hover:underline">rcan-spec →</a>
           </div>
         </div>
       </div>
@@ -77,6 +77,37 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <a href="https://docs.robotregistryfoundation.org/governance/#how-to-get-involved" class="text-sm text-accent hover:underline">
           How to become a co-founder →
         </a>
+      </div>
+    </section>
+
+    <!-- Governance and neutrality -->
+    <section id="governance" class="mb-12 scroll-mt-24">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Governance and neutrality</h2>
+      <div class="space-y-4 text-text-muted leading-relaxed">
+        <p>
+          <strong class="text-text">Maintainers: one.</strong> The registry and the RCAN specification are currently
+          maintained by one person, Craig Merry. There is no board, no co-founders, no endorsing organizations and no
+          partners yet. Nothing in the registry or the spec has had third-party verification.
+        </p>
+        <p>
+          <strong class="text-text">Conflict of interest.</strong> The maintainer also builds OpenCastor, an open-source
+          runtime that uses RCAN and this registry, and PlatAtlas, a commercial product built on them. His own robots
+          are registered here under the same rules as anyone else's. The specification is licensed CC BY 4.0 and the
+          registry software is open source, so anyone can run, fork or audit either without permission.
+        </p>
+        <p>
+          <strong class="text-text">Independence is a goal, not a fact yet.</strong> The intent is to hand governance to
+          a neutral steward. RCAN, with this registry, has been proposed to the AAIF (Linux Foundation) as a Sandbox
+          project (<a href="https://github.com/aaif/project-proposals/issues/43" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">aaif/project-proposals#43</a>).
+          The proposal has not been accepted.
+        </p>
+        <p>
+          <strong class="text-text">Standards.</strong> We are seeking review and collaboration from standards bodies and
+          testing labs. The physical-assurance test method is to be presented at the ITU-T FG-EAI workshop on embodied
+          AI, 16 October 2026 (remote). No standards body has endorsed, adopted or approved RCAN or this registry.
+          See <a href="/physical-assurance/" class="text-accent hover:underline">Physical assurance</a>.
+        </p>
+        <p class="text-sm">Conformance is not certification. Compliance evidence is not regulatory sufficiency.</p>
       </div>
     </section>
 
@@ -158,7 +189,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Current Status</h2>
       <div class="space-y-2 text-sm">
         {[
-          { done: false, item: 'Identifying co-founders and endorsing organizations' },
+          { done: false, item: 'Identifying co-founders, and seeking review and collaboration from standards bodies and testing labs' },
           { done: false, item: 'Soliciting feedback on governance model and board composition' },
           { done: false, item: 'Mapping regulatory requirements across jurisdictions (EU, US, Japan, South Korea)' },
           { done: false, item: 'Identifying potential escrow agents and successor organizations' },
