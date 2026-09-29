@@ -104,3 +104,17 @@ listed for the consistency pass.
 `tests/mint-attestation-kid.test.ts` (2) and `tests/u1b-runbook-kv-record.test.ts` (1)
 fail before and after this branch: they spawn `/home/craigm26/rcan-py/.venv/bin/python`,
 which does not exist on this machine (`ENOENT`). Environmental, not touched.
+
+## 7. Resolutions (consistency pass, same branch)
+
+- RCAN is expanded as "Robot Communication and Addressing Network" (the ecosystem-wide
+  choice; see the rcan-spec audit §7 for the reasoning).
+- `VerificationBadge.astro`, `RobotCard.astro` and `src/content/config.ts` use the tiers
+  the API implements.
+- `registry/entity.astro` and `registry/index.astro` escape every interpolated value and
+  URI-encode ids.
+- rrf-docs (craigm26/rrf-docs#1): governance status banner and no endorsement ask;
+  verification page rewritten to the implemented tiers; federation and v1 API pages
+  marked as design, not live.
+- Still open: whether "Community" should remain maintainer-curated; the §27 spatial-eval
+  wire format has no spec text yet (rcan-docs now reserves §27 for it).

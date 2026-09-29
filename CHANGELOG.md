@@ -28,6 +28,12 @@ RobotRegistryFoundation/rcan-spec#221). Audit: `docs/alignment/bounded-embodimen
 - Home, about, footer and README copy no longer imply endorsements, a board, partners,
   certification, DNSSEC trust chains or registry audits that do not exist. README record
   schema, endpoint table and verification tiers now match the code.
+- Badge component and content schema use the implemented verification tiers.
+
+### Fixed
+
+- Registry list and entity pages HTML-escape API fields and the `id` query parameter
+  before inserting them with `innerHTML` (registrant-chosen text could inject markup).
 
 ## Submission receipts point at a host that answers, 2026-09-14
 
