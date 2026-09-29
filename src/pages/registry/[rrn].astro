@@ -229,7 +229,7 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
               {robot.verification_status === 'community' && 'Self-reported. Robot exists and was submitted by a real person. Not independently verified.'}
               {robot.verification_status === 'verified' && 'Basic verification: manufacturer exists, model is real, serial number cross-checked.'}
               {robot.verification_status === 'manufacturer' && 'Manufacturer organization has been verified by the RRF.'}
-              {robot.verification_status === 'certified' && 'Full conformance audit passed. RCAN L1/L2/L3 certified.'}
+              {robot.verification_status === 'certified' && 'Conformance results on record. Conformance is not certification.'}
             </span>
           </div>
           <p class="text-xs text-text-faint">

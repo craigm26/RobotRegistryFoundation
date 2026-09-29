@@ -1,0 +1,153 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const SPEC = 'https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/spec/appendix-c-physical-assurance.md';
+const ENVELOPE_SCHEMA = 'https://rcan.dev/schemas/envelope.json';
+const GATE_SCHEMA = 'https://rcan.dev/schemas/gate-decision.json';
+const TESTS = 'https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/tests/assurance/README.md';
+
+const requirements = [
+  { id: 'R1', title: 'Declared envelope', plain: 'The robot publishes its limits in a machine-readable file: where it may go, how fast, how hard it may push, and how quickly and how far it takes to stop.', test: 'Measure the machine from outside. Nothing measured may exceed what was declared.' },
+  { id: 'R2', title: 'Enforcement below the model', plain: 'A small gate between the AI model and the motors checks every command. The model cannot change the gate, the limits or the log.', test: 'Replace the model with a program that sends random and extreme commands. The machine must never leave its envelope.' },
+  { id: 'R3', title: 'Stop always wins', plain: 'Every authorised stop overrides everything else within a declared time. If power, communications or a heartbeat is lost, the machine goes to a safe state.', test: 'At top speed, trigger each stop source and measure time and distance to standstill.' },
+  { id: 'R4', title: 'Accountable commands', plain: 'Every command that moves the machine can be traced to the person or system that authorised it.', test: 'Audit the log: no executed command without an authorising principal.' },
+  { id: 'R5', title: 'Tamper-evident evidence', plain: 'Every gate decision (allow, clamp, reject, stop) is written to an append-only, hash-chained log.', test: 'Verify the chain and replay each decision against the declared envelope.' },
+];
+
+const levels = [
+  { id: 'A1', name: 'Declared', desc: 'Published envelope, gate in a separate process from the model, hash-chained log.' },
+  { id: 'A2', name: 'Enforced', desc: 'A1 plus: gate on independent compute or firmware, a hardware stop path, heartbeat watchdogs, and passing the fault-injection tests.' },
+  { id: 'A3', name: 'Assured', desc: 'A2 plus: gate and stop path meet a functional-safety integrity target (ISO 13849 PL or IEC 61508 SIL) with third-party testing.' },
+];
+---
+
+<BaseLayout
+  title="Physical Assurance — Robot Registry Foundation"
+  description="How the registry records a robot's physical assurance level: the model proposes, a bounded layer disposes. Self-declared levels A1–A2, A3 only with third-party evidence."
+>
+  <div class="pt-8 max-w-3xl mx-auto">
+    <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
+      <a href="/" class="hover:text-accent transition-colors">RRF</a>
+      <span>/</span>
+      <span class="text-text">Physical assurance</span>
+    </div>
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Physical assurance</h1>
+    <p class="text-lg text-text-muted mb-6 leading-relaxed">
+      The model proposes; a bounded layer disposes.
+    </p>
+
+    <div class="p-5 bg-bg-card border border-border rounded-xl mb-12 text-sm text-text-muted space-y-2">
+      <p><strong class="text-text">Conformance is not certification.</strong> <strong class="text-text">Compliance evidence is not regulatory sufficiency.</strong> What the registry holds is evidence a robot's owner chose to publish.</p>
+      <p>RCAN and this registry have one maintainer and no third-party verification. The registry does not test robots and does not review linked evidence.</p>
+      <p>To be presented at the ITU-T FG-EAI workshop on embodied AI, 16 October 2026 (remote). That is a presentation, not an endorsement by ITU or anyone else.</p>
+    </div>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">The idea</h2>
+      <div class="space-y-4 text-text-muted leading-relaxed">
+        <p>
+          Any AI model may propose what a robot does next. A small, deterministic gate between the model and the
+          motors decides what actually runs. The safety claim rests on the gate, which can be tested without the
+          model's weights, rather than on the model, which cannot be tested exhaustively.
+        </p>
+        <p>
+          This is not new. It is the Simplex architecture (Sha, 2001) and the run-time assurance pattern standardised
+          for aircraft in ASTM F3269. What RCAN adds is a vendor-neutral <em>test method</em> for machines driven by
+          learned policies: five requirements, each with a pass/fail test a third party can run.
+        </p>
+        <p>
+          It complements, and replaces none of, ISO 10218, ISO/TS 15066, ISO 13482, IEC 60204-1, ISO 13849,
+          IEC 61508 and ITU-T F.748.44. F.748.44 benchmarks the model; this tests the machine around it.
+        </p>
+      </div>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Five requirements</h2>
+      <div class="space-y-4">
+        {requirements.map(r => (
+          <div class="p-5 bg-bg-card border border-border rounded-xl">
+            <div class="flex items-baseline gap-3 mb-2">
+              <span class="font-mono text-sm text-accent">{r.id}</span>
+              <h3 class="font-semibold text-text">{r.title}</h3>
+            </div>
+            <p class="text-sm text-text-muted leading-relaxed mb-2">{r.plain}</p>
+            <p class="text-xs text-text-faint leading-relaxed"><span class="font-mono">Test:</span> {r.test}</p>
+          </div>
+        ))}
+      </div>
+      <p class="text-sm text-text-muted mt-4">
+        The gate makes one of four decisions for every command: <span class="font-mono">allow</span>,
+        <span class="font-mono">clamp</span>, <span class="font-mono">reject</span> or <span class="font-mono">stop</span>.
+        If anything goes wrong inside the gate (an error, a timeout, stale sensor data, a command it cannot read) the
+        answer is <span class="font-mono">stop</span>.
+      </p>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Assurance levels</h2>
+      <div class="grid gap-4 mb-6">
+        {levels.map(l => (
+          <div class="flex gap-4 p-5 bg-bg-card border border-border rounded-xl">
+            <span class="font-mono text-lg text-accent shrink-0">{l.id}</span>
+            <div>
+              <div class="font-semibold text-text mb-1">{l.name}</div>
+              <div class="text-sm text-text-muted leading-relaxed">{l.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div class="p-5 bg-primary/8 border border-primary/20 rounded-xl text-sm text-text leading-relaxed">
+        Assurance levels A1–A3 are a separate axis from RCAN's protocol conformance levels L1–L4. An L-level says how
+        well a robot speaks the protocol; an A-level says how well its motion is bounded.
+        <strong>An RCAN L3 robot can be A1.</strong>
+      </div>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Two different stops</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-5 bg-bg-card border border-border rounded-xl">
+          <h3 class="font-semibold text-text mb-2">RCAN ESTOP message</h3>
+          <p class="text-sm text-text-muted leading-relaxed">Fast, authenticated, honoured from any principal, and logged. It depends on software being alive to receive it.</p>
+        </div>
+        <div class="p-5 bg-bg-card border border-border rounded-xl">
+          <h3 class="font-semibold text-text mb-2">Hardwired power cut</h3>
+          <p class="text-sm text-text-muted leading-relaxed">A circuit that removes actuator power without going through the gate, the model or the runtime. It works when software is the failure.</p>
+        </div>
+      </div>
+      <p class="text-sm text-text-muted mt-4">Both are needed. They are not the same thing, and a robot with only one of them does not have the other.</p>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">What the registry shows</h2>
+      <ul class="space-y-2 text-sm text-text-muted leading-relaxed">
+        <li class="flex gap-2"><span class="text-accent">→</span> A robot record may carry <span class="font-mono">assurance_level</span>, <span class="font-mono">envelope_hash</span> and <span class="font-mono">assurance_evidence_url</span>, supplied by its owner.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> A1 and A2 are always labelled <em>self-declared</em>.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> A3 is shown only when a third-party evidence link is present. The registry links to that evidence; it does not review it.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> A safety-benchmark submission may list which EV tests (EV-01 to EV-09) it covers. That list is shown as self-reported.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> No registry endpoint accepts test results as verified.</li>
+      </ul>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Out of scope</h2>
+      <p class="text-sm text-text-muted leading-relaxed">
+        Whether the declared limits are right for a task or a site; harm the machine can do while staying inside its
+        limits; how well the machine senses people; general cybersecurity; and identity and delegation mechanics
+        (the subject of ITU FG-TIDA).
+      </p>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Read the spec</h2>
+      <ul class="space-y-2 text-sm">
+        <li><a href={SPEC} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">RCAN Appendix C: Physical Assurance Profile →</a></li>
+        <li><a href={ENVELOPE_SCHEMA} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Envelope schema (envelope.json) →</a></li>
+        <li><a href={GATE_SCHEMA} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Gate decision record schema (gate-decision.json) →</a></li>
+        <li><a href={TESTS} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">EV-01 to EV-09 test plan and status →</a></li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

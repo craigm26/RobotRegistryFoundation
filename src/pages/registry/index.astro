@@ -129,7 +129,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function summaryLine(entry: any): string {
     const s = entry.summary ?? {};
     if (entry.entity_type === 'robot') {
-      return [s.manufacturer, s.model, s.rcan_version ? `RCAN v${s.rcan_version}` : ''].filter(Boolean).join(' · ');
+      // Physical assurance (RCAN Appendix C) is owner-declared; label it that way.
+      const a = s.assurance;
+      const assurance = a && a.displayed && /^A[123]$/.test(a.level) ? `${a.level} (self-declared)` : '';
+      return [s.manufacturer, s.model, s.rcan_version ? `RCAN v${s.rcan_version}` : '', assurance].filter(Boolean).join(' · ');
     }
     if (entry.entity_type === 'component') {
       return [s.type, s.manufacturer, s.parent_rrn ? `parent: ${s.parent_rrn}` : ''].filter(Boolean).join(' · ');

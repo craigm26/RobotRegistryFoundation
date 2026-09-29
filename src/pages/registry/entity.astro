@@ -64,6 +64,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     return `<div><dt class="text-xs text-text-faint font-mono mb-0.5">${label}</dt><dd class="text-sm text-text font-mono break-all">${display}</dd></div>`;
   }
 
+  function esc(v: unknown): string {
+    return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
+  // RCAN Appendix C physical assurance. Owner-declared; RRF does not verify it.
+  function renderAssurance(a: any): string {
+    if (!a) return '';
+    const level = /^A[123]$/.test(a.level ?? '') ? a.level : null;
+    const url = typeof a.evidence_url === 'string' && a.evidence_url.startsWith('https://') ? a.evidence_url : null;
+    const heading = level
+      ? `<span class="font-mono text-text">${level}</span> <span class="text-xs px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20">${url ? 'self-declared · evidence linked, not reviewed by RRF' : 'self-declared'}</span>`
+      : `<span class="text-text-muted">Not displayed:</span> <span class="text-xs text-text-faint">${esc(a.reason_not_displayed ?? '')}</span>`;
+    return `<div class="mt-6 p-4 rounded-lg border border-border bg-bg">
+        <div class="text-xs text-text-faint font-mono mb-1">Physical assurance</div>
+        <div class="text-sm mb-2">${heading}</div>
+        ${a.envelope_hash ? `<div class="text-xs text-text-faint font-mono break-all mb-1">envelope ${esc(a.envelope_hash)}</div>` : ''}
+        ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow" class="text-xs text-accent hover:underline break-all">Third-party evidence →</a>` : ''}
+        <p class="text-xs text-text-faint mt-2">${esc(a.note ?? '')} <a href="/physical-assurance/" class="text-accent hover:underline">What A1–A3 mean</a></p>
+      </div>`;
+  }
+
   function renderRobot(r: any) {
     document.title = `${r.rrn} — ${r.name} · RRF`;
     return `${idBadge(r.rrn)}
@@ -77,7 +98,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         ${field('PQ Key ID', r.pq_kid)}
         ${field('Components', r.components)}
         ${field('Registered', r.registered_at ? new Date(r.registered_at).toLocaleString() : '')}
-      </dl>`;
+      </dl>
+      ${renderAssurance(r.assurance)}`;
   }
 
   function renderComponent(r: any) {
