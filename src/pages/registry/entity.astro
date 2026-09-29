@@ -37,6 +37,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <script>
 (() => {
+  function esc(v: unknown): string {
+    return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
   const params = new URLSearchParams(window.location.search);
   const entityType = params.get('type') ?? 'robot';
   const entityId   = params.get('id')   ?? '';
@@ -53,7 +57,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const cls = PREFIX_COLOR[prefix] ?? 'text-text-muted border-border bg-bg-card';
     return `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border font-mono text-sm font-medium ${cls}">
       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      ${id}
+      ${esc(id)}
     </span>`;
   }
 
@@ -61,11 +65,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     if (value === undefined || value === null || value === '') return '';
     const display = Array.isArray(value) ? (value.length ? value.join(', ') : '') : String(value);
     if (!display) return '';
-    return `<div><dt class="text-xs text-text-faint font-mono mb-0.5">${label}</dt><dd class="text-sm text-text font-mono break-all">${display}</dd></div>`;
-  }
-
-  function esc(v: unknown): string {
-    return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+    return `<div><dt class="text-xs text-text-faint font-mono mb-0.5">${esc(label)}</dt><dd class="text-sm text-text font-mono break-all">${esc(display)}</dd></div>`;
   }
 
   // RCAN Appendix C physical assurance. Owner-declared; RRF does not verify it.
@@ -86,10 +86,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   function renderRobot(r: any) {
-    document.title = `${r.rrn} — ${r.name} · RRF`;
+    document.title = `${esc(r.rrn)} — ${esc(r.name)} · RRF`;
     return `${idBadge(r.rrn)}
-      <h1 class="font-display text-4xl font-semibold text-text mt-4 mb-1">${r.name}</h1>
-      <p class="text-text-muted font-mono text-sm mb-4">${r.manufacturer} · ${r.model}</p>
+      <h1 class="font-display text-4xl font-semibold text-text mt-4 mb-1">${esc(r.name)}</h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${esc(r.manufacturer)} · ${esc(r.model)}</p>
       <dl class="space-y-3 mt-6">
         ${field('Firmware', r.firmware_version)}
         ${field('RCAN Version', r.rcan_version)}
@@ -103,10 +103,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   function renderComponent(r: any) {
-    document.title = `${r.rcn} — ${r.model} · RRF`;
+    document.title = `${esc(r.rcn)} — ${esc(r.model)} · RRF`;
     return `${idBadge(r.rcn)}
-      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${r.model}</h1>
-      <p class="text-text-muted font-mono text-sm mb-4">${r.type} · ${r.manufacturer}</p>
+      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${esc(r.model)}</h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${esc(r.type)} · ${esc(r.manufacturer)}</p>
       <dl class="space-y-3 mt-6">
         ${field('Parent Robot', r.parent_rrn)}
         ${field('Type', r.type)}
@@ -118,10 +118,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   function renderModel(r: any) {
-    document.title = `${r.rmn} — ${r.name} · RRF`;
+    document.title = `${esc(r.rmn)} — ${esc(r.name)} · RRF`;
     return `${idBadge(r.rmn)}
-      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${r.name} <span class="text-text-muted font-mono text-xl">v${r.version}</span></h1>
-      <p class="text-text-muted font-mono text-sm mb-4">${r.model_family}${r.architecture ? ' · ' + r.architecture : ''}</p>
+      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${esc(r.name)} <span class="text-text-muted font-mono text-xl">v${esc(r.version)}</span></h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${esc(r.model_family)}${r.architecture ? ' · ' + esc(r.architecture) : ''}</p>
       <dl class="space-y-3 mt-6">
         ${field('Parameters', r.parameter_count_b ? r.parameter_count_b + 'B' : undefined)}
         ${field('Quantization', r.quantization)}
@@ -136,10 +136,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   function renderHarness(r: any) {
-    document.title = `${r.rhn} — ${r.name} · RRF`;
+    document.title = `${esc(r.rhn)} — ${esc(r.name)} · RRF`;
     return `${idBadge(r.rhn)}
-      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${r.name} <span class="text-text-muted font-mono text-xl">v${r.version}</span></h1>
-      <p class="text-text-muted font-mono text-sm mb-4">${r.harness_type} · RCAN v${r.rcan_version}</p>
+      <h1 class="font-display text-3xl font-semibold text-text mt-4 mb-1">${esc(r.name)} <span class="text-text-muted font-mono text-xl">v${esc(r.version)}</span></h1>
+      <p class="text-text-muted font-mono text-sm mb-4">${esc(r.harness_type)} · RCAN v${esc(r.rcan_version)}</p>
       <dl class="space-y-3 mt-6">
         ${field('Description', r.description)}
         ${field('Models Used', r.model_ids)}
@@ -155,10 +155,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     robot: renderRobot, component: renderComponent, model: renderModel, harness: renderHarness,
   };
   const ENDPOINT_MAP: Record<string, string> = {
-    robot:     `/v2/robots/${entityId}`,
-    component: `/v2/components/${entityId}`,
-    model:     `/v2/models/${entityId}`,
-    harness:   `/v2/harnesses/${entityId}`,
+    robot:     `/v2/robots/${encodeURIComponent(entityId)}`,
+    component: `/v2/components/${encodeURIComponent(entityId)}`,
+    model:     `/v2/models/${encodeURIComponent(entityId)}`,
+    harness:   `/v2/harnesses/${encodeURIComponent(entityId)}`,
   };
 
   async function load() {
@@ -195,14 +195,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <span>/</span>
           <a href="/registry/" class="hover:text-accent transition-colors">Registry</a>
           <span>/</span>
-          <span class="text-text">${entityId}</span>
+          <span class="text-text">${esc(entityId)}</span>
         </div>
         <div class="bg-bg-card border border-border rounded-xl p-7 mb-6">
           ${renderer(record)}
         </div>
         <div class="flex items-center gap-4 mt-2">
           <a href="data:application/json;charset=utf-8,${downloadJson}"
-             download="${entityId}.json"
+             download="${esc(entityId)}.json"
              class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-text-muted hover:text-accent hover:border-border-strong transition-colors font-mono">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download JSON

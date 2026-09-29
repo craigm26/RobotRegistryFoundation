@@ -147,32 +147,36 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     return '';
   }
 
+  function esc(v: unknown): string {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+
   function renderCard(entry: any): string {
     const prefix = entry.id.split('-')[0];
     const prefixCls = PREFIX_COLOR[prefix] ?? 'text-text-muted border-border bg-bg-card';
     const icon = TYPE_ICON[entry.entity_type] ?? '📦';
     const sub = summaryLine(entry);
     const date = new Date(entry.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const detailUrl = `/registry/entity/?type=${entry.entity_type}&id=${entry.id}`;
+    const detailUrl = `/registry/entity/?type=${encodeURIComponent(entry.entity_type)}&id=${encodeURIComponent(entry.id)}`;
 
     return `
       <div class="entity-card bg-bg-card border border-border rounded-xl p-5 transition-colors"
-           data-id="${entry.id.toLowerCase()}"
-           data-name="${(entry.name ?? '').toLowerCase()}"
-           data-type="${entry.entity_type}"
-           data-summary="${sub.toLowerCase()}"
-           onclick="window.location.href='${detailUrl}'">
+           data-id="${esc(entry.id.toLowerCase())}"
+           data-name="${esc((entry.name ?? '').toLowerCase())}"
+           data-type="${esc(entry.entity_type)}"
+           data-summary="${esc(sub.toLowerCase())}"
+           onclick="window.location.href='${esc(detailUrl)}'">
         <div class="flex items-start justify-between gap-3 mb-3">
           <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border font-mono text-xs font-medium ${prefixCls}">
             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            ${entry.id}
+            ${esc(entry.id)}
           </span>
-          <span class="text-lg" title="${entry.entity_type}">${icon}</span>
+          <span class="text-lg" title="${esc(entry.entity_type)}">${icon}</span>
         </div>
-        <h3 class="text-base font-semibold text-text mb-1 truncate">${entry.name}</h3>
-        ${sub ? `<p class="text-xs text-text-faint font-mono mb-3 truncate">${sub}</p>` : '<p class="mb-3"></p>'}
+        <h3 class="text-base font-semibold text-text mb-1 truncate">${esc(entry.name)}</h3>
+        ${sub ? `<p class="text-xs text-text-faint font-mono mb-3 truncate">${esc(sub)}</p>` : '<p class="mb-3"></p>'}
         <div class="flex items-center justify-between mt-auto">
-          <span class="text-xs px-2 py-0.5 rounded-full bg-border/50 text-text-faint font-mono">${entry.entity_type}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-border/50 text-text-faint font-mono">${esc(entry.entity_type)}</span>
           <span class="text-xs text-text-faint font-mono">${date}</span>
         </div>
       </div>

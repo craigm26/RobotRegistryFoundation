@@ -226,10 +226,10 @@ const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(record
           <div class="flex items-center gap-3 mb-3">
             <VerificationBadge status={robot.verification_status} />
             <span class="text-sm text-text-muted">
-              {robot.verification_status === 'community' && 'Self-reported. Robot exists and was submitted by a real person. Not independently verified.'}
-              {robot.verification_status === 'verified' && 'Basic verification: manufacturer exists, model is real, serial number cross-checked.'}
-              {robot.verification_status === 'manufacturer' && 'Manufacturer organization has been verified by the RRF.'}
-              {robot.verification_status === 'certified' && 'Conformance results on record. Conformance is not certification.'}
+              {robot.verification_status === 'unverified' && 'Signed registration. Nothing else has been checked.'}
+              {robot.verification_status === 'community' && 'A maintainer looked at the record. Not independently verified.'}
+              {robot.verification_status === 'manufacturer_claimed' && "A DNS TXT record on the manufacturer's domain matches this robot."}
+              {robot.verification_status === 'manufacturer_verified' && 'DNS TXT record plus a signed manufacturer attestation and RURI manifest. An identity statement, not a certification.'}
             </span>
           </div>
           <p class="text-xs text-text-faint">
