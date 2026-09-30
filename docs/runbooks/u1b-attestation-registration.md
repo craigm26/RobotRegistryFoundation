@@ -6,8 +6,10 @@ the ML-DSA key offline. PQ is **mandatory** in RRF: hybrid is required both to r
 (`register.ts:46-106`) and to serve (`keys/[kid].ts:136-141`). Do **not** relax this.
 
 Prereqs:
-- `~/rcan-py/.venv/bin/python` with rcan 3.4.0 (`[pq]` + `[crypto]`). Verify:
-  `~/rcan-py/.venv/bin/python -c "import rcan, dilithium_py, cryptography; print(rcan.__version__)"` → `3.4.0`.
+- `~/rcan-py/.venv/bin/python` with a current `rcan` release installed with the `[pq]` and
+  `[crypto]` extras (current pairings: [rcan.dev/compatibility](https://rcan.dev/compatibility)). Verify:
+  `~/rcan-py/.venv/bin/python -c "import rcan, dilithium_py, cryptography; print(rcan.__version__)"`
+  prints a version and raises nothing.
 - `wrangler` authenticated for the RRF account (KV namespace binding `RRF_KV`, id in `wrangler.toml`).
 - An RRF RAN for this attestation authority (the `--ran` below). NOTE: `register-operator-kid.ts`
   takes an explicit RAN and does NOT use `counter:ran`; pick a RAN that does not collide with any
