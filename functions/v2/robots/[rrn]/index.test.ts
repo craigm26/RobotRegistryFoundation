@@ -399,3 +399,65 @@ describe("PATCH /v2/robots/[rrn] — happy path (real sig verify)", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("RCAN Appendix C assurance fields", () => {
+  const HASH = "sha256:" + "cd".repeat(32);
+
+  it("GET adds a self-declared assurance view", async () => {
+    const env = makeEnv({ ...UNSIGNED_RECORD, assurance_level: "A1", envelope_hash: HASH });
+    const res = await onRequestGet({ env, params: { rrn: RRN } } as any);
+    const body = await res.json() as any;
+    expect(body.assurance.level).toBe("A1");
+    expect(body.assurance.basis).toBe("self-declared");
+    expect(body.api_key).toBeUndefined();
+  });
+
+  it("GET returns assurance null when nothing is declared", async () => {
+    const res = await onRequestGet({ env: makeEnv(), params: { rrn: RRN } } as any);
+    expect(((await res.json()) as any).assurance).toBeNull();
+  });
+
+  it("GET hides a stored A3 that has no evidence URL", async () => {
+    const env = makeEnv({ ...UNSIGNED_RECORD, assurance_level: "A3" });
+    const body = await (await onRequestGet({ env, params: { rrn: RRN } } as any)).json() as any;
+    expect(body.assurance.level).toBeNull();
+    expect(body.assurance.displayed).toBe(false);
+  });
+
+  it("PATCH sets A2 + envelope hash", async () => {
+    const env = makeEnv();
+    const res = await onRequestPatch({ request: makePatchRequest({ assurance_level: "A2", envelope_hash: HASH }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(200);
+    const stored = JSON.parse(env.__store[`robot:${RRN}`]);
+    expect(stored.assurance_level).toBe("A2");
+    expect(((await res.json()) as any).assurance.basis).toBe("self-declared");
+  });
+
+  it("PATCH rejects A3 without evidence and leaves the record unchanged", async () => {
+    const env = makeEnv();
+    const res = await onRequestPatch({ request: makePatchRequest({ assurance_level: "A3" }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+    expect(JSON.parse(env.__store[`robot:${RRN}`]).assurance_level).toBeUndefined();
+  });
+
+  it("PATCH rejects removing the evidence URL from an A3 record", async () => {
+    const env = makeEnv({ ...UNSIGNED_RECORD, assurance_level: "A3", assurance_evidence_url: "https://lab.example/r" });
+    const res = await onRequestPatch({ request: makePatchRequest({ assurance_evidence_url: null }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("PATCH null clears all assurance fields together", async () => {
+    const env = makeEnv({ ...UNSIGNED_RECORD, assurance_level: "A1", envelope_hash: HASH });
+    const res = await onRequestPatch({ request: makePatchRequest({ assurance_level: null, envelope_hash: null }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(200);
+    const stored = JSON.parse(env.__store[`robot:${RRN}`]);
+    expect(stored.assurance_level).toBeUndefined();
+    expect(stored.envelope_hash).toBeUndefined();
+  });
+
+  it("PATCH still rejects null for non-assurance fields", async () => {
+    const env = makeEnv();
+    const res = await onRequestPatch({ request: makePatchRequest({ ruri: null }), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(400);
+  });
+});

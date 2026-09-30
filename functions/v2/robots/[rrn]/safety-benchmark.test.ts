@@ -114,6 +114,42 @@ describe("POST /v2/robots/[rrn]/safety-benchmark", () => {
   });
 });
 
+describe("EV cross-reference (RCAN Appendix C)", () => {
+  it("stores ev_tests_covered and echoes it as self-reported", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+    const doc = { ...buildSafetyBenchmark(validBenchmarkInput()), ev_tests_covered: ["EV-05", "EV-08"] };
+    const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
+    const res = await onRequest({ request: req("POST", signed), env, params: { rrn: RRN } } as any);
+    expect(res.status).toBe(201);
+    const body = await res.json() as any;
+    expect(body.ev_tests_covered).toEqual(["EV-05", "EV-08"]);
+    expect(body.ev_tests_basis).toMatch(/self-reported/);
+    expect(body.ev_tests_basis).toMatch(/not run or checked/);
+    expect(JSON.parse(env.__store[`compliance:safety-benchmark:${RRN}`]).ev_tests_covered).toEqual(["EV-05", "EV-08"]);
+  });
+
+  it("omits the EV fields when the submission has none", async () => {
+    const kp = await makeTestKeypair();
+    const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+    const signed = await signComplianceBody(buildSafetyBenchmark(validBenchmarkInput()) as unknown as Record<string, unknown>, kp);
+    const body = await (await onRequest({ request: req("POST", signed), env, params: { rrn: RRN } } as any)).json() as any;
+    expect(body.ev_tests_covered).toBeUndefined();
+  });
+
+  it("rejects unknown or duplicate EV IDs", async () => {
+    const kp = await makeTestKeypair();
+    for (const bad of [["EV-10"], ["EV-01", "EV-01"], [], "EV-01"]) {
+      const env = makeEnv({ [`robot:${RRN}`]: makeRobotRecord(RRN, kp) });
+      const doc = { ...buildSafetyBenchmark(validBenchmarkInput()), ev_tests_covered: bad };
+      const signed = await signComplianceBody(doc as unknown as Record<string, unknown>, kp);
+      const res = await onRequest({ request: req("POST", signed), env, params: { rrn: RRN } } as any);
+      expect(res.status, JSON.stringify(bad)).toBe(400);
+      expect(env.__store[`compliance:safety-benchmark:${RRN}`]).toBeUndefined();
+    }
+  });
+});
+
 describe("method handling", () => {
   it("returns 405 on PUT", async () => {
     const env = makeEnv();

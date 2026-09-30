@@ -1,35 +1,39 @@
 ---
+// Tiers as implemented by functions/v2/robots/[rrn]/verify-tier.ts and register.ts.
+// No tier certifies a robot; see docs.robotregistryfoundation.org/verification.
+type Tier = 'unverified' | 'community' | 'manufacturer_claimed' | 'manufacturer_verified';
+
 interface Props {
-  status: 'community' | 'verified' | 'certified' | 'accredited';
+  status: Tier | string;
   size?: 'sm' | 'md';
 }
 
 const { status, size = 'md' } = Astro.props;
 
-const tiers: Record<string, { icon: string; label: string; classes: string }> = {
+const tiers: Record<Tier, { icon: string; label: string; classes: string }> = {
+  unverified: {
+    icon: '·',
+    label: 'Unverified',
+    classes: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+  },
   community: {
     icon: '⬜',
     label: 'Community',
-    classes: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+    classes: 'bg-gray-500/10 text-gray-300 border-gray-500/30',
   },
-  verified: {
+  manufacturer_claimed: {
     icon: '🟡',
-    label: 'Verified',
+    label: 'Manufacturer claimed',
     classes: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   },
-  certified: {
+  manufacturer_verified: {
     icon: '🔵',
-    label: 'Certified',
+    label: 'Manufacturer verified',
     classes: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  },
-  accredited: {
-    icon: '✅',
-    label: 'Accredited',
-    classes: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   },
 };
 
-const tier = tiers[status] ?? tiers.community;
+const tier = tiers[status as Tier] ?? tiers.unverified;
 const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-xs px-2.5 py-1';
 ---
 

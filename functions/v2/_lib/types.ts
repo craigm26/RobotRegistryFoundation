@@ -31,6 +31,11 @@ export interface RobotRecord {
   rcn_ids?: string[];
   rmn?: string;
   rhn_ids?: string[];
+  // RCAN Appendix C (informative): owner-declared physical assurance. Self-declared;
+  // RRF neither tests robots nor reviews evidence. See _lib/assurance.ts.
+  assurance_level?: "A1" | "A2" | "A3";
+  envelope_hash?: string;          // sha256:<hex> of the declared envelope
+  assurance_evidence_url?: string; // https; required for A3
 }
 
 // ── Hardware Component ────────────────────────────────────────────────────────

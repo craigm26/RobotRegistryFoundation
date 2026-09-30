@@ -94,3 +94,22 @@ describe("POST /v2/robots/register — signing enforcement (RCAN 3.0 §2.2)", ()
     expect(stored.verification_status).toBe("unverified");
   });
 });
+
+describe("POST /v2/robots/register — RCAN Appendix C assurance fields", () => {
+  it("rejects A3 without a third-party evidence URL (400)", async () => {
+    const res = await onRequestPost({ request: makePost({ ...fx.http_body, assurance_level: "A3" }), env: makeEnv() } as any);
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as any).error).toMatch(/A3 requires assurance_evidence_url/);
+  });
+
+  it("rejects an L-level in assurance_level (400)", async () => {
+    const res = await onRequestPost({ request: makePost({ ...fx.http_body, assurance_level: "L3" }), env: makeEnv() } as any);
+    expect(res.status).toBe(400);
+  });
+
+  it("assurance fields are covered by the signature: adding one after signing fails verification", async () => {
+    const res = await onRequestPost({ request: makePost({ ...fx.http_body, assurance_level: "A1" }), env: makeEnv() } as any);
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as any).error).toMatch(/Signature verification failed/);
+  });
+});

@@ -15,46 +15,54 @@ The open registry for RCAN-compliant robots — assigns permanent global identit
 
 ## What RRF Does
 
-- **Assigns RRNs** — Robot Registration Numbers: permanent, globally unique identifiers that survive hardware swaps and OS reinstalls
-- **Stores capability declarations** — each robot record includes hardware specs, RCAN version, and declared capabilities
-- **Provides a revocation API** — operators can revoke a robot's identity if it's compromised or decommissioned
-- **Operates trust anchors** — as a root registry, RRF signs authoritative sub-registry keys via DNSSEC trust chains
-- **Federated architecture** — manufacturers can run their own authoritative registry nodes; RRF is the root
+- **Assigns RRNs**: Robot Registration Numbers, permanent and globally unique, that survive hardware swaps and OS reinstalls
+- **Stores what owners declare**: name, manufacturer, model, firmware and RCAN versions, signing keys, and (optionally) a self-declared physical assurance level
+- **Revokes keys and credentials**: robot key revocation and rotation, orchestrator revocation list at `GET /v2/revocations`
+- **Accepts signed evidence**: RCAN §22–§26 compliance artifacts and run bundles, stored as submitted and signature-checked, never judged
+- **Designed for federation**: the protocol lets other organizations run registry nodes. Today there is one node (this one) and no delegated namespaces.
 
 ## How to Register a Robot
 
 1. Install the CLI tool: `pip install robot-md`
 2. Initialize and register a new robot: `robot-md init my-robot --register`
 3. Or register an existing manifest: `robot-md register ./ROBOT.md`
-4. Register manually at [robotregistryfoundation.org/register](https://robotregistryfoundation.org/register)
+4. Register manually at [robotregistryfoundation.org/registry/submit/](https://robotregistryfoundation.org/registry/submit/)
 
-## Robot Document Schema
+## Robot Record
+
+As returned by `GET /v2/robots/{rrn}` (the `api_key` is never returned). Source of truth: `functions/v2/_lib/types.ts`.
 
 | Field | Type | Description |
 |---|---|---|
 | `rrn` | string | Robot Registration Number, e.g. `RRN-000000000001` |
-| `name` | string | Human-readable robot name |
-| `owner` | string | Owner identifier (email or org) |
-| `capabilities` | object | Capability Object Map (§18) — declared skills and hardware |
-| `hardware_safety` | object | P66 manifest — ESTOP config, LoA requirements |
-| `rcan_version` | string | Highest RCAN spec version supported |
-| `verification_tier` | string | `community` / `verified` / `partner` / `certified` |
-| `runtime` | string | e.g. `opencastor/2026.3.17.1` |
-| `registered_at` | ISO 8601 | Registration timestamp |
-| `revoked` | boolean | Whether this robot's identity is revoked |
+| `name`, `manufacturer`, `model` | string | As declared at registration |
+| `firmware_version`, `rcan_version` | string | As declared; patchable |
+| `pq_signing_pub`, `pq_kid` | string | ML-DSA-65 public key and key id; registration must be signed |
+| `ruri` | string | Optional `rcan://` URI |
+| `rcn_ids`, `rmn`, `rhn_ids` | string / string[] | Optional operator-declared component, model and harness IDs |
+| `verification_status` | string | `unverified` → `community` → `manufacturer_claimed` → `manufacturer_verified` |
+| `assurance_level` | string | Optional `A1` / `A2` / `A3`, self-declared (see below) |
+| `envelope_hash` | string | Optional `sha256:<hex>` of the robot's declared physical envelope |
+| `assurance_evidence_url` | string | Optional https link to third-party evidence; required for A3 |
+| `assurance` | object \| null | Derived view of the three fields above, with its basis and a note |
+| `registered_at`, `updated_at` | ISO 8601 | Timestamps |
+| `revoked`, `revoked_at` | boolean, ISO 8601 | Present when revoked |
 
-## API Endpoints
+## API Endpoints (selection)
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/v2/robots` | List all registered robots (paginated) |
-| `GET` | `/v2/robots/{rrn}` | Resolve a robot record by RRN |
-| `GET` | `/v2/robots/{rrn}/revocation-status` | Check if an RRN is revoked |
-| `GET` | `/v2/robots/{rrn}/keys` | Fetch JWKS public keys for an RRN |
-| `POST` | `/v2/robots/register` | Register a new robot |
-| `GET` | `/.well-known/rcan-node.json` | Registry node manifest |
+| `GET` | `/v2/registry` | List registered entities (robots, components, models, harnesses, authorities) |
+| `POST` | `/v2/robots/register` | Register a new robot (signed body required) |
+| `GET` | `/v2/robots/register` | List recently registered robots |
+| `GET` / `PATCH` / `DELETE` | `/v2/robots/{rrn}` | Resolve, update whitelisted fields (bearer), or unregister (bearer) |
+| `POST` | `/v2/robots/{rrn}/verify-tier` | Signed request to move to `manufacturer_claimed` / `manufacturer_verified` |
+| `POST` | `/v2/robots/{rrn}/revoke-key`, `/rotate-key` | Key revocation and rotation |
+| `GET` | `/v2/keys/{kid}` | Resolve a signing key id |
+| `GET` | `/v2/revocations` | Orchestrator revocation list |
+| `GET` | `/.well-known/rrf-root-pubkey.pem` | Registry log-signing public key |
 
-Full API reference: [robotregistryfoundation.org/api/](https://robotregistryfoundation.org/api/)
+Full API reference: [docs.robotregistryfoundation.org/api/](https://docs.robotregistryfoundation.org/api/)
 
 ## Identity Namespaces
 
@@ -94,6 +102,20 @@ Robots registered under [`/v2/robots/register`](#registration) can submit EU AI 
 | `POST /v2/models/:rmn/eu-register` | §26 EU Register (Art. 49) | public |
 
 All five have a matching `GET` at the same path. §26 is scoped per model (RMN) rather than per robot; submitting robots identify themselves via the `X-Submitter-RRN` header.
+
+A §23 safety-benchmark submission may include `ev_tests_covered` (e.g. `["EV-05","EV-08"]`), naming which [physical-assurance tests](https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/tests/assurance/README.md) it covers. The list is part of the signed document and is echoed back as self-reported. RRF does not run or check the tests.
+
+## Physical Assurance (RCAN Appendix C)
+
+A robot record may carry a self-declared physical assurance level. The model proposes, a bounded layer disposes; A1–A3 describe how well that layer is built and tested ([RCAN Appendix C](https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/spec/appendix-c-physical-assurance.md), informative).
+
+- Set at registration (inside the signed body) or with `PATCH /v2/robots/{rrn}`; `null` clears.
+- A1 and A2 are always shown as self-declared. A3 needs `assurance_evidence_url` and is shown only when one is present.
+- RRF does not test robots, fetch or review the evidence, or check the envelope. No endpoint accepts test results as verified.
+- A-levels are independent of RCAN conformance levels L1–L4: an L3 robot can be A1.
+- Existing records need no migration; they read as `assurance: null`.
+
+Site page: [robotregistryfoundation.org/physical-assurance/](https://robotregistryfoundation.org/physical-assurance/)
 
 ### Happy path (POST)
 
@@ -138,24 +160,20 @@ Browse all: [robotregistryfoundation.org/registry/](https://robotregistryfoundat
 
 ## Verification Tiers
 
-| Tier | Badge | How to Achieve |
+| Tier | How to achieve | What it proves |
 |---|---|---|
-| Community | ⬜ | Self-registered; no identity check |
-| Verified | 🟡 | Email or domain verified; manufacturer identity confirmed |
-| Partner | 🔵 | Signed partnership agreement with RRF |
-| Certified | ✅ | Passed third-party conformance test suite |
+| `unverified` | Default on registration | The registrant holds the signing key |
+| `community` | Maintainer-curated | A maintainer looked at it; no independent check |
+| `manufacturer_claimed` | DNS TXT record on the manufacturer's domain | Control of that domain |
+| `manufacturer_verified` | DNS TXT + signed attestation + RURI manifest | The above, plus a signed manufacturer attestation |
+
+Tiers move one step at a time, never skipping. No tier certifies the robot. Conformance is not certification.
 
 Robots may only issue LoA 1 tokens from community registries. LoA 2/3 requires a verified or authoritative registry.
 
 ## Registry Tiers
 
-| Tier | Who | Trust Level |
-|---|---|---|
-| **Root** | RRF (rcan.dev) | Signs authoritative registry keys; manages global trust anchors |
-| **Authoritative** | Manufacturers, verified operators | Can issue LoA 2/3 JWTs; must pass annual audit |
-| **Community** | Anyone | Self-signed; LoA 1 only |
-
-Any organization can run an authoritative registry node. RCAN's federation model means robots registered at `bd.rcan.example` are fully interoperable with robots registered at `rcan.dev`.
+RCAN defines root, authoritative and community registry roles. Today the only registry node is this one, and no namespaces have been delegated. Nothing here audits other registries.
 
 ## Development
 
@@ -180,9 +198,9 @@ npm run build    # production → dist/
 
 The RRF is in active formation. Open issues and discussions at GitHub.
 
-We're seeking co-founders, board members, manufacturer partnerships, and standards body endorsements.
+RRF currently has one maintainer and no board, partners or endorsing organizations. We're seeking co-founders, and review and collaboration from standards bodies and testing labs. See [Governance and neutrality](https://robotregistryfoundation.org/about/#governance).
 
-Governance charter: [robotregistryfoundation.org/governance/](https://robotregistryfoundation.org/governance/)
+Draft governance charter: [docs.robotregistryfoundation.org/governance/](https://docs.robotregistryfoundation.org/governance/)
 
 ## License
 

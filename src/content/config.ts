@@ -19,7 +19,7 @@ const robotsCollection = defineCollection({
       dimensions: z.string().optional(),
       platform: z.string().optional(),
     }).optional(),
-    verification_status: z.enum(['community', 'verified', 'certified', 'accredited']).default('community'),
+    verification_status: z.enum(['unverified', 'community', 'manufacturer_claimed', 'manufacturer_verified']).default('unverified'),
     ruri: z.string().nullable().optional(),
     rrn_uri: z.string().optional(),
     tags: z.array(z.string()).default([]),

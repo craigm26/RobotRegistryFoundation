@@ -10,6 +10,7 @@
  */
 
 import type { RegistryEntry } from "../_lib/types.js";
+import { presentAssurance } from "../_lib/assurance.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -92,6 +93,10 @@ function summarize(record: Record<string, unknown>, type: RegistryEntry["entity_
       name = record.name as string;
       summary = { manufacturer: record.manufacturer, model: record.model,
                   rcan_version: record.rcan_version, firmware_version: record.firmware_version };
+      {
+        const a = presentAssurance(record);
+        if (a) summary.assurance = { level: a.level, basis: a.basis, displayed: a.displayed };
+      }
       break;
     case "component":
       name = `${record.model} (${record.type})`;

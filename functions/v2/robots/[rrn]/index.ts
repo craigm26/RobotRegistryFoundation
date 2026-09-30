@@ -3,7 +3,8 @@
  * PATCH /v2/robots/:rrn  — Two modes, both bearer-auth:
  *   1. Body has pq_signing_pub → upgrade an unsigned record with a PQ key.
  *   2. Body has whitelisted fields only → update them in place
- *      (PATCHABLE_FIELDS below).
+ *      (PATCHABLE_FIELDS below, plus the RCAN Appendix C assurance fields,
+ *      which accept null to clear).
  * DELETE /v2/robots/:rrn — Unregister a robot. Bearer api_key required.
  */
 
@@ -11,6 +12,7 @@ import { isValidId } from "../../_lib/id.js";
 import { isRevoked } from "../../_lib/revocation.js";
 import { verifyBody } from "rcan-ts";
 import { redactRobotRecord } from "../../_lib/redact.js";
+import { ASSURANCE_FIELDS, presentAssurance, validateAssurance } from "../../_lib/assurance.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -59,6 +61,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
     }
   }
 
+  parsed.assurance = presentAssurance(parsed);
   return new Response(JSON.stringify(redactRobotRecord(parsed)), {
     headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
   });
@@ -131,21 +134,33 @@ async function handleFieldUpdate(
   if (keys.length === 0) {
     return err("PATCH body must include at least one whitelisted field", 400);
   }
-  const allowed = new Set<string>(PATCHABLE_FIELDS);
+  const assuranceKeys = new Set<string>(ASSURANCE_FIELDS);
+  const allowed = new Set<string>([...PATCHABLE_FIELDS, ...ASSURANCE_FIELDS]);
   for (const k of keys) {
     if (!allowed.has(k)) {
-      return err(`Field '${k}' is not in the patchable whitelist (${PATCHABLE_FIELDS.join(", ")})`, 400);
+      return err(`Field '${k}' is not in the patchable whitelist (${[...allowed].join(", ")})`, 400);
     }
-    if (typeof body[k] !== "string") {
-      return err(`Field '${k}' must be a string`, 400);
+    const nullable = assuranceKeys.has(k) && body[k] === null;
+    if (typeof body[k] !== "string" && !nullable) {
+      return err(`Field '${k}' must be a string${assuranceKeys.has(k) ? " or null" : ""}`, 400);
     }
   }
+  // Validate the assurance fields as they would be stored after this PATCH.
+  const next: Record<string, unknown> = {};
+  for (const k of ASSURANCE_FIELDS) if (record[k] !== undefined) next[k] = record[k];
+  for (const k of keys) if (assuranceKeys.has(k)) {
+    if (body[k] === null) delete next[k]; else next[k] = body[k];
+  }
+  const assuranceError = validateAssurance(next);
+  if (assuranceError) return err(assuranceError, 400);
+
   for (const k of keys) {
-    record[k as PatchableField] = body[k];
+    if (body[k] === null) delete record[k];
+    else record[k as PatchableField] = body[k] as string;
   }
   record.updated_at = new Date().toISOString();
   await env.RRF_KV.put(`robot:${rrn}`, JSON.stringify(record));
-  return ok(redactRobotRecord(record));
+  return ok(redactRobotRecord({ ...record, assurance: presentAssurance(record) }));
 }
 
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) => {

@@ -7,7 +7,7 @@ interface Props {
   name: string;
   manufacturer: string;
   description: string;
-  verification_status: 'community' | 'verified' | 'manufacturer' | 'certified';
+  verification_status: 'unverified' | 'community' | 'manufacturer_claimed' | 'manufacturer_verified';
   tags?: string[];
   status?: string;
 }

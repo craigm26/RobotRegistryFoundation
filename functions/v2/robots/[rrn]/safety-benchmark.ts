@@ -12,6 +12,12 @@
  * fail signature verification.
  *
  * KV: compliance:safety-benchmark:{rrn} + compliance:safety-benchmark:history:{rrn}:{ts}
+ *
+ * EV cross-reference (RCAN Appendix C, informative): a submission MAY carry
+ * `ev_tests_covered`, a list of the physical-assurance test IDs (EV-01..EV-09)
+ * the benchmark claims to cover. It is part of the signed document, stored as
+ * submitted, and echoed back labelled as self-reported. RRF does not run or
+ * check the tests, and nothing here marks a robot as having passed them.
  */
 
 import { SAFETY_BENCHMARK_SCHEMA } from "rcan-ts";
@@ -24,6 +30,22 @@ export interface Env {
 
 const TEN_YEARS_SECS = 10 * 365 * 24 * 3600;
 const RRN_RE = /^RRN-[0-9]{12}$/;
+const EV_ID_RE = /^EV-0[1-9]$/;
+export const EV_TESTS_URL =
+  "https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/tests/assurance/README.md";
+
+/** Validate the optional ev_tests_covered list. Returns an error or null. */
+export function validateEvTests(v: unknown): string | null {
+  if (v === undefined) return null;
+  if (!Array.isArray(v) || v.length === 0 || v.length > 9) {
+    return "ev_tests_covered must be a non-empty array of EV test IDs (EV-01..EV-09)";
+  }
+  if (!v.every((x) => typeof x === "string" && EV_ID_RE.test(x))) {
+    return "ev_tests_covered entries must be EV-01..EV-09";
+  }
+  if (new Set(v).size !== v.length) return "ev_tests_covered entries must be unique";
+  return null;
+}
 
 export const onRequest: PagesFunction<Env> = async (ctx) => {
   const { request, env, params } = ctx;
@@ -53,6 +75,9 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
     return json({ error: `Expected schema ${SAFETY_BENCHMARK_SCHEMA}, got ${String(doc.schema)}` }, 400);
   }
 
+  const evError = validateEvTests(doc.ev_tests_covered);
+  if (evError) return json({ error: evError }, 400);
+
   const now = new Date().toISOString();
   const stored = JSON.stringify({ ...doc, _received_at: now });
   await env.RRF_KV.put(`compliance:safety-benchmark:${rrn}`, stored, { expirationTtl: TEN_YEARS_SECS });
@@ -63,6 +88,11 @@ async function handlePost(request: Request, env: Env, rrn: string): Promise<Resp
     rrn,
     submitted_at: now,
     safety_benchmark_url: `${API_BASE}/v2/robots/${rrn}/safety-benchmark`,
+    ...(doc.ev_tests_covered !== undefined && {
+      ev_tests_covered: doc.ev_tests_covered,
+      ev_tests_basis: "self-reported by the submitter; RRF has not run or checked these tests",
+      ev_tests_reference: EV_TESTS_URL,
+    }),
   }, 201);
 }
 

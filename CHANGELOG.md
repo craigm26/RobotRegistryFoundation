@@ -4,6 +4,37 @@ All notable changes to the Robot Registry Foundation are documented here.
 
 ---
 
+## Physical assurance, honest status, 2026-09-29
+
+Aligns the registry with RCAN Appendix C (Physical Assurance Profile, informative;
+RobotRegistryFoundation/rcan-spec#221). Audit: `docs/alignment/bounded-embodiment-audit.md`.
+
+### Added
+
+- Robot records: optional `assurance_level` (`A1`/`A2`/`A3`), `envelope_hash`,
+  `assurance_evidence_url`. Accepted at registration inside the signed body and via
+  `PATCH /v2/robots/:rrn` (`null` clears). A3 requires an https evidence URL.
+- `assurance` view on `GET`/`PATCH /v2/robots/:rrn` and in `/v2/registry` robot
+  summaries: A1/A2 labelled self-declared; A3 shown only with an evidence URL; a note
+  that RRF does not test robots or review evidence. No KV migration: absent fields read
+  as `assurance: null`.
+- `POST /v2/robots/:rrn/safety-benchmark` accepts an optional signed
+  `ev_tests_covered` list (`EV-01`..`EV-09`), echoed back as self-reported.
+- `/physical-assurance/` page; Governance and neutrality section on `/about/`
+  (one maintainer, conflicts of interest, AAIF proposal status, ITU talk).
+
+### Changed
+
+- Home, about, footer and README copy no longer imply endorsements, a board, partners,
+  certification, DNSSEC trust chains or registry audits that do not exist. README record
+  schema, endpoint table and verification tiers now match the code.
+- Badge component and content schema use the implemented verification tiers.
+
+### Fixed
+
+- Registry list and entity pages HTML-escape API fields and the `id` query parameter
+  before inserting them with `innerHTML` (registrant-chosen text could inject markup).
+
 ## Submission receipts point at a host that answers, 2026-09-14
 
 Seven compliance submission routes returned `*_url` values in their 201 bodies

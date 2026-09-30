@@ -5,6 +5,8 @@
  * Body (RobotRecord minus rrn/registered_at):
  *   name, manufacturer, model, firmware_version, rcan_version
  *   pq_signing_pub? (ML-DSA-65 base64), pq_kid?, ruri?, owner_uid?
+ *   assurance_level?, envelope_hash?, assurance_evidence_url? (RCAN Appendix C;
+ *     self-declared, covered by the signature when present)
  *
  * Returns: { rrn, registered_at, record_url }
  */
@@ -12,6 +14,7 @@
 import { nextId, isValidId } from "../_lib/id.js";
 import type { RobotRecord } from "../_lib/types.js";
 import { verifyBody } from "rcan-ts";
+import { pickAssurance, validateAssurance } from "../_lib/assurance.js";
 
 export interface Env { RRF_KV: KVNamespace }
 
@@ -37,6 +40,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const rmn     = body.rmn     as string | undefined;
   const rhn_ids = body.rhn_ids as string[] | undefined;
 
+  // RCAN Appendix C: optional, self-declared physical assurance fields.
+  const assurance = pickAssurance(body);
+  for (const [k, v] of Object.entries(assurance)) if (v === null) delete assurance[k];
+  const assuranceError = validateAssurance(assurance);
+  if (assuranceError) return err(assuranceError, 400);
+
   const signedFields: Record<string, unknown> = {
     name, manufacturer, model, firmware_version, rcan_version,
     pq_signing_pub, pq_kid,
@@ -46,6 +55,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (rcn_ids)  signedFields.rcn_ids  = rcn_ids;
   if (rmn)      signedFields.rmn      = rmn;
   if (rhn_ids)  signedFields.rhn_ids  = rhn_ids;
+  Object.assign(signedFields, assurance);
 
   let verified = false;
   try {
@@ -70,6 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     rcn_ids,
     rmn,
     rhn_ids,
+    ...assurance,
     verification_status: "unverified",
     loa_enforcement: body.loa_enforcement !== false,  // default true
     registered_at:   new Date().toISOString(),
