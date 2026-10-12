@@ -114,8 +114,9 @@ jobs:
           echo "$sha  dist/bounded-embodiment/method/bounded-embodiment-method-v0.1.md" | sha256sum -c -
 
       - name: Deploy to Cloudflare Pages
-        # Pull requests build and check only; they never deploy to production.
-        if: github.event_name != 'pull_request'
+        # Only main reaches production: pull requests build and check only, and a manual run
+        # on another branch or a tag builds without deploying.
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
