@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumb from '../../components/bounded-embodiment/Breadcrumb.astro';
+import DocArticle from '../../components/bounded-embodiment/DocArticle.astro';
+import VendoredNote from '../../components/bounded-embodiment/VendoredNote.astro';
+import * as Guide from '../../data/bounded-embodiment/lab-guide.md';
+---
+
+<BaseLayout
+  title="Bounded Embodiment lab guide"
+  description="One session with the Bounded Embodiment reference kit: set up an external instrument, check its accuracy, run EV-03 and EV-10, and submit signed reports."
+>
+  <div class="pt-8 max-w-3xl mx-auto">
+    <Breadcrumb items={[{ label: 'Bounded Embodiment', href: '/bounded-embodiment/' }, { label: 'Lab guide' }]} />
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-6">Lab guide: running EV-03 and EV-10 with the reference kit</h1>
+    <VendoredNote file="lab-guide.md" />
+    <DocArticle Content={Guide.Content} headings={Guide.getHeadings()} />
+  </div>
+</BaseLayout>

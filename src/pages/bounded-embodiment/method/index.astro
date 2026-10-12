@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumb from '../../../components/bounded-embodiment/Breadcrumb.astro';
+import source from '../../../data/bounded-embodiment/source.json';
+
+const m = source.method;
+const versions = [
+  {
+    version: m.version,
+    status: m.status,
+    date: m.date,
+    sha256: m.text_sha256,
+    page: '/bounded-embodiment/method/v0.1/',
+    file: '/bounded-embodiment/method/bounded-embodiment-method-v0.1.md',
+  },
+];
+---
+
+<BaseLayout
+  title="Bounded Embodiment test method"
+  description="Versions of the Bounded Embodiment test method, each identified by the SHA-256 of its text."
+>
+  <div class="pt-8 max-w-3xl mx-auto">
+    <Breadcrumb items={[{ label: 'Bounded Embodiment', href: '/bounded-embodiment/' }, { label: 'Method' }]} />
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Test method versions</h1>
+    <p class="text-lg text-text-muted mb-10 leading-relaxed">
+      Each version is identified by its method id, its version and the SHA-256 of its text. A version is frozen, and
+      its SHA-256 published, before any physical run is made under it; after that its bytes never change, and any
+      change makes a new version.
+    </p>
+
+    <div class="space-y-4">
+      {versions.map((v) => (
+        <div class="p-5 bg-bg-card border border-border rounded-xl">
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3">
+            <a href={v.page} class="font-display text-2xl font-semibold text-text hover:text-accent transition-colors">Version {v.version}</a>
+            <span class="text-sm text-text-muted">{v.status}, {v.date}</span>
+          </div>
+          <div class="font-mono text-xs text-text-muted break-all mb-3">{v.sha256}</div>
+          <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <a href={v.page} class="text-accent hover:underline">Read →</a>
+            <a href={v.file} download class="text-accent hover:underline">Download the text</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

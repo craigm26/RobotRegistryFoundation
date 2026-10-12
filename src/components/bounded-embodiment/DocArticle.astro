@@ -1,0 +1,30 @@
+---
+/**
+ * A vendored Markdown document: a contents list of its sections, then the document itself.
+ * The page supplies the title, so the document's own first-level heading is not shown twice.
+ */
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  Content: (props: Record<string, unknown>) => unknown;
+  headings: MarkdownHeading[];
+}
+
+const { Content, headings } = Astro.props;
+const sections = headings.filter((h) => h.depth === 2);
+---
+
+{sections.length >= 3 && (
+  <nav aria-label="Contents" class="p-5 bg-bg-card border border-border rounded-xl mb-10">
+    <div class="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3 font-mono">Contents</div>
+    <ol class="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+      {sections.map((h) => (
+        <li><a href={`#${h.slug}`} class="text-text-muted hover:text-accent transition-colors">{h.text}</a></li>
+      ))}
+    </ol>
+  </nav>
+)}
+
+<article class="prose max-w-none [&>h1:first-child]:hidden">
+  <Content />
+</article>

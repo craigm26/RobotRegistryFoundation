@@ -1,0 +1,22 @@
+---
+/** Where a vendored guide comes from, and that the method text, not the guide, is normative. */
+import source from '../../data/bounded-embodiment/source.json';
+
+interface Props {
+  file: keyof typeof source.files;
+}
+
+const entry = source.files[Astro.props.file];
+const url = `https://github.com/${source.repository}/blob/${entry.commit}/${entry.path}`;
+---
+
+<div class="p-5 bg-bg-card border border-border rounded-xl mb-10 text-sm text-text-muted space-y-2">
+  <p>
+    <strong class="text-text">Informative.</strong> The <a href="/bounded-embodiment/method/v0.1/" class="text-accent hover:underline">method text</a>
+    is normative; where this guide and the method differ, the method wins.
+  </p>
+  <p>
+    This page is <a href={url} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{entry.path}</a>
+    at <span class="font-mono">{entry.commit.slice(0, 7)}</span>. The repository may hold a newer copy.
+  </p>
+</div>

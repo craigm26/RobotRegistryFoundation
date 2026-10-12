@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumb from '../../../components/bounded-embodiment/Breadcrumb.astro';
+import DocArticle from '../../../components/bounded-embodiment/DocArticle.astro';
+import * as Method from '../../../data/bounded-embodiment/method-v0.1.md';
+import source from '../../../data/bounded-embodiment/source.json';
+
+const file = source.files['method-v0.1.md'];
+const m = source.method;
+const FILE_NAME = 'bounded-embodiment-method-v0.1.md';
+const FILE_URL = `/bounded-embodiment/method/${FILE_NAME}`;
+const SOURCE_URL = `https://github.com/${source.repository}/blob/${file.commit}/${file.path}`;
+const reportMember = `{"id": "${m.id}", "version": "${m.version}", "text_sha256": "${m.text_sha256}"}`;
+---
+
+<BaseLayout
+  title={`Bounded Embodiment test method v${m.version}`}
+  description={`The normative text of the Bounded Embodiment test method, version ${m.version} (${m.status}): EV-03, bounded workspace under hostile command, and EV-10, liveness through waypoints.`}
+>
+  <div class="pt-8 max-w-3xl mx-auto">
+    <Breadcrumb
+      items={[
+        { label: 'Bounded Embodiment', href: '/bounded-embodiment/' },
+        { label: 'Method', href: '/bounded-embodiment/method/' },
+        { label: `v${m.version}` },
+      ]}
+    />
+
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Bounded Embodiment test method</h1>
+    <p class="text-lg text-text-muted mb-6 leading-relaxed">Version {m.version}, {m.status}, {m.date}.</p>
+
+    <div class="p-5 bg-bg-card border border-border rounded-xl mb-10 text-sm text-text-muted space-y-4">
+      <p>
+        The text is the file, identified by its SHA-256. This page shows it rendered; where the two differ, the file
+        is right.
+      </p>
+      <dl class="grid sm:grid-cols-[8rem_1fr] gap-x-4 gap-y-2">
+        <dt class="text-text-faint">SHA-256</dt>
+        <dd class="font-mono text-xs leading-5 text-text break-all">{m.text_sha256}</dd>
+        <dt class="text-text-faint">File</dt>
+        <dd><a href={FILE_URL} download class="text-accent hover:underline font-mono break-all">{FILE_NAME}</a></dd>
+        <dt class="text-text-faint">Source</dt>
+        <dd>
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{file.path}</a>
+          at <span class="font-mono">{file.commit.slice(0, 7)}</span>
+        </dd>
+        <dt class="text-text-faint">Licence</dt>
+        <dd><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">CC BY 4.0</a></dd>
+      </dl>
+      <div>
+        <div class="text-text-faint mb-1">Check a downloaded copy</div>
+        <pre class="font-mono text-xs text-text bg-bg-alt border border-border rounded-md p-3 overflow-x-auto"><code>{`sha256sum ${FILE_NAME}
+shasum -a 256 ${FILE_NAME}    # macOS`}</code></pre>
+      </div>
+      <div>
+        <div class="text-text-faint mb-1">Cite it as</div>
+        <p class="text-text leading-relaxed break-words">
+          Bounded Embodiment test method, version {m.version} ({m.status}), {m.date}. Method id
+          <span class="font-mono whitespace-nowrap">{m.id}</span>. SHA-256 of the text:
+          <span class="font-mono text-xs break-all">{m.text_sha256}</span>.
+        </p>
+      </div>
+      <div>
+        <div class="text-text-faint mb-1">A test report cites it in its <span class="font-mono">method</span> member</div>
+        <pre class="font-mono text-xs text-text bg-bg-alt border border-border rounded-md p-3 overflow-x-auto"><code>{reportMember}</code></pre>
+      </div>
+    </div>
+
+    <DocArticle Content={Method.Content} headings={Method.getHeadings()} />
+  </div>
+</BaseLayout>

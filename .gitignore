@@ -12,3 +12,7 @@ package-lock.json
 
 *-private.pem
 mint-manifest.json
+
+# Bounded Embodiment results table: written by the deploy workflow from the results repository
+src/data/bounded-embodiment/results.json
+public/bounded-embodiment/results.json

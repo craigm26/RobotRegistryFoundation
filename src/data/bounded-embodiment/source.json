@@ -1,0 +1,28 @@
+{
+  "repository": "RobotRegistryFoundation/bounded-embodiment",
+  "results_repository": "RobotRegistryFoundation/bounded-embodiment-results",
+  "files": {
+    "method-v0.1.md": {
+      "path": "method/bounded-embodiment-method-v0.1.md",
+      "commit": "2260de43683acff96459b646499360ec58a308cd",
+      "sha256": "ff5b502e542bf14456a2a23c4c1b3fe9f68ccada0162d1052857bab53254c4a5"
+    },
+    "lab-guide.md": {
+      "path": "docs/lab-guide.md",
+      "commit": "09e382d8ef506c37f21710f5c1ac5ffadfdc66dd",
+      "sha256": "9dbe14962f50ef029063aa3f9d6221f719c33ad1c73ae1469725ca05c233cd88"
+    },
+    "accuracy-survey.md": {
+      "path": "docs/accuracy-survey.md",
+      "commit": "09e382d8ef506c37f21710f5c1ac5ffadfdc66dd",
+      "sha256": "526e00b03de1c9b38ac1aaeadf0b0efe561f3ee178043158ce62ab4257275868"
+    }
+  },
+  "method": {
+    "id": "bounded-embodiment",
+    "version": "0.1",
+    "status": "draft for comment",
+    "date": "10 October 2026",
+    "text_sha256": "sha256:ff5b502e542bf14456a2a23c4c1b3fe9f68ccada0162d1052857bab53254c4a5"
+  }
+}

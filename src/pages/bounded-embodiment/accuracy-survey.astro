@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumb from '../../components/bounded-embodiment/Breadcrumb.astro';
+import DocArticle from '../../components/bounded-embodiment/DocArticle.astro';
+import VendoredNote from '../../components/bounded-embodiment/VendoredNote.astro';
+import * as Survey from '../../data/bounded-embodiment/accuracy-survey.md';
+---
+
+<BaseLayout
+  title="Surveying the accuracy check's points"
+  description="Measuring the reference positions for the Bounded Embodiment pre-run accuracy check with a tape, a rule and a plumb line."
+>
+  <div class="pt-8 max-w-3xl mx-auto">
+    <Breadcrumb items={[{ label: 'Bounded Embodiment', href: '/bounded-embodiment/' }, { label: 'Accuracy survey' }]} />
+    <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-6">Surveying the accuracy check's points</h1>
+    <VendoredNote file="accuracy-survey.md" />
+    <DocArticle Content={Survey.Content} headings={Survey.getHeadings()} />
+  </div>
+</BaseLayout>
