@@ -5,9 +5,73 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Hourly, for the Bounded Embodiment results table: a scheduled run deploys only when the
+  # results repository's main has moved since the published table was built.
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+# Deploys to production run one at a time; pull requests get their own group.
+concurrency:
+  group: deploy-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'production' }}
+  cancel-in-progress: false
 
 jobs:
+  be-results:
+    # Runs the results repository's own table builder (tools/build_table.py) in a job with no
+    # secrets; only its JSON output reaches the deploy job, and the results page checks every
+    # field of it before use (src/lib/bounded-embodiment.ts).
+    name: Bounded Embodiment results
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.build.outputs.changed }}
+    steps:
+      - name: Build the table from the results repository's main
+        id: build
+        run: |
+          set -uo pipefail
+          repo=RobotRegistryFoundation/bounded-embodiment-results
+          mkdir -p be-results
+          # The published table, if there is one. The site answers unknown paths with a page, not
+          # a 404, so anything that is not a results payload counts as none.
+          published_table() {
+            curl -fsS --max-time 20 https://robotregistryfoundation.org/bounded-embodiment/results.json \
+              | python3 -c 'import json, sys
+          doc = json.load(sys.stdin)
+          if not isinstance(doc, dict) or not isinstance(doc.get("rows"), list):
+              sys.exit(1)
+          json.dump(doc, sys.stdout)' 2>/dev/null
+          }
+          published=$(published_table | python3 -c 'import json, sys; print(json.load(sys.stdin).get("source_commit") or "")' 2>/dev/null || true)
+          if git clone --quiet --depth 1 "https://github.com/$repo" "$RUNNER_TEMP/results" \
+            && commit=$(git -C "$RUNNER_TEMP/results" rev-parse HEAD) \
+            && env GITHUB_REPOSITORY="$repo" GITHUB_SHA="$commit" \
+                 python3 "$RUNNER_TEMP/results/tools/build_table.py" \
+                 --repo "$RUNNER_TEMP/results" --out "$RUNNER_TEMP/table" \
+            && cp "$RUNNER_TEMP/table/results.json" be-results/results.json; then
+            # GITHUB_REPOSITORY and GITHUB_SHA above name the results repository, which
+            # build_table.py records as its source and links to; not this repository.
+            if [ "$commit" = "$published" ]; then echo "changed=false"; else echo "changed=true"; fi >> "$GITHUB_OUTPUT"
+          else
+            # A broken results repository must not block the rest of the site: keep the
+            # published table, or deploy without one if there is none.
+            echo "::warning::Could not build the Bounded Embodiment results table; keeping the published one."
+            published_table > be-results/results.json || rm -f be-results/results.json
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: be-results
+          path: be-results/results.json
+          if-no-files-found: warn
+          retention-days: 5
+
   deploy:
+    needs: be-results
+    # A scheduled run exists only to pick up new results.
+    if: github.event_name != 'schedule' || needs.be-results.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -15,6 +79,20 @@ jobs:
     name: Deploy
     steps:
       - uses: actions/checkout@v6
+
+      - name: Bounded Embodiment results table
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          name: be-results
+          path: src/data/bounded-embodiment
+
+      - name: Publish results.json beside the table
+        run: |
+          if [ -f src/data/bounded-embodiment/results.json ]; then
+            mkdir -p public/bounded-embodiment
+            cp src/data/bounded-embodiment/results.json public/bounded-embodiment/results.json
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -24,10 +102,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check the vendored Bounded Embodiment documents
+        run: npx vitest run tests/bounded-embodiment.test.ts
+
       - name: Build
         run: npm run build
 
+      - name: Check the served method text is the file its SHA-256 names
+        run: |
+          sha=$(python3 -c 'import json; print(json.load(open("src/data/bounded-embodiment/source.json"))["files"]["method-v0.1.md"]["sha256"])')
+          echo "$sha  dist/bounded-embodiment/method/bounded-embodiment-method-v0.1.md" | sha256sum -c -
+
       - name: Deploy to Cloudflare Pages
+        # Only main reaches production: pull requests build and check only, and a manual run
+        # on another branch or a tag builds without deploying.
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

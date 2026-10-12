@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumb from '../../components/bounded-embodiment/Breadcrumb.astro';
+import { COLUMNS, MAINTAINER_LABEL, RESULTS_REPOSITORY, parseResults } from '../../lib/bounded-embodiment';
+
+// Written at deploy time by the results repository's tools/build_table.py (see deploy.yml); absent
+// in a local build.
+const found = import.meta.glob('../../data/bounded-embodiment/results.json', { eager: true, import: 'default' });
+const table = parseResults(Object.values(found)[0]);
+const repository = table?.repository ?? RESULTS_REPOSITORY;
+const base = `https://github.com/${repository}`;
+
+const verdictClass: Record<string, string> = {
+  PASS: 'text-green-400',
+  FAIL: 'text-red-400',
+  INCONCLUSIVE: 'text-amber-400',
+};
+const chip = 'inline-block mt-1 mr-1 px-1.5 rounded bg-white/5 border border-border text-xs text-text-muted whitespace-nowrap';
+---
+
+<BaseLayout
+  title="Bounded Embodiment results"
+  description="Runs of the Bounded Embodiment tests, submitted as signed reports to a public repository and found consistent by its CI."
+>
+  <div class="pt-8">
+    <div class="max-w-3xl mx-auto">
+      <Breadcrumb items={[{ label: 'Bounded Embodiment', href: '/bounded-embodiment/' }, { label: 'Results' }]} />
+      <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-6">Bounded Embodiment results</h1>
+
+      {table ? (
+        <div class="space-y-4 text-text-muted leading-relaxed mb-10">
+          <p>{table.statement}</p>
+          <p class="text-sm">
+            {table.notes}{' '}
+            <a href={`${base}/blob/main/POLICY.md`} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">POLICY.md</a>
+          </p>
+        </div>
+      ) : (
+        <div class="p-5 bg-bg-card border border-border rounded-xl mb-10 text-sm text-text-muted">
+          This build has no results data. The table is built from the main branch of
+          <a href={base} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{repository}</a>
+          each time the site is deployed.
+        </div>
+      )}
+    </div>
+
+    {table && (
+      <div class="overflow-x-auto border-t border-border">
+        <table class="w-full text-sm text-left">
+          <thead>
+            <tr>
+              {COLUMNS.map((c) => (
+                <th scope="col" class="py-3 pr-3 font-semibold text-text-faint whitespace-nowrap border-b border-border">{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.length === 0 && (
+              <tr>
+                <td colspan={COLUMNS.length} class="py-4 text-text-muted border-b border-border">No results yet.</td>
+              </tr>
+            )}
+            {table.rows.map((r) => (
+              <tr class="align-top border-b border-border">
+                <td class="py-3 pr-3 min-w-[9rem]">
+                  {r.runUrl ? (
+                    <a href={r.runUrl} target="_blank" rel="noopener noreferrer" class="text-text hover:text-accent font-mono whitespace-nowrap">{r.when}</a>
+                  ) : (
+                    <span class="text-text font-mono whitespace-nowrap">{r.when}</span>
+                  )}
+                  <span class="block text-xs text-text-faint break-all">{r.resultId}</span>
+                </td>
+                <td class="py-3 pr-3 font-mono text-text-muted whitespace-nowrap">{r.test}</td>
+                <td class="py-3 pr-3 whitespace-nowrap">
+                  <span class:list={['font-mono font-semibold', verdictClass[r.verdict] ?? 'text-text-muted']}>{r.verdict}</span>
+                  {r.withdrawn && <span class={chip}>withdrawn</span>}
+                </td>
+                <td class="py-3 pr-3 text-text-muted whitespace-nowrap">{r.role}</td>
+                <td class="py-3 pr-3 text-text-muted min-w-[9rem]">
+                  {r.labName ? <span class="text-text">{r.labName}</span> : <span class="font-mono">{r.lab}</span>}
+                  {r.labName && <span class="block text-xs text-text-faint font-mono">{r.lab}</span>}
+                  {r.maintainersOwn && <span class={chip}>{MAINTAINER_LABEL}</span>}
+                </td>
+                <td class="py-3 pr-3 text-text-muted whitespace-nowrap">{r.identityLevel}</td>
+                <td class="py-3 pr-3 text-text-muted min-w-[9rem]">{r.instrument}</td>
+                <td class="py-3 pr-3 text-text-muted whitespace-nowrap">{r.control}</td>
+                <td class="py-3 pr-3 text-text-muted min-w-[9rem]">{r.reproduction}</td>
+                <td class="py-3 pr-3 font-mono text-text-muted whitespace-nowrap">{r.coreVersion}</td>
+                <td class="py-3 pr-3 font-mono text-text-muted whitespace-nowrap">{r.methodVersion}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <div class="max-w-3xl mx-auto mt-10 text-sm text-text-muted space-y-2">
+      <p>
+        Dry-run labs (test-*) are not listed. A withdrawn run stays listed and no longer counts as a control or a
+        reproduction.
+      </p>
+      <p>
+        Data: CC BY 4.0, granted in each lab's signed report. The table is built by the results repository's
+        <span class="font-mono">tools/build_table.py</span>; its rows are also published as
+        <a href="/bounded-embodiment/results.json" class="text-accent hover:underline font-mono">results.json</a>.
+      </p>
+      <p>The method's maintainer also maintains RCAN and this registry; the method depends on neither.</p>
+      <p>
+        <a href={base} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{repository}</a>
+        {table?.sourceCommit && (
+          <Fragment>
+            {' · built from '}
+            <a href={`${base}/commit/${table.sourceCommit}`} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono">{table.sourceCommit.slice(0, 12)}</a>
+          </Fragment>
+        )}
+        {table && table.dropped > 0 && <span> · {table.dropped} malformed row(s) not shown</span>}
+      </p>
+    </div>
+  </div>
+</BaseLayout>
