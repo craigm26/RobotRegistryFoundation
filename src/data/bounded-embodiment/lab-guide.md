@@ -7,7 +7,7 @@ method wins.
 
 **Status.** Method v0.1 is a draft for comment and its thresholds are illustrative. A verdict is a
 finding about one run, never a certification. The kit's runner and watchdog are a draft that needs
-line-by-line human review before it drives hardware (method, known gap 10). The markerless tracker has
+line-by-line human review before it drives hardware (method, known gap 7). The markerless tracker has
 been validated on synthetic recordings only.
 
 The examples use an SO-101 arm, a Luxonis OAK-D on a tripod and the kit's markerless tracker, as on
