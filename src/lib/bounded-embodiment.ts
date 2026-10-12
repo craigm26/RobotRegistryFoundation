@@ -106,10 +106,12 @@ export function utcMinute(value: unknown): string | null {
   }
   let offsetMinutes = 0;
   if (zone !== 'Z') {
-    const sign = zone[0] === '+' ? 1 : -1;
-    offsetMinutes = sign * (Number(zone.slice(1, 3)) * 60 + Number(zone.slice(4, 6)));
+    const [offHours, offMinutes] = [Number(zone.slice(1, 3)), Number(zone.slice(4, 6))];
+    if (offHours > 23 || offMinutes > 59) return null; // RFC 3339: +hh:mm, hh 00-23, mm 00-59
+    offsetMinutes = (zone[0] === '+' ? 1 : -1) * (offHours * 60 + offMinutes);
   }
   const utc = new Date(local.getTime() - offsetMinutes * 60_000);
+  if (utc.getUTCFullYear() < 1 || utc.getUTCFullYear() > 9999) return null;
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
     `${String(utc.getUTCFullYear()).padStart(4, '0')}-${pad(utc.getUTCMonth() + 1)}-` +

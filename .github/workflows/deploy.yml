@@ -49,10 +49,10 @@ jobs:
             && commit=$(git -C "$RUNNER_TEMP/results" rev-parse HEAD) \
             && env GITHUB_REPOSITORY="$repo" GITHUB_SHA="$commit" \
                  python3 "$RUNNER_TEMP/results/tools/build_table.py" \
-                 --repo "$RUNNER_TEMP/results" --out "$RUNNER_TEMP/table"; then
+                 --repo "$RUNNER_TEMP/results" --out "$RUNNER_TEMP/table" \
+            && cp "$RUNNER_TEMP/table/results.json" be-results/results.json; then
             # GITHUB_REPOSITORY and GITHUB_SHA above name the results repository, which
             # build_table.py records as its source and links to; not this repository.
-            cp "$RUNNER_TEMP/table/results.json" be-results/results.json
             if [ "$commit" = "$published" ]; then echo "changed=false"; else echo "changed=true"; fi >> "$GITHUB_OUTPUT"
           else
             # A broken results repository must not block the rest of the site: keep the

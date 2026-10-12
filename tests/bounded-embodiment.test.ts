@@ -108,6 +108,11 @@ describe('results.json from build_table.py', () => {
     expect(utcMinute('0000-01-01T00:00:00Z')).toBeNull();
     expect(utcMinute('2026-10-13T24:00:00Z')).toBeNull();
     expect(utcMinute('2026-10-13 17:00:00')).toBeNull();
+    expect(utcMinute('2026-10-13T17:00:00+24:00')).toBeNull();
+    expect(utcMinute('2026-10-13T17:00:00+00:60')).toBeNull();
+    expect(utcMinute('0001-01-01T00:30:00+01:00')).toBeNull();
+    expect(utcMinute('9999-12-31T23:30:00-01:00')).toBeNull();
+    expect(utcMinute('2026-10-13T17:00:00+23:59')).toBe('2026-10-12 17:01');
     expect(parseResults(payload([row({ started_at: 'yesterday' })]))?.rows[0].when).toBe('yesterday');
     expect(parseResults(payload([row({ started_at: 12 })]))?.rows[0].when).toBe('?');
   });
