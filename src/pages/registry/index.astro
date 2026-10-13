@@ -27,6 +27,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
     </div>
 
+    <!-- Reset notice: keep until the registry has real entries of its own -->
+    <aside class="mb-8 rounded-xl border border-border bg-bg-card px-5 py-4 text-sm text-text-muted" aria-label="Registry reset notice">
+      <p>
+        <span class="font-mono text-text">13 October 2026.</span>
+        The registry was reset. Records created while the registry software was being built and tested are archived and no longer served, here or on the rcan.dev API.
+      </p>
+      <p class="mt-2">
+        Numbers are never reused: new registrations continue from <span class="font-mono text-text">RRN-000000000013</span>, <span class="font-mono text-text">RAN-000000000778</span> and <span class="font-mono text-text">RPN-000000000004</span>.
+        Kept: the RRF root key; the robots in use, <span class="font-mono">RRN-000000000011</span> and <span class="font-mono">RRN-000000000012</span>; the signing authorities <span class="font-mono">RAN-000000000334</span> and <span class="font-mono">RAN-000000000335</span>; the actuator packages <span class="font-mono">RPN-000000000002</span> and <span class="font-mono">RPN-000000000003</span>; and, on rcan.dev, <span class="font-mono">RRN-000000000003</span>.
+      </p>
+    </aside>
+
     <!-- Entity type tabs -->
     <div class="flex flex-wrap gap-2 mb-6" id="type-tabs" role="group" aria-label="Filter by entity type">
       {['all', 'robot', 'component', 'model', 'harness'].map(t => (

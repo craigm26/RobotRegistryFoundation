@@ -108,6 +108,10 @@ Always update both:
 1. `src/content/robots/<robot-slug>.json` — the JSON data
 2. If OpenCastor version changes: update `opencastor_version` and `rcan_version` fields
 
-Current registered robots (versions per the live `/v2/registry` API; `src/content/robots/` is intentionally empty since the registry was redesigned to dynamic — see `[rrn].astro:1-7`):
-- **Bob**: RRN-000000000001, Raspberry Pi 5 + Hailo-8 + SO-ARM101 6-DOF arm, OpenCastor (see PyPI for canonical version)
-- **Alex**: RRN-000000000005, Raspberry Pi 5 + OAK-D, OpenCastor (see PyPI for canonical version)
+Current registered robots (per the live `/v2/registry` API; `src/content/robots/` is intentionally empty since the registry was redesigned to dynamic — see `[rrn].astro:1-7`):
+- **Bob**: RRN-000000000011 (`bob-spec-b-pick-place`, SO-ARM101), the RRN Bob's discovery service advertises
+- **Rover**: RRN-000000000012 (`rover-spec-a-drive`, RC car), signers RAN-000000000334 (manifest) and RAN-000000000335 (gateway attestation)
+
+### Registry reset, 2026-10-13
+
+The KV binding now points at `rrf-registry-2026-10-13` (`d5cdd8c5a99d429bbe31d7cfd584a050`). The previous namespace, `0f2b391c4ea541c7b6e89e9eb95a44b3`, is kept unchanged as the archive: test registrations from development, including RRN-000000000001 (bob-baseline), RAN-000000000777 and the 330 repeated "bob — envelope signer" authorities. Carried over: the root keypair, the counters (no number is reused; next mints are RRN-000000000013, RAN-000000000778, RPN-000000000004), packages RPN-000000000002 and RPN-000000000003, the two robots above and the rover's two signers. RRN slots below 10 stay reserved for manual assignment (`RESERVED_FLOORS` in `functions/v2/_lib/id.ts`).

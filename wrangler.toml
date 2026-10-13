@@ -4,4 +4,7 @@ pages_build_output_dir = "dist"
 
 [[kv_namespaces]]
 binding = "RRF_KV"
-id      = "0f2b391c4ea541c7b6e89e9eb95a44b3"
+# Registry reset on 2026-10-13: rrf-registry-2026-10-13. The previous namespace,
+# 0f2b391c4ea541c7b6e89e9eb95a44b3, is kept unchanged as the archive; pointing
+# this id back at it undoes the reset.
+id      = "d5cdd8c5a99d429bbe31d7cfd584a050"
