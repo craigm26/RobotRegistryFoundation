@@ -5,6 +5,9 @@ const SPEC = 'https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/s
 const ENVELOPE_SCHEMA = 'https://rcan.dev/schemas/envelope.json';
 const GATE_SCHEMA = 'https://rcan.dev/schemas/gate-decision.json';
 const TESTS = 'https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/tests/assurance/README.md';
+const METHOD_REPO = 'https://github.com/RobotRegistryFoundation/bounded-embodiment';
+const METHOD_FEEDBACK = 'https://github.com/RobotRegistryFoundation/bounded-embodiment/issues/new/choose';
+const ITU_WORKSHOP = 'https://www.itu.int/en/ITU-T/Workshops-and-Seminars/2026/1016/Pages/default.aspx';
 
 const requirements = [
   { id: 'R1', title: 'Declared envelope', plain: 'The robot publishes its limits in a machine-readable file: where it may go, how fast, how hard it may push, and how quickly and how far it takes to stop.', test: 'Measure the machine from outside. Nothing measured may exceed what was declared.' },
@@ -15,15 +18,15 @@ const requirements = [
 ];
 
 const levels = [
-  { id: 'A1', name: 'Declared', desc: 'Published envelope, gate in a separate process from the model, hash-chained log.' },
-  { id: 'A2', name: 'Enforced', desc: 'A1 plus: gate on independent compute or firmware, a hardware stop path, heartbeat watchdogs, and passing the fault-injection tests.' },
-  { id: 'A3', name: 'Assured', desc: 'A2 plus: gate and stop path meet a functional-safety integrity target (ISO 13849 PL or IEC 61508 SIL) with third-party testing.' },
+  { id: 'BE-1', wire: 'A1', name: 'Declared', desc: 'Published envelope, gate in a separate process from the model, hash-chained log.' },
+  { id: 'BE-2', wire: 'A2', name: 'Enforced', desc: 'BE-1 plus: gate on independent compute or firmware, a hardware stop path, heartbeat watchdogs, and passing the fault-injection tests.' },
+  { id: 'BE-3', wire: 'A3', name: 'Assured', desc: 'BE-2 plus: gate and stop path meet a functional-safety integrity target (ISO 13849 PL or IEC 61508 SIL) with third-party testing.' },
 ];
 ---
 
 <BaseLayout
   title="Physical Assurance — Robot Registry Foundation"
-  description="How the registry records a robot's physical assurance level: the model proposes, a bounded layer disposes. Self-declared levels A1–A2, A3 only with third-party evidence."
+  description="How the registry records a robot's physical assurance level: the model proposes, a bounded layer disposes. Self-declared levels BE-1 and BE-2, BE-3 only with third-party evidence."
 >
   <div class="pt-8 max-w-3xl mx-auto">
     <div class="flex items-center gap-2 text-sm text-text-muted font-mono mb-8">
@@ -40,7 +43,7 @@ const levels = [
     <div class="p-5 bg-bg-card border border-border rounded-xl mb-12 text-sm text-text-muted space-y-2">
       <p><strong class="text-text">Conformance is not certification.</strong> <strong class="text-text">Compliance evidence is not regulatory sufficiency.</strong> What the registry holds is evidence a robot's owner chose to publish.</p>
       <p>RCAN and this registry have one maintainer and no third-party verification. The registry does not test robots and does not review linked evidence.</p>
-      <p>To be presented at the ITU-T FG-EAI workshop on embodied AI, 16 October 2026 (remote). That is a presentation, not an endorsement by ITU or anyone else.</p>
+      <p>The Bounded Embodiment test method was presented remotely in Session 1 (“Core Technologies for Embodied AI”) of the <a href={ITU_WORKSHOP} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">ITU Workshop on “Embodied AI for Multimedia Technologies”</a>, Hangzhou, China, 16 October 2026, held with ITU-T FG-EAI. That was a presentation, not an endorsement by ITU or anyone else.</p>
     </div>
 
     <section class="mb-12">
@@ -53,8 +56,12 @@ const levels = [
         </p>
         <p>
           This is not new. It is the Simplex architecture (Sha, 2001) and the run-time assurance pattern standardised
-          for aircraft in ASTM F3269. What RCAN adds is a vendor-neutral <em>test method</em> for machines driven by
-          learned policies: five requirements, each with a pass/fail test a third party can run.
+          for aircraft in ASTM F3269. What is new is a vendor-neutral <em>test method</em> for machines driven by
+          learned policies: five requirements, each with a pass/fail test a third party can run. That method,
+          <a href={METHOD_REPO} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Bounded Embodiment</a>,
+          is independent of RCAN and of this registry and does not require either. RCAN Appendix C is one
+          implementation that maps onto it. Comments on the method go to its
+          <a href={METHOD_FEEDBACK} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">issue tracker</a>.
         </p>
         <p>
           It complements, and replaces none of, ISO 10218, ISO/TS 15066, ISO 13482, IEC 60204-1, ISO 13849,
@@ -92,16 +99,18 @@ const levels = [
           <div class="flex gap-4 p-5 bg-bg-card border border-border rounded-xl">
             <span class="font-mono text-lg text-accent shrink-0">{l.id}</span>
             <div>
-              <div class="font-semibold text-text mb-1">{l.name}</div>
+              <div class="font-semibold text-text mb-1">{l.name} <span class="font-mono text-xs text-text-faint font-normal">(registry value <span class="font-mono">{l.wire}</span>)</span></div>
               <div class="text-sm text-text-muted leading-relaxed">{l.desc}</div>
             </div>
           </div>
         ))}
       </div>
       <div class="p-5 bg-primary/8 border border-primary/20 rounded-xl text-sm text-text leading-relaxed">
-        Assurance levels A1–A3 are a separate axis from RCAN's protocol conformance levels L1–L4. An L-level says how
-        well a robot speaks the protocol; an A-level says how well its motion is bounded.
-        <strong>An RCAN L3 robot can be A1.</strong>
+        Assurance levels BE-1 to BE-3 are a separate axis from RCAN's protocol conformance levels L1–L4. An L-level says how
+        well a robot speaks the protocol; a BE-level says how well its motion is bounded.
+        <strong>An RCAN L3 robot can be BE-1.</strong>
+        The names BE-1 to BE-3 replaced A1–A3 on 8 October 2026. The registry API still stores and returns the values
+        <span class="font-mono">A1</span>, <span class="font-mono">A2</span> and <span class="font-mono">A3</span>, which mean BE-1, BE-2 and BE-3.
       </div>
     </section>
 
@@ -124,8 +133,8 @@ const levels = [
       <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">What the registry shows</h2>
       <ul class="space-y-2 text-sm text-text-muted leading-relaxed">
         <li class="flex gap-2"><span class="text-accent">→</span> A robot record may carry <span class="font-mono">assurance_level</span>, <span class="font-mono">envelope_hash</span> and <span class="font-mono">assurance_evidence_url</span>, supplied by its owner.</li>
-        <li class="flex gap-2"><span class="text-accent">→</span> A1 and A2 are always labelled <em>self-declared</em>.</li>
-        <li class="flex gap-2"><span class="text-accent">→</span> A3 is shown only when a third-party evidence link is present. The registry links to that evidence; it does not review it.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> BE-1 and BE-2 are always labelled <em>self-declared</em>.</li>
+        <li class="flex gap-2"><span class="text-accent">→</span> BE-3 is shown only when a third-party evidence link is present. The registry links to that evidence; it does not review it.</li>
         <li class="flex gap-2"><span class="text-accent">→</span> A safety-benchmark submission may list which EV tests (EV-01 to EV-09) it covers. That list is shown as self-reported.</li>
         <li class="flex gap-2"><span class="text-accent">→</span> No registry endpoint accepts test results as verified.</li>
       </ul>
