@@ -208,6 +208,6 @@ Draft governance charter: [docs.robotregistryfoundation.org/governance/](https:/
 
 ## License
 
-Site content: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
-Code: MIT
+Site content: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (full text in [LICENSES/CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt)).
+Code: MIT (see [LICENSE](LICENSE)).
 
