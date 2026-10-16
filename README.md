@@ -41,9 +41,9 @@ As returned by `GET /v2/robots/{rrn}` (the `api_key` is never returned). Source 
 | `ruri` | string | Optional `rcan://` URI |
 | `rcn_ids`, `rmn`, `rhn_ids` | string / string[] | Optional operator-declared component, model and harness IDs |
 | `verification_status` | string | `unverified` → `community` → `manufacturer_claimed` → `manufacturer_verified` |
-| `assurance_level` | string | Optional `A1` / `A2` / `A3`, self-declared (see below) |
+| `assurance_level` | string | Optional `A1` / `A2` / `A3` (levels BE-1 / BE-2 / BE-3), self-declared (see below) |
 | `envelope_hash` | string | Optional `sha256:<hex>` of the robot's declared physical envelope |
-| `assurance_evidence_url` | string | Optional https link to third-party evidence; required for A3 |
+| `assurance_evidence_url` | string | Optional https link to third-party evidence; required for `A3` (BE-3) |
 | `assurance` | object \| null | Derived view of the three fields above, with its basis and a note |
 | `registered_at`, `updated_at` | ISO 8601 | Timestamps |
 | `revoked`, `revoked_at` | boolean, ISO 8601 | Present when revoked |
@@ -107,12 +107,14 @@ A §23 safety-benchmark submission may include `ev_tests_covered` (e.g. `["EV-05
 
 ## Physical Assurance (RCAN Appendix C)
 
-A robot record may carry a self-declared physical assurance level. The model proposes, a bounded layer disposes; A1–A3 describe how well that layer is built and tested ([RCAN Appendix C](https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/spec/appendix-c-physical-assurance.md), informative).
+A robot record may carry a self-declared physical assurance level. The model proposes, a bounded layer disposes; levels BE-1 (Declared), BE-2 (Enforced) and BE-3 (Assured) describe how well that layer is built and tested ([RCAN Appendix C](https://github.com/RobotRegistryFoundation/rcan-spec/blob/master/spec/appendix-c-physical-assurance.md), informative; the test method itself is [Bounded Embodiment](https://github.com/RobotRegistryFoundation/bounded-embodiment), which does not depend on RCAN).
+
+The names BE-1 to BE-3 replaced A1–A3 on 2026-10-08. The API values did not change: `assurance_level` still takes and returns `A1`, `A2` and `A3`, meaning BE-1, BE-2 and BE-3.
 
 - Set at registration (inside the signed body) or with `PATCH /v2/robots/{rrn}`; `null` clears.
-- A1 and A2 are always shown as self-declared. A3 needs `assurance_evidence_url` and is shown only when one is present.
+- BE-1 (`A1`) and BE-2 (`A2`) are always shown as self-declared. BE-3 (`A3`) needs `assurance_evidence_url` and is shown only when one is present.
 - RRF does not test robots, fetch or review the evidence, or check the envelope. No endpoint accepts test results as verified.
-- A-levels are independent of RCAN conformance levels L1–L4: an L3 robot can be A1.
+- BE-levels are independent of RCAN conformance levels L1–L4: an L3 robot can be BE-1.
 - Existing records need no migration; they read as `assurance: null`.
 
 Site page: [robotregistryfoundation.org/physical-assurance/](https://robotregistryfoundation.org/physical-assurance/)
