@@ -187,18 +187,20 @@ npm run build    # production → dist/
 
 ## Ecosystem
 
-| Project | Version | Purpose |
-|---|---|---|
-| **RRF** (this) | v2.0.0 | Global robot identity registry |
-| [RCAN Protocol](https://rcan.dev/spec/) | v3.0.0 | Open robot communication standard |
-| [OpenCastor](https://github.com/craigm26/OpenCastor) | v2026.4.21.1 | Robot runtime, RCAN reference implementation |
-| [rcan-py](https://github.com/continuonai/rcan-py) | v3.0.0 | Python RCAN SDK |
-| [rcan-ts](https://github.com/continuonai/rcan-ts) | v3.0.0 | TypeScript RCAN SDK |
-| [Fleet UI](https://app.opencastor.com) | live | Web fleet dashboard |
+| Project | Purpose |
+|---|---|
+| **RRF** (this) | Global robot identity registry |
+| [RCAN Protocol](https://rcan.dev/spec/) | Open robot communication protocol |
+| [OpenCastor](https://github.com/craigm26/OpenCastor) | Robot runtime, RCAN reference implementation |
+| [rcan-py](https://github.com/RobotRegistryFoundation/rcan-py) | Python RCAN SDK |
+| [rcan-ts](https://github.com/RobotRegistryFoundation/rcan-ts) | TypeScript RCAN SDK |
+| [Fleet UI](https://app.opencastor.com) | Web fleet dashboard |
+
+For spec and SDK versions, see the live compatibility matrix at [rcan.dev/compatibility](https://rcan.dev/compatibility).
 
 ## Contributing
 
-The RRF is in active formation. Open issues and discussions at GitHub.
+The RRF is in active formation. Open an issue on GitHub.
 
 RRF currently has one maintainer and no board, partners or endorsing organizations. We're seeking co-founders, and review and collaboration from standards bodies and testing labs. See [Governance and neutrality](https://robotregistryfoundation.org/about/#governance).
 
