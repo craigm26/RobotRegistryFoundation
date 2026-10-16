@@ -196,7 +196,7 @@ npm run build    # production → dist/
 | [rcan-ts](https://github.com/RobotRegistryFoundation/rcan-ts) | TypeScript RCAN SDK |
 | [Fleet UI](https://app.opencastor.com) | Web fleet dashboard |
 
-Current spec and SDK versions: [rcan.dev/compatibility](https://rcan.dev/compatibility).
+For spec and SDK versions, see the live compatibility matrix at [rcan.dev/compatibility](https://rcan.dev/compatibility).
 
 ## Contributing
 
