@@ -5,6 +5,7 @@ import source from '../../data/bounded-embodiment/source.json';
 
 const REPO = `https://github.com/${source.repository}`;
 const RESULTS_REPO = `https://github.com/${source.results_repository}`;
+const TALK = 'https://craigmerry.com/bounded-embodiment/';
 
 const tests = [
   {
@@ -32,12 +33,59 @@ const verdicts = [
   { v: 'INCONCLUSIVE', cls: 'text-amber-400', meaning: 'The run cannot support a judgement, and its reasons say why: the accuracy check, gaps, rate, duration, a simulation, or an instrument that is not external.' },
 ];
 
-const docs = [
-  { href: '/bounded-embodiment/method/v0.1/', title: 'Method text, version 0.1', desc: 'The normative text: what is declared and by whom, the instrument, the command streams, scoring, the verdict and the report. CC BY 4.0.' },
-  { href: '/bounded-embodiment/lab-guide/', title: 'Lab guide', desc: 'One session with the reference kit, from setting up the instrument to a signed submission.' },
-  { href: '/bounded-embodiment/accuracy-survey/', title: 'Surveying the accuracy check\'s points', desc: 'Measuring the reference positions for the pre-run accuracy check with a tape, a rule and a plumb line.' },
-  { href: '/bounded-embodiment/results/', title: 'Results', desc: 'Runs submitted to the public results repository and merged after its consistency check, each with the verdict the core package worked out.' },
+interface DoorLink {
+  href: string;
+  title: string;
+  desc: string;
+  /** Show the title in monospace: it is a package or repository name. */
+  code?: boolean;
+}
+
+// The front door: every place a reader may want to go next. Pages on this site are relative links;
+// the rest open in a new tab and show their host.
+const groups: { heading: string; note?: string; links: DoorLink[] }[] = [
+  {
+    heading: 'Read',
+    links: [
+      { href: '/bounded-embodiment/method/v0.1/', title: 'Method text, version 0.1', desc: 'The normative text: what is declared and by whom, the instrument, the command streams, scoring, the verdict and the report. CC BY 4.0.' },
+      { href: `${REPO}/blob/main/docs/requirements.md`, title: 'Requirements and test plan', desc: 'The five requirements and the test plan behind the method, in vendor-neutral terms. A scope draft, informative: version 0.1 of the method defines two of the tests, EV-03 and EV-10.' },
+      { href: '/bounded-embodiment/lab-guide/', title: 'Lab guide', desc: 'One session with the reference kit, from setting up the instrument to a signed submission.' },
+      { href: '/bounded-embodiment/accuracy-survey/', title: 'Surveying the accuracy check\'s points', desc: 'Measuring the reference positions for the pre-run accuracy check with a tape, a rule and a plumb line.' },
+      { href: '/bounded-embodiment/results/', title: 'Results', desc: 'Runs submitted to the public results repository and merged after its consistency check, each with the verdict the core package worked out.' },
+    ],
+  },
+  {
+    heading: 'Install',
+    links: [
+      { href: 'https://pypi.org/project/bounded-embodiment/', title: 'bounded-embodiment', code: true, desc: 'The core: loaders, the command streams, the scorers, the signed test report and be verify, which recomputes a report\'s verdict from its raw data. Pure Python, 3.10 or later.' },
+      { href: 'https://pypi.org/project/bounded-embodiment-kit/', title: 'bounded-embodiment-kit', code: true, desc: 'The lab bench: adapters, instruments, the runner and its watchdog. Python 3.12 or later. The adapters, runner and watchdog are a draft that needs line-by-line human review before they drive hardware.' },
+    ],
+  },
+  {
+    heading: 'Source',
+    links: [
+      { href: REPO, title: source.repository, code: true, desc: 'The method text, the reference implementation (bounded-embodiment, the core with be verify, and bounded-embodiment-kit, the lab bench), schemas, profiles and test vectors. Code Apache-2.0; the method text, schemas, profiles and vectors CC BY 4.0.' },
+      { href: RESULTS_REPO, title: source.results_repository, code: true, desc: 'Signed submissions, the lab registry and the rules a submission must follow.' },
+    ],
+  },
+  {
+    heading: 'Take part',
+    note: 'The method is a draft for comment, and comment is the contribution it needs most. You need nothing installed to comment.',
+    links: [
+      { href: `${REPO}/issues/new?template=feedback-requirement.yml`, title: 'Feedback on a requirement or test', desc: 'Say a requirement or test is missing, wrong or untestable. An issue form on GitHub.' },
+      { href: `${REPO}/issues/new?template=offer-testbed.yml`, title: 'Offer a testbed', desc: 'Run the tests on real hardware and show where the method breaks. An issue form on GitHub.' },
+      { href: `${REPO}/discussions/categories/standards-contribution`, title: 'Help shape a standards contribution', desc: 'Help turn the method into a written contribution to a standards body. A thread in the repository\'s Discussions.' },
+    ],
+  },
+  {
+    heading: 'The talk',
+    links: [
+      { href: TALK, title: 'Slides, written version and next steps', desc: 'Presented at the ITU-T FG-EAI workshop on embodied AI, 16 October 2026 (remote). That is a presentation, not an endorsement: neither ITU nor any other body has reviewed or adopted the method. On the maintainer\'s own site.' },
+    ],
+  },
 ];
+
+const isExternal = (href: string) => href.startsWith('https://');
 ---
 
 <BaseLayout
@@ -48,9 +96,15 @@ const docs = [
     <Breadcrumb items={[{ label: 'Bounded Embodiment' }]} />
 
     <h1 class="font-display text-4xl md:text-5xl font-semibold text-text mb-4">Bounded Embodiment</h1>
-    <p class="text-lg text-text-muted mb-6 leading-relaxed">
+    <p class="text-lg text-text-muted mb-4 leading-relaxed">
       A public test method, and its reference implementation, for one question: does a machine stay within its
       declared physical limits when its commands come from a source that cannot be trusted, such as an AI model?
+    </p>
+    <p class="text-text-muted mb-6 leading-relaxed">
+      Version 0.1 defines two tests, EV-03 and EV-10. Each run produces a signed report whose verdict, PASS, FAIL or
+      INCONCLUSIVE, anyone can recompute from the raw data with <span class="font-mono text-sm">be verify</span>, which
+      checks consistency, not the truth of the data. This page links the texts, the packages, the source, the results
+      and the ways to take part.
     </p>
 
     <div class="p-5 bg-bg-card border border-border rounded-xl mb-12 text-sm text-text-muted space-y-2">
@@ -58,6 +112,33 @@ const docs = [
       <p>The reference kit's adapters, runner and watchdog control real machines. Read the <a href="/bounded-embodiment/lab-guide/" class="text-accent hover:underline">lab guide</a>, including its status and safety sections, before using them on hardware.</p>
       <p>The method's author also maintains RCAN and this registry. The method depends on neither. The registry does not review or verify Bounded Embodiment results, and they must not be cited as evidence for a registry tier, a standard or a regulatory claim.</p>
     </div>
+
+    <section class="mb-12">
+      <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Start here</h2>
+      <div class="space-y-8">
+        {groups.map((g) => (
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-widest text-text-faint mb-3 font-mono">{g.heading}</h3>
+            {g.note && <p class="text-sm text-text-muted leading-relaxed mb-3">{g.note}</p>}
+            <div class="grid sm:grid-cols-2 gap-4">
+              {g.links.map((d) => (
+                <a
+                  href={d.href}
+                  {...(isExternal(d.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  class="block p-5 bg-bg-card border border-border rounded-xl hover:border-border-strong transition-colors group"
+                >
+                  <div class:list={['font-semibold text-text group-hover:text-accent transition-colors mb-1', d.code && 'font-mono text-sm break-words']}>
+                    {d.title.split('/').map((part, i) => <Fragment>{i > 0 && <Fragment>/<wbr /></Fragment>}{part}</Fragment>)} →
+                  </div>
+                  <div class="text-sm text-text-muted leading-relaxed">{d.desc}</div>
+                  {isExternal(d.href) && <div class="mt-2 text-xs font-mono text-text-faint">{new URL(d.href).host}</div>}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
 
     <section class="mb-12">
       <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Two tests</h2>
@@ -104,35 +185,6 @@ const docs = [
         A PASS is a finding about one run under method v0.1 and the named profile, nothing more. Encoder readings and
         simulations never give a PASS.
       </p>
-    </section>
-
-    <section class="mb-12">
-      <h2 class="font-display text-2xl font-semibold text-text mb-6 pb-2 border-b border-border">Read</h2>
-      <div class="grid sm:grid-cols-2 gap-4">
-        {docs.map((d) => (
-          <a href={d.href} class="block p-5 bg-bg-card border border-border rounded-xl hover:border-border-strong transition-colors group">
-            <div class="font-semibold text-text group-hover:text-accent transition-colors mb-1">{d.title} →</div>
-            <div class="text-sm text-text-muted leading-relaxed">{d.desc}</div>
-          </a>
-        ))}
-      </div>
-    </section>
-
-    <section class="mb-12">
-      <h2 class="font-display text-2xl font-semibold text-text mb-4 pb-2 border-b border-border">Source</h2>
-      <ul class="space-y-3 text-sm text-text-muted leading-relaxed">
-        <li>
-          <a href={REPO} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{source.repository}</a>:
-          the method text, the reference implementation (<span class="font-mono">bounded-embodiment</span>, the core
-          with <span class="font-mono">be verify</span>, and <span class="font-mono">bounded-embodiment-kit</span>, the
-          lab bench), schemas, profiles and test vectors. Code Apache-2.0; the method text, schemas, profiles and vectors
-          CC BY 4.0.
-        </li>
-        <li>
-          <a href={RESULTS_REPO} target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-mono break-all">{source.results_repository}</a>:
-          signed submissions, the lab registry and the rules a submission must follow.
-        </li>
-      </ul>
     </section>
   </div>
 </BaseLayout>
