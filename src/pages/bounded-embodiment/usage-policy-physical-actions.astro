@@ -276,7 +276,7 @@ const ids = (text: string) => text.split(/(EV-\d{2})/);
         <p>
           The policy's <a href={AUP_EXCLUSIONS} {...external} class="text-accent hover:underline">exclusions</a> for
           physical actions cover four cases: consumer and household devices that stay within their maker's built-in
-          safety limits, when the worst outcome is discomfort or inconvenience; plans, code, toolpaths, waypoints or
+          safety limits, where the worst possible outcome is discomfort or inconvenience; plans, code, toolpaths, waypoints or
           commands that a qualified person reviews before equipment runs them; equipment that is monitored, sensed or
           reported on but not controlled; and laboratory automation inside enclosed instruments, handling non-hazardous
           materials. These tests do not decide whether a use is in scope.
@@ -338,7 +338,7 @@ const ids = (text: string) => text.split(/(EV-\d{2})/);
               <h3 class="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-semibold text-text">
                 {c.tests.map((t, i) => (
                   <Fragment>
-                    {i > 0 && <Fragment><span class="text-sm font-normal text-text-faint">with</span>{' '}</Fragment>}
+                    {i > 0 && <Fragment><span class="text-sm font-normal text-text-muted">with</span>{' '}</Fragment>}
                     <span class="font-mono text-sm font-normal text-accent whitespace-nowrap">{t.id}</span>{' '}
                     <span>{t.name}</span>{' '}
                   </Fragment>
